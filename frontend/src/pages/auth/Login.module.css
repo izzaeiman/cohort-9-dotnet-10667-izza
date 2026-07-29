@@ -1,0 +1,291 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Login.module.css  –  WorkFlow Login Page
+   Premium SaaS split-screen layout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page root ──────────────────────────────────────────────────────────── */
+.page {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: #F8F8F8;
+  animation: pageFadeIn 0.5s ease both;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LEFT PANEL  ─ ~45% – orange gradient branding side
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.leftPanel {
+  position: relative;
+  flex: 0 0 44%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Warm orange gradient */
+  background: linear-gradient(
+    145deg,
+    #FF7A1A 0%,
+    #FF5F00 40%,
+    #FF8C35 70%,
+    #FFB347 100%
+  );
+  padding: 48px 40px;
+}
+
+/* Decorative gradient orbs */
+.orb1,
+.orb2,
+.orb3 {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.orb1 {
+  width: 480px;
+  height: 480px;
+  top: -160px;
+  right: -160px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 70%);
+}
+
+.orb2 {
+  width: 360px;
+  height: 360px;
+  bottom: -120px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(255, 200, 120, 0.25) 0%, transparent 70%);
+}
+
+.orb3 {
+  width: 200px;
+  height: 200px;
+  top: 40%;
+  left: -60px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.10) 0%, transparent 70%);
+}
+
+.leftContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 36px;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ── Logo ────────────────────────────────────────────────────────────────── */
+.logoWrap {
+  animation: slideInLeft 0.6s ease both;
+}
+
+/* ── Illustration ────────────────────────────────────────────────────────── */
+.illustrationWrap {
+  width: 100%;
+  animation: slideInLeft 0.6s ease 0.1s both;
+}
+
+/* ── Hero text ───────────────────────────────────────────────────────────── */
+.heroText {
+  animation: slideInLeft 0.6s ease 0.2s both;
+}
+
+.heroTitle {
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.heroAccent {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.heroDesc {
+  font-size: 0.975rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 340px;
+}
+
+/* ── Feature list ────────────────────────────────────────────────────────── */
+.featureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideInLeft 0.6s ease 0.3s both;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.featureIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  font-size: 15px;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RIGHT PANEL  ─ ~55% – light background, centered form card
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  background: #F8F8F8;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Mobile-only logo */
+.mobileLogo {
+  display: none;
+  margin-bottom: 28px;
+}
+
+/* ── Form card ───────────────────────────────────────────────────────────── */
+.formCard {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #ECECEC;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    0 20px 48px rgba(0, 0, 0, 0.05);
+  padding: 44px 44px;
+  width: 100%;
+  max-width: 470px;
+  animation: cardSlideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cardSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Card header ─────────────────────────────────────────────────────────── */
+.cardHeader {
+  margin-bottom: 30px;
+}
+
+.cardTitle {
+  font-size: clamp(1.5rem, 2vw, 1.85rem);
+  font-weight: 800;
+  color: #1F1F1F;
+  margin: 0 0 8px;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.cardSubtitle {
+  font-size: 0.95rem;
+  color: #666666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.pageFooter {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #BBBBBB;
+  font-weight: 500;
+}
+
+/* ── Slide-in animation for left panel items ─────────────────────────────── */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
+  .leftPanel { flex: 0 0 42%; padding: 36px 28px; }
+  .formCard  { padding: 38px 36px; }
+}
+
+/* Tablet portrait — hide left panel, center form */
+@media (max-width: 768px) {
+  .page { flex-direction: column; }
+
+  .leftPanel { display: none; }
+
+  .rightPanel {
+    flex: 1;
+    min-height: 100vh;
+    padding: 40px 24px;
+    justify-content: center;
+    background: linear-gradient(
+      160deg,
+      #FFF5EC 0%,
+      #F8F8F8 50%,
+      #F8F8F8 100%
+    );
+  }
+
+  .mobileLogo { display: flex; }
+
+  .formCard {
+    max-width: 440px;
+    padding: 36px 28px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .pageFooter { position: static; margin-top: 28px; }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .rightPanel { padding: 28px 16px; }
+  .formCard   { padding: 28px 20px; border-radius: 20px; }
+  .cardTitle  { font-size: 1.5rem; }
+}

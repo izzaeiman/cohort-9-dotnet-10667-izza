@@ -14,9 +14,11 @@ interface LoginFormProps {
   onSubmit: SubmitHandler<LoginFormData>;
   isLoading?: boolean;
   serverError?: string;
+  successMessage?: string;
+  onGoogleSignIn?: () => void;
 }
 
-const LoginForm = ({ onSubmit, isLoading = false, serverError }: LoginFormProps) => {
+const LoginForm = ({ onSubmit, isLoading = false, serverError, successMessage, onGoogleSignIn }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -41,6 +43,14 @@ const LoginForm = ({ onSubmit, isLoading = false, serverError }: LoginFormProps)
       noValidate
       aria-label="Login form"
     >
+      {/* Success banner */}
+      {successMessage && (
+        <div className={styles.successBanner} role="status" aria-live="polite">
+          <span className={styles.errorIcon}>🎉</span>
+          {successMessage}
+        </div>
+      )}
+
       {/* Server error */}
       {serverError && (
         <div className={styles.serverError} role="alert" aria-live="polite">
@@ -133,6 +143,7 @@ const LoginForm = ({ onSubmit, isLoading = false, serverError }: LoginFormProps)
         leftIcon={<FcGoogle size={20} />}
         id="login-google"
         aria-label="Continue with Google"
+        onClick={onGoogleSignIn}
       >
         Continue with Google
       </AppButton>

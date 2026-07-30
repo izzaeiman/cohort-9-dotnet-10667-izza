@@ -17,6 +17,7 @@ const FEATURES = [
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   /**
    * Form submit handler — placeholder until the ASP.NET Core API is connected.
@@ -24,17 +25,24 @@ const LoginPage = () => {
    */
   const handleLogin: SubmitHandler<LoginFormData> = async (data) => {
     setServerError('');
+    setSuccessMessage('');
     setIsLoading(true);
     try {
       // TODO: Replace with real auth call → await authService.login(data);
       console.log('[LoginPage] credentials →', data);
       // Simulate network delay for demo
-      await new Promise((res) => setTimeout(res, 1200));
+      await new Promise((res) => setTimeout(res, 800));
+      setSuccessMessage(`Welcome! Authenticated as ${data.email}.`);
     } catch {
       setServerError('Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSignIn = () => {
+    setServerError('');
+    setSuccessMessage('Google Sign-In clicked (UI Demo mode).');
   };
 
   return (
@@ -102,6 +110,8 @@ const LoginPage = () => {
             onSubmit={handleLogin}
             isLoading={isLoading}
             serverError={serverError}
+            successMessage={successMessage}
+            onGoogleSignIn={handleGoogleSignIn}
           />
         </div>
 

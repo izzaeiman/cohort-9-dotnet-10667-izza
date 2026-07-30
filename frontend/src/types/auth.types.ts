@@ -1,4 +1,4 @@
-// ─── Auth types ──────────────────────────────────────────────────────────────
+// ─── Auth Form Interfaces ───────────────────────────────────────────────────
 
 export interface LoginCredentials {
   email: string;
@@ -6,15 +6,30 @@ export interface LoginCredentials {
   rememberMe?: boolean;
 }
 
+export type UserRole = 'Regular User' | 'Administrator';
+
+export interface SignupCredentials {
+  fullName: string;
+  email: string;
+  role: UserRole;
+  password: string;
+  confirmPassword?: string;
+  agreeToTerms: boolean;
+}
+
+export interface ForgotPasswordCredentials {
+  email: string;
+}
+
 export interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   avatar?: string;
 }
 
-// ─── Form field types ─────────────────────────────────────────────────────────
+// ─── Form Field Types ────────────────────────────────────────────────────────
 
 export interface InputFieldProps {
   id: string;

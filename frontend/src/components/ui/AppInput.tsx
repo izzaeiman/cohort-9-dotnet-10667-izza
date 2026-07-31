@@ -1,4 +1,4 @@
-import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useState, type InputHTMLAttributes, type ReactNode, type FocusEvent } from 'react';
 import clsx from 'clsx';
 import styles from './AppInput.module.css';
 
@@ -12,8 +12,21 @@ interface AppInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const AppInput = forwardRef<HTMLInputElement, AppInputProps>(
-  ({ id, label, error, leftIcon, rightSlot, helperText, className, ...rest }, ref) => {
+  (
+    { id, label, error, leftIcon, rightSlot, helperText, className, onFocus, onBlur, ...rest },
+    ref,
+  ) => {
     const [isFocused, setIsFocused] = useState(false);
+
+    const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
+      onFocus?.(e);
+    };
+
+    const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
+      setIsFocused(false);
+      onBlur?.(e);
+    };
 
     return (
       <div className={clsx(styles.wrapper, className)}>
@@ -32,11 +45,11 @@ const AppInput = forwardRef<HTMLInputElement, AppInputProps>(
             ref={ref}
             id={id}
             className={styles.input}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
             aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
             aria-invalid={!!error}
             {...rest}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
           />
           {rightSlot && <span className={styles.rightSlot}>{rightSlot}</span>}
         </div>

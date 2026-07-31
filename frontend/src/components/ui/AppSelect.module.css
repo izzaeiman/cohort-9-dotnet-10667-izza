@@ -94,7 +94,7 @@
   color: #FF5A5A;
   margin: 0;
   padding-left: 2px;
-  animation: slideDown 0.18s ease;
+  animation: slide-down 0.18s ease;
 }
 
 .helperText {
@@ -104,7 +104,7 @@
   padding-left: 2px;
 }
 
-@keyframes slideDown {
+@keyframes slide-down {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }

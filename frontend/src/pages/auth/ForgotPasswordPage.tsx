@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { type SubmitHandler } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { type ForgotPasswordFormData } from '../../utils/forgotPasswordSchema';
 import ForgotPasswordForm from '../../components/forms/ForgotPasswordForm';
 import WorkFlowLogo from '../../components/ui/WorkFlowLogo';
@@ -10,6 +10,7 @@ import AppButton from '../../components/ui/AppButton';
 import styles from './ForgotPassword.module.css';
 
 const ForgotPasswordPage = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -19,7 +20,6 @@ const ForgotPasswordPage = () => {
     setIsLoading(true);
     try {
       // TODO: Replace with real auth call → await authService.forgotPassword(data.email);
-      console.log('[ForgotPasswordPage] email →', data.email);
       await new Promise((res) => setTimeout(res, 900));
       setSubmittedEmail(data.email);
     } catch {
@@ -94,11 +94,15 @@ const ForgotPasswordPage = () => {
                 Please check your spam or junk folder if you don't see the email within a few minutes.
               </p>
 
-              <Link to="/login" style={{ width: '100%', textDecoration: 'none', marginTop: '12px' }}>
-                <AppButton variant="primary" size="lg" fullWidth>
-                  Back to Sign In
-                </AppButton>
-              </Link>
+              <AppButton
+                variant="primary"
+                size="lg"
+                fullWidth
+                onClick={() => navigate('/login')}
+                style={{ marginTop: '12px' }}
+              >
+                Back to Sign In
+              </AppButton>
 
               <p className={styles.resendRow}>
                 Didn't receive the email?{' '}

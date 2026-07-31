@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, useWatch, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
 import { MdPerson, MdEmail, MdLock, MdBadge, MdVisibility, MdVisibilityOff } from 'react-icons/md';
@@ -21,15 +21,15 @@ interface SignupFormProps {
 
 const getPasswordStrength = (pass: string) => {
   if (!pass) return { score: 0, label: '', color: '#ECECEC', percent: '0%' };
-  if (pass.length < 6) return { score: 1, label: 'Weak', color: '#FF5A5A', percent: '33%' };
+  if (pass.length < 8) return { score: 1, label: 'Weak', color: '#FF5A5A', percent: '33%' };
   const hasLetter = /[a-zA-Z]/.test(pass);
   const hasNumber = /[0-9]/.test(pass);
   const hasSpecial = /[^a-zA-Z0-9]/.test(pass);
 
-  if (pass.length >= 8 && hasLetter && hasNumber && hasSpecial) {
+  if (pass.length >= 10 && hasLetter && hasNumber && hasSpecial) {
     return { score: 3, label: 'Strong', color: '#4CAF50', percent: '100%' };
   }
-  if (pass.length >= 6 && hasLetter && hasNumber) {
+  if (pass.length >= 8 && hasLetter && hasNumber) {
     return { score: 2, label: 'Medium', color: '#FF7A1A', percent: '66%' };
   }
   return { score: 1, label: 'Weak', color: '#FF5A5A', percent: '33%' };
@@ -48,7 +48,7 @@ const SignupForm = ({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -62,8 +62,8 @@ const SignupForm = ({
     },
   });
 
-  const watchPassword = watch('password', '');
-  const strength = getPasswordStrength(watchPassword);
+  const watchPassword = useWatch({ control, name: 'password', defaultValue: '' });
+  const strength = getPasswordStrength(watchPassword || '');
 
   const roleOptions = USER_ROLES.map((r) => ({ value: r, label: r }));
 

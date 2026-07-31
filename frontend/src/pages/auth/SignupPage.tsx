@@ -26,7 +26,6 @@ const SignupPage = () => {
     setIsLoading(true);
     try {
       // TODO: Replace with real auth call → await authService.signup(data);
-      console.log('[SignupPage] credentials →', data);
       await new Promise((res) => setTimeout(res, 900));
       setSuccessMessage(`Account created successfully for ${data.fullName}! (${data.role})`);
     } catch {

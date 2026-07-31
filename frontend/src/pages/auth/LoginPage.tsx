@@ -29,7 +29,6 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       // TODO: Replace with real auth call → await authService.login(data);
-      console.log('[LoginPage] credentials →', data);
       // Simulate network delay for demo
       await new Promise((res) => setTimeout(res, 800));
       setSuccessMessage(`Welcome! Authenticated as ${data.email}.`);

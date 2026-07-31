@@ -19,7 +19,7 @@
   color: #D32F2F;
   font-size: 0.875rem;
   font-weight: 500;
-  animation: slideDown 0.2s ease;
+  animation: slide-down 0.2s ease;
 }
 
 /* ── Success banner ─────────────────────────────────────────────────── */
@@ -34,7 +34,7 @@
   color: #2E7D32;
   font-size: 0.875rem;
   font-weight: 500;
-  animation: slideDown 0.2s ease;
+  animation: slide-down 0.2s ease;
 }
 
 .errorIcon { font-size: 16px; flex-shrink: 0; }
@@ -175,7 +175,7 @@
 .signupLink:focus-visible { outline: 2px solid #FF7A1A; border-radius: 4px; }
 
 /* ── Animations ──────────────────────────────────────────────────────────── */
-@keyframes slideDown {
+@keyframes slide-down {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }

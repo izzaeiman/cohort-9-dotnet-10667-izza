@@ -8,17 +8,14 @@ export const signupSchema = z
       .string()
       .min(1, 'Full name is required')
       .min(2, 'Full name must be at least 2 characters'),
-    email: z
-      .string()
-      .min(1, 'Email address is required')
-      .email('Please enter a valid email address'),
+    email: z.email('Please enter a valid email address'),
     role: z.enum(USER_ROLES, {
-      message: 'Please select a valid role',
+      error: 'Please select a valid role',
     }),
     password: z
       .string()
       .min(1, 'Password is required')
-      .min(6, 'Password must be at least 6 characters'),
+      .min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
     agreeToTerms: z.boolean().refine((val) => val === true, {
       message: 'You must agree to the Terms and Privacy Policy',

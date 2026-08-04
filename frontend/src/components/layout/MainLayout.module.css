@@ -1,0 +1,32 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #F8F8F8;
+}
+
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  padding: 32px 32px 48px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  animation: pageFadeIn 0.35s ease both;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 20px 16px 36px;
+  }
+}

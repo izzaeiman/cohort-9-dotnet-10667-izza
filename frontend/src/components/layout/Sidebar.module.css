@@ -1,0 +1,147 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  border-right: 1px solid #ECECEC;
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 40;
+  user-select: none;
+}
+
+.sidebar--expanded {
+  width: 260px;
+}
+
+.sidebar--collapsed {
+  width: 80px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  height: 72px;
+  border-bottom: 1px solid #F5F5F5;
+}
+
+.logoWrap {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #ECECEC;
+  background: #F8F8F8;
+  color: #666666;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.22s ease;
+  flex-shrink: 0;
+}
+
+.collapseBtn:hover {
+  background: #FFF5EC;
+  color: #FF7A1A;
+  border-color: rgba(255, 122, 26, 0.3);
+}
+
+/* Navigation List */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  color: #666666;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.navItem:hover {
+  background: #F8F8F8;
+  color: #1F1F1F;
+}
+
+.navItemActive {
+  background: #FFF5EC !important;
+  color: #FF7A1A !important;
+  font-weight: 700;
+}
+
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  background: #FF7A1A;
+  border-radius: 0 4px 4px 0;
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.navText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Footer / Logout */
+.footer {
+  padding: 16px 12px;
+  border-top: 1px solid #F5F5F5;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: #FF5A5A;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  white-space: nowrap;
+}
+
+.logoutBtn:hover {
+  background: #FFEBEE;
+}

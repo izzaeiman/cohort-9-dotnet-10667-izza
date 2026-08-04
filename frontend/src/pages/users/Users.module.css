@@ -1,0 +1,212 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1F1F1F;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #666666;
+  margin: 4px 0 0;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #ECECEC;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #888888;
+}
+
+.statVal {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1F1F1F;
+}
+
+.controlsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: 18px;
+  border: 1px solid #ECECEC;
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 9px 14px 9px 36px;
+  border-radius: 12px;
+  border: 1.5px solid #ECECEC;
+  background: #F8F8F8;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  color: #1F1F1F;
+  outline: none;
+  width: 240px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  color: #AAAAAA;
+  display: flex;
+}
+
+/* User Table */
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #ECECEC;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: var(--font-family);
+  min-width: 700px;
+}
+
+.th {
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid #F0F0F0;
+}
+
+.tr {
+  border-bottom: 1px solid #F8F8F8;
+  transition: background 0.18s ease;
+}
+
+.tr:hover {
+  background: #FFFBF8;
+}
+
+.td {
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  color: #1F1F1F;
+  vertical-align: middle;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.nameWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-weight: 700;
+  color: #1F1F1F;
+}
+
+.userEmail {
+  font-size: 0.78rem;
+  color: #888888;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.roleAdmin {
+  background: #FFF5EC;
+  color: #FF7A1A;
+}
+
+.roleUser {
+  background: #F0F4FF;
+  color: #3B82F6;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+
+.statusActive {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.statusOffline {
+  background: #F5F5F5;
+  color: #777777;
+}
+
+.statusPending {
+  background: #FFF8E1;
+  color: #B78103;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

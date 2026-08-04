@@ -1,0 +1,275 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Signup.module.css  –  WorkFlow Signup Page
+   Premium SaaS split-screen layout matching Login page design language
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page root ──────────────────────────────────────────────────────────── */
+.page {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: #F8F8F8;
+  animation: page-fade-in 0.5s ease both;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LEFT PANEL  ─ ~44% – orange gradient branding side
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.leftPanel {
+  position: relative;
+  flex: 0 0 44%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(
+    145deg,
+    #FF7A1A 0%,
+    #FF5F00 40%,
+    #FF8C35 70%,
+    #FFB347 100%
+  );
+  padding: 48px 40px;
+}
+
+/* Decorative gradient orbs */
+.orb1,
+.orb2,
+.orb3 {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.orb1 {
+  width: 480px;
+  height: 480px;
+  top: -160px;
+  right: -160px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 70%);
+}
+
+.orb2 {
+  width: 360px;
+  height: 360px;
+  bottom: -120px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(255, 200, 120, 0.25) 0%, transparent 70%);
+}
+
+.orb3 {
+  width: 200px;
+  height: 200px;
+  top: 40%;
+  left: -60px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.10) 0%, transparent 70%);
+}
+
+.leftContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 32px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.logoWrap {
+  animation: slide-in-left 0.6s ease both;
+}
+
+.illustrationWrap {
+  width: 100%;
+  animation: slide-in-left 0.6s ease 0.1s both;
+}
+
+.heroText {
+  animation: slide-in-left 0.6s ease 0.2s both;
+}
+
+.heroTitle {
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.heroAccent {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.heroDesc {
+  font-size: 0.975rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 340px;
+}
+
+.featureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slide-in-left 0.6s ease 0.3s both;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.featureIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  font-size: 15px;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RIGHT PANEL  ─ ~56% – light background, centered form card
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 40px;
+  background: #F8F8F8;
+  position: relative;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.mobileLogo {
+  display: none;
+  margin-bottom: 24px;
+}
+
+.formCard {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #ECECEC;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    0 20px 48px rgba(0, 0, 0, 0.05);
+  padding: 40px 44px;
+  width: 100%;
+  max-width: 490px;
+  animation: card-slide-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  margin: auto 0;
+}
+
+@keyframes card-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cardHeader {
+  margin-bottom: 24px;
+}
+
+.cardTitle {
+  font-size: clamp(1.5rem, 2vw, 1.85rem);
+  font-weight: 800;
+  color: #1F1F1F;
+  margin: 0 0 8px;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.cardSubtitle {
+  font-size: 0.95rem;
+  color: #666666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pageFooter {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #BBBBBB;
+  font-weight: 500;
+  margin-top: 24px;
+  padding-bottom: 12px;
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .leftPanel { flex: 0 0 42%; padding: 36px 28px; }
+  .formCard  { padding: 36px 32px; }
+}
+
+@media (max-width: 768px) {
+  .page { flex-direction: column; }
+  .leftPanel { display: none; }
+
+  .rightPanel {
+    flex: 1;
+    min-height: 100vh;
+    padding: 32px 20px;
+    justify-content: center;
+    background: linear-gradient(
+      160deg,
+      #FFF5EC 0%,
+      #F8F8F8 50%,
+      #F8F8F8 100%
+    );
+  }
+
+  .mobileLogo { display: flex; }
+
+  .formCard {
+    max-width: 450px;
+    padding: 32px 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+}
+
+@media (max-width: 480px) {
+  .rightPanel { padding: 24px 14px; }
+  .formCard   { padding: 24px 18px; border-radius: 20px; }
+  .cardTitle  { font-size: 1.45rem; }
+}

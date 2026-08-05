@@ -83,11 +83,37 @@
   width: 240px;
 }
 
+.searchInput:focus,
+.searchInput:focus-visible {
+  border-color: #FF7A1A;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
+}
+
 .searchIcon {
   position: absolute;
   left: 10px;
   color: #AAAAAA;
   display: flex;
+}
+
+.selectFilter {
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #ECECEC;
+  background: #F8F8F8;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444444;
+  outline: none;
+  cursor: pointer;
+}
+
+.selectFilter:focus,
+.selectFilter:focus-visible {
+  border-color: #FF7A1A;
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
 }
 
 /* User Table */
@@ -172,12 +198,12 @@
 
 .roleAdmin {
   background: #FFF5EC;
-  color: #FF7A1A;
+  color: #C65100;
 }
 
 .roleUser {
   background: #F0F4FF;
-  color: #3B82F6;
+  color: #1565C0;
 }
 
 .statusPill {
@@ -192,17 +218,17 @@
 
 .statusActive {
   background: #E8F5E9;
-  color: #2E7D32;
+  color: #1B5E20;
 }
 
 .statusOffline {
   background: #F5F5F5;
-  color: #777777;
+  color: #555555;
 }
 
 .statusPending {
   background: #FFF8E1;
-  color: #B78103;
+  color: #7F5000;
 }
 
 .modalForm {

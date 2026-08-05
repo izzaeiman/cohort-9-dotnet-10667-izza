@@ -56,6 +56,23 @@ export const MOCK_PRODUCTIVITY_DATA: ProductivityDataPoint[] = [
   { day: 'Sun', completed: 3, created: 1 },
 ];
 
+export const MOCK_PRODUCTIVITY_LAST_WEEK: ProductivityDataPoint[] = [
+  { day: 'Mon', completed: 3, created: 5 },
+  { day: 'Tue', completed: 5, created: 4 },
+  { day: 'Wed', completed: 6, created: 7 },
+  { day: 'Thu', completed: 8, created: 3 },
+  { day: 'Fri', completed: 9, created: 6 },
+  { day: 'Sat', completed: 4, created: 3 },
+  { day: 'Sun', completed: 2, created: 1 },
+];
+
+export const MOCK_PRODUCTIVITY_THIS_MONTH: ProductivityDataPoint[] = [
+  { day: 'Week 1', completed: 22, created: 28 },
+  { day: 'Week 2', completed: 28, created: 24 },
+  { day: 'Week 3', completed: 35, created: 30 },
+  { day: 'Week 4', completed: 31, created: 25 },
+];
+
 export const MOCK_STATUS_DISTRIBUTION: StatusDistributionData[] = [
   { name: 'Completed', value: 28, color: '#4CAF50' },
   { name: 'In Progress', value: 12, color: '#FF7A1A' },
@@ -72,8 +89,8 @@ export const MOCK_TASKS: TaskItem[] = [
     status: 'in_progress',
     dueDate: '2026-08-05',
     assignees: [
-      { id: 'usr-1', name: 'Sarah Connor', avatar: 'https://i.pravatar.cc/150?img=32' },
-      { id: 'usr-2', name: 'Alex Rivera', avatar: 'https://i.pravatar.cc/150?img=12' },
+      { id: 'usr-1', name: 'Alice Carter', avatar: 'https://i.pravatar.cc/150?img=32' },
+      { id: 'usr-2', name: 'Bob Wilson', avatar: 'https://i.pravatar.cc/150?img=12' },
     ],
   },
   {
@@ -84,7 +101,7 @@ export const MOCK_TASKS: TaskItem[] = [
     status: 'pending',
     dueDate: '2026-08-06',
     assignees: [
-      { id: 'usr-3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
+      { id: 'usr-3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
     ],
   },
   {
@@ -95,8 +112,8 @@ export const MOCK_TASKS: TaskItem[] = [
     status: 'completed',
     dueDate: '2026-08-03',
     assignees: [
-      { id: 'usr-3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
-      { id: 'usr-4', name: 'Elena Rostova', avatar: 'https://i.pravatar.cc/150?img=47' },
+      { id: 'usr-3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
+      { id: 'usr-4', name: 'Diana Evans', avatar: 'https://i.pravatar.cc/150?img=47' },
     ],
   },
   {
@@ -107,7 +124,7 @@ export const MOCK_TASKS: TaskItem[] = [
     status: 'overdue',
     dueDate: '2026-08-02',
     assignees: [
-      { id: 'usr-5', name: 'David Miller', avatar: 'https://i.pravatar.cc/150?img=59' },
+      { id: 'usr-5', name: 'Charlie Davis', avatar: 'https://i.pravatar.cc/150?img=59' },
     ],
   },
   {
@@ -118,7 +135,7 @@ export const MOCK_TASKS: TaskItem[] = [
     status: 'in_progress',
     dueDate: '2026-08-08',
     assignees: [
-      { id: 'usr-2', name: 'Alex Rivera', avatar: 'https://i.pravatar.cc/150?img=12' },
+      { id: 'usr-2', name: 'Bob Wilson', avatar: 'https://i.pravatar.cc/150?img=12' },
     ],
   },
 ];
@@ -153,7 +170,7 @@ export const MOCK_DEADLINES: DeadlineItem[] = [
 export const MOCK_ACTIVITIES: ActivityItemData[] = [
   {
     id: 'act-1',
-    user: 'Izza Eiman',
+    user: 'Jane Doe',
     avatar: 'https://i.pravatar.cc/150?img=68',
     action: 'completed task',
     target: 'Responsive Split-Screen Login & Signup UI',
@@ -162,7 +179,7 @@ export const MOCK_ACTIVITIES: ActivityItemData[] = [
   },
   {
     id: 'act-2',
-    user: 'Nouman (Mentor)',
+    user: 'John Smith (Mentor)',
     avatar: 'https://i.pravatar.cc/150?img=33',
     action: 'approved Pull Request',
     target: '#2 feat(auth): add responsive signup & forgot password',
@@ -171,7 +188,7 @@ export const MOCK_ACTIVITIES: ActivityItemData[] = [
   },
   {
     id: 'act-3',
-    user: 'Sarah Connor',
+    user: 'Alice Carter',
     avatar: 'https://i.pravatar.cc/150?img=32',
     action: 'created task',
     target: 'Design System & Token Architecture',
@@ -180,7 +197,7 @@ export const MOCK_ACTIVITIES: ActivityItemData[] = [
   },
   {
     id: 'act-4',
-    user: 'Alex Rivera',
+    user: 'Bob Wilson',
     avatar: 'https://i.pravatar.cc/150?img=12',
     action: 'commented on',
     target: 'Serilog Logging & Structured Exception Middleware',

@@ -80,8 +80,13 @@
   white-space: nowrap;
 }
 
+.actionCell {
+  position: relative;
+  text-align: right;
+}
+
 .actionBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
@@ -97,4 +102,52 @@
 .actionBtn:hover {
   background: #FFF5EC;
   color: #FF7A1A;
+}
+
+.actionBtn:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 2px;
+}
+
+.menuDropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  width: 140px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #ECECEC;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  animation: dropdown-fade 0.15s ease both;
+}
+
+.menuItem {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444444;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.menuItem:hover {
+  background: #FFF5EC;
+  color: #FF7A1A;
+}
+
+.menuItemDanger {
+  color: #D32F2F;
+}
+
+.menuItemDanger:hover {
+  background: #FFEBEE;
+  color: #D32F2F;
 }

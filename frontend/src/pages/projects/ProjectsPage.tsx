@@ -12,6 +12,7 @@ import AvatarGroup from '../../components/ui/AvatarGroup';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
+import { getLocalDate } from '../../utils/dateHelpers';
 import styles from './Projects.module.css';
 
 interface ProjectItem {
@@ -38,11 +39,11 @@ const MOCK_PROJECTS: ProjectItem[] = [
     completedTasks: 18,
     totalTasks: 23,
     dueDate: 'Aug 15, 2026',
-    lead: { id: 'u3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
+    lead: { id: 'u3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
     team: [
-      { id: 'u3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
-      { id: 'u1', name: 'Sarah Connor', avatar: 'https://i.pravatar.cc/150?img=32' },
-      { id: 'u2', name: 'Alex Rivera', avatar: 'https://i.pravatar.cc/150?img=12' },
+      { id: 'u3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
+      { id: 'u1', name: 'Alice Carter', avatar: 'https://i.pravatar.cc/150?img=32' },
+      { id: 'u2', name: 'Bob Wilson', avatar: 'https://i.pravatar.cc/150?img=12' },
     ],
     status: 'in_progress',
   },
@@ -55,10 +56,10 @@ const MOCK_PROJECTS: ProjectItem[] = [
     completedTasks: 9,
     totalTasks: 20,
     dueDate: 'Aug 22, 2026',
-    lead: { id: 'u2', name: 'Alex Rivera', avatar: 'https://i.pravatar.cc/150?img=12' },
+    lead: { id: 'u2', name: 'Bob Wilson', avatar: 'https://i.pravatar.cc/150?img=12' },
     team: [
-      { id: 'u2', name: 'Alex Rivera', avatar: 'https://i.pravatar.cc/150?img=12' },
-      { id: 'u5', name: 'David Miller', avatar: 'https://i.pravatar.cc/150?img=59' },
+      { id: 'u2', name: 'Bob Wilson', avatar: 'https://i.pravatar.cc/150?img=12' },
+      { id: 'u5', name: 'Charlie Davis', avatar: 'https://i.pravatar.cc/150?img=59' },
     ],
     status: 'in_progress',
   },
@@ -71,10 +72,10 @@ const MOCK_PROJECTS: ProjectItem[] = [
     completedTasks: 14,
     totalTasks: 14,
     dueDate: 'Jul 30, 2026',
-    lead: { id: 'u1', name: 'Sarah Connor', avatar: 'https://i.pravatar.cc/150?img=32' },
+    lead: { id: 'u1', name: 'Alice Carter', avatar: 'https://i.pravatar.cc/150?img=32' },
     team: [
-      { id: 'u1', name: 'Sarah Connor', avatar: 'https://i.pravatar.cc/150?img=32' },
-      { id: 'u3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
+      { id: 'u1', name: 'Alice Carter', avatar: 'https://i.pravatar.cc/150?img=32' },
+      { id: 'u3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
     ],
     status: 'completed',
   },
@@ -106,7 +107,7 @@ export const ProjectsPage = () => {
       name: '',
       description: '',
       category: 'Full Stack',
-      dueDate: new Date().toISOString().split('T')[0],
+      dueDate: getLocalDate(),
     },
   });
 
@@ -120,7 +121,7 @@ export const ProjectsPage = () => {
 
   const handleCreateProject = async (data: CreateProjectFormData) => {
     // TODO: Connect to ASP.NET Core Web API → await projectService.createProject(data);
-    await new Promise((res) => setTimeout(res, 600));
+    await new Promise((res) => setTimeout(res, 400));
 
     const newProject: ProjectItem = {
       id: `PRJ-0${projects.length + 1}`,
@@ -131,8 +132,8 @@ export const ProjectsPage = () => {
       completedTasks: 0,
       totalTasks: 10,
       dueDate: data.dueDate,
-      lead: { id: 'u3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
-      team: [{ id: 'u3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' }],
+      lead: { id: 'u3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
+      team: [{ id: 'u3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' }],
       status: 'in_progress',
     };
 
@@ -164,7 +165,7 @@ export const ProjectsPage = () => {
       </header>
 
       {/* ── Stats Summary ─────────────────────────────────────────────────── */}
-      <div className={styles.statsGrid}>
+      <div className={styles.statsGrid} aria-label="Project overview metrics">
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Projects</span>
           <span className={styles.statVal}>{projects.length}</span>
@@ -190,13 +191,14 @@ export const ProjectsPage = () => {
       {/* ── Search Bar ────────────────────────────────────────────────────── */}
       <div className={styles.controlsBar}>
         <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}>
+          <span className={styles.searchIcon} aria-hidden="true">
             <MdSearch size={18} />
           </span>
           <input
             type="text"
             className={styles.searchInput}
             placeholder="Search projects..."
+            aria-label="Search projects by name or category"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -286,7 +288,7 @@ export const ProjectsPage = () => {
             {...register('dueDate')}
           />
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
             <AppButton type="button" variant="outlined" size="md" onClick={() => setIsModalOpen(false)}>
               Cancel
             </AppButton>

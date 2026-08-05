@@ -26,46 +26,46 @@
   flex-shrink: 0;
 }
 
-/* Status variants */
+/* Status variants (WCAG AA Compliant 4.5:1+ contrast text) */
 .badge--completed {
   background: #E8F5E9;
-  color: #2E7D32;
+  color: #1B5E20;
 }
-.badge--completed .dot { background: #4CAF50; }
+.badge--completed .dot { background: #2E7D32; }
 
 .badge--in_progress {
   background: #FFF5EC;
-  color: #FF7A1A;
+  color: #C65100;
 }
-.badge--in_progress .dot { background: #FF7A1A; }
+.badge--in_progress .dot { background: #C65100; }
 
 .badge--pending {
   background: #FFF8E1;
-  color: #B78103;
+  color: #7F5000;
 }
-.badge--pending .dot { background: #FFC107; }
+.badge--pending .dot { background: #7F5000; }
 
 .badge--overdue {
   background: #FFEBEE;
-  color: #D32F2F;
+  color: #B71C1C;
 }
-.badge--overdue .dot { background: #FF5A5A; }
+.badge--overdue .dot { background: #B71C1C; }
 
-/* Priority variants */
+/* Priority variants (WCAG AA Compliant contrast text) */
 .badge--priority-high {
   background: #FFEBEE;
-  color: #D32F2F;
-  border: 1px solid rgba(255, 90, 90, 0.2);
+  color: #B71C1C;
+  border: 1px solid rgba(183, 28, 28, 0.25);
 }
 
 .badge--priority-medium {
   background: #FFF5EC;
-  color: #FF7A1A;
-  border: 1px solid rgba(255, 122, 26, 0.2);
+  color: #C65100;
+  border: 1px solid rgba(198, 81, 0, 0.25);
 }
 
 .badge--priority-low {
   background: #F0F4FF;
-  color: #3B82F6;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #1565C0;
+  border: 1px solid rgba(21, 101, 192, 0.25);
 }

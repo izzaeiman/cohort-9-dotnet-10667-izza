@@ -13,6 +13,8 @@ import { SkeletonCard, SkeletonTable } from '../../components/ui/SkeletonLoaders
 import {
   MOCK_STAT_CARDS,
   MOCK_PRODUCTIVITY_DATA,
+  MOCK_PRODUCTIVITY_LAST_WEEK,
+  MOCK_PRODUCTIVITY_THIS_MONTH,
   MOCK_STATUS_DISTRIBUTION,
   MOCK_TASKS,
   MOCK_DEADLINES,
@@ -24,10 +26,11 @@ import styles from './Dashboard.module.css';
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [productivityTimeframe, setProductivityTimeframe] = useState('this_week');
 
   // Simulate initial data loading state
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
+    const timer = setTimeout(() => setIsLoading(false), 400);
     return () => clearTimeout(timer);
   }, []);
 
@@ -38,12 +41,23 @@ export const DashboardPage = () => {
     year: 'numeric',
   });
 
+  const getProductivityData = () => {
+    switch (productivityTimeframe) {
+      case 'last_week':
+        return MOCK_PRODUCTIVITY_LAST_WEEK;
+      case 'this_month':
+        return MOCK_PRODUCTIVITY_THIS_MONTH;
+      default:
+        return MOCK_PRODUCTIVITY_DATA;
+    }
+  };
+
   return (
     <div className={styles.page}>
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <header className={styles.header}>
         <div className={styles.greeting}>
-          <h1 className={styles.title}>Welcome back, Izza! 👋</h1>
+          <h1 className={styles.title}>Welcome back, Jane! 👋</h1>
           <p className={styles.subtitle}>
             <span>Here is what's happening across your workspace today.</span>
             <span className={styles.dateBadge}>{todayFormatted}</span>
@@ -61,7 +75,7 @@ export const DashboardPage = () => {
       </header>
 
       {/* ── Statistics Cards Grid ─────────────────────────────────────────── */}
-      <section className={styles.statsGrid}>
+      <section className={styles.statsGrid} aria-label="Key statistics">
         {isLoading
           ? [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)
           : MOCK_STAT_CARDS.map((stat) => (
@@ -70,12 +84,14 @@ export const DashboardPage = () => {
       </section>
 
       {/* ── Charts Grid (Weekly Productivity + Task Status Distribution) ─── */}
-      <section className={styles.chartsGrid}>
+      <section className={styles.chartsGrid} aria-label="Performance charts">
         <ChartCard
-          title="Weekly Productivity"
-          subtitle="Comparison of completed vs created tasks over the last 7 days"
+          title="Productivity Overview"
+          subtitle="Comparison of completed vs created tasks"
+          timeframe={productivityTimeframe}
+          onTimeframeChange={setProductivityTimeframe}
         >
-          <WeeklyProductivityChart data={MOCK_PRODUCTIVITY_DATA} />
+          <WeeklyProductivityChart data={getProductivityData()} />
         </ChartCard>
 
         <ChartCard

@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import type { TaskItem } from '../../types/dashboard.types';
 import StatusBadge from '../ui/StatusBadge';
 import AvatarGroup from '../ui/AvatarGroup';
@@ -12,8 +13,27 @@ interface TaskTableProps {
 }
 
 export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
+  const [activeMenuTaskId, setActiveMenuTaskId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveMenuTaskId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAction = (actionName: string, taskId: string) => {
+    setActiveMenuTaskId(null);
+    // TODO: Connect task action to ASP.NET Core Web API
+    alert(`${actionName} action triggered for task ${taskId}`);
+  };
+
   return (
-    <div className={styles.card}>
+    <div className={styles.card} ref={containerRef}>
       <SectionTitle
         title="Recent Tasks"
         subtitle="Overview of latest active tasks across your team"
@@ -64,15 +84,48 @@ export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
               <td className={styles.td}>
                 <AvatarGroup assignees={task.assignees} size={28} />
               </td>
-              <td className={styles.td} style={{ textAlign: 'right' }}>
+              <td className={`${styles.td} ${styles.actionCell}`}>
                 <button
                   type="button"
                   className={styles.actionBtn}
                   title="Task options"
                   aria-label={`Task options for ${task.title}`}
+                  aria-expanded={activeMenuTaskId === task.id}
+                  onClick={() =>
+                    setActiveMenuTaskId((prev) => (prev === task.id ? null : task.id))
+                  }
                 >
                   <MdMoreVert size={18} />
                 </button>
+
+                {activeMenuTaskId === task.id && (
+                  <div className={styles.menuDropdown} role="menu">
+                    <button
+                      type="button"
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => handleAction('View Details', task.id)}
+                    >
+                      View Details
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => handleAction('Edit Task', task.id)}
+                    >
+                      Edit Task
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                      role="menuitem"
+                      onClick={() => handleAction('Delete Task', task.id)}
+                    >
+                      Delete Task
+                    </button>
+                  </div>
+                )}
               </td>
             </tr>
           ))}

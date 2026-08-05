@@ -27,6 +27,19 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Global Ctrl+K / Cmd+K keyboard shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -57,7 +70,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
           type="button"
           className={styles.menuBtn}
           onClick={onOpenMobileMenu}
-          aria-label="Open navigation menu"
+          aria-label="Open mobile navigation menu"
         >
           <MdMenu size={22} />
         </button>
@@ -67,7 +80,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
           <Link to="/dashboard" className={styles.breadcrumbLink}>
             WorkFlow
           </Link>
-          <span className={styles.separator}>
+          <span className={styles.separator} aria-hidden="true">
             <MdChevronRight size={16} />
           </span>
           <span className={styles.breadcrumbCurrent}>{currentSegment}</span>
@@ -78,16 +91,17 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
       <div className={styles.rightSection} ref={dropdownRef}>
         {/* Search Input */}
         <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}>
+          <span className={styles.searchIcon} aria-hidden="true">
             <MdSearch size={18} />
           </span>
           <input
+            ref={searchInputRef}
             type="text"
             className={styles.searchInput}
             placeholder="Search tasks, projects..."
-            aria-label="Search dashboard"
+            aria-label="Search tasks and projects (Ctrl+K)"
           />
-          <kbd className={styles.searchKbd}>Ctrl K</kbd>
+          <kbd className={styles.searchKbd} aria-hidden="true">Ctrl K</kbd>
         </div>
 
         {/* Theme Toggle (UI Only) */}
@@ -96,7 +110,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
           className={styles.iconBtn}
           onClick={() => setIsDarkMode((prev) => !prev)}
           title="Toggle Light/Dark Theme (UI Demo)"
-          aria-label="Toggle theme"
+          aria-label={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
         >
           {isDarkMode ? <MdLightMode size={20} /> : <MdDarkMode size={20} />}
         </button>
@@ -111,26 +125,27 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
               setIsUserDropdownOpen(false);
             }}
             title="Notifications"
-            aria-label="Notifications"
+            aria-label="Toggle notifications menu"
+            aria-expanded={isNotificationOpen}
           >
             <MdNotificationsNone size={22} />
-            <span className={styles.badge} />
+            <span className={styles.badge} aria-hidden="true" />
           </button>
 
           {/* Notifications Dropdown */}
           {isNotificationOpen && (
-            <div className={styles.dropdown}>
+            <div className={styles.dropdown} role="menu" aria-label="Notifications list">
               <div style={{ padding: '8px 12px', fontWeight: 700, fontSize: '0.85rem' }}>
                 Notifications (3 unread)
               </div>
-              <div className={styles.dropdownDivider} />
-              <div className={styles.dropdownItem} style={{ fontSize: '0.8rem' }}>
-                <span>✅ Sarah completed <strong>Task System Spec</strong></span>
+              <div className={styles.dropdownDivider} aria-hidden="true" />
+              <div className={styles.dropdownItem} role="menuitem" style={{ fontSize: '0.8rem' }}>
+                <span>✅ Alice completed <strong>Task System Spec</strong></span>
               </div>
-              <div className={styles.dropdownItem} style={{ fontSize: '0.8rem' }}>
-                <span>💬 Nouman commented on your PR</span>
+              <div className={styles.dropdownItem} role="menuitem" style={{ fontSize: '0.8rem' }}>
+                <span>💬 John commented on your PR</span>
               </div>
-              <div className={styles.dropdownItem} style={{ fontSize: '0.8rem' }}>
+              <div className={styles.dropdownItem} role="menuitem" style={{ fontSize: '0.8rem' }}>
                 <span>⚠️ Deadline approaching for SQL Migration</span>
               </div>
             </div>
@@ -147,26 +162,27 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
               setIsNotificationOpen(false);
             }}
             aria-expanded={isUserDropdownOpen}
-            aria-label="User account menu"
+            aria-label="User account menu for Jane Doe"
           >
             <img
               src="https://i.pravatar.cc/150?img=68"
-              alt="Izza Eiman"
+              alt="Jane Doe profile avatar"
               className={styles.avatar}
             />
             <div className={styles.userInfo}>
-              <span className={styles.userName}>Izza Eiman</span>
+              <span className={styles.userName}>Jane Doe</span>
               <span className={styles.userRole}>Software Engineer</span>
             </div>
-            <MdExpandMore size={18} color="#888" />
+            <MdExpandMore size={18} color="#888" aria-hidden="true" />
           </button>
 
           {/* User Dropdown Menu */}
           {isUserDropdownOpen && (
-            <div className={styles.dropdown}>
+            <div className={styles.dropdown} role="menu" aria-label="Account actions">
               <Link
                 to="/profile"
                 className={styles.dropdownItem}
+                role="menuitem"
                 onClick={() => setIsUserDropdownOpen(false)}
               >
                 <MdPersonOutline size={18} />
@@ -175,15 +191,17 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
               <Link
                 to="/settings"
                 className={styles.dropdownItem}
+                role="menuitem"
                 onClick={() => setIsUserDropdownOpen(false)}
               >
                 <MdOutlineSettings size={18} />
                 <span>Settings</span>
               </Link>
-              <div className={styles.dropdownDivider} />
+              <div className={styles.dropdownDivider} aria-hidden="true" />
               <button
                 type="button"
                 className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
+                role="menuitem"
                 onClick={handleLogout}
               >
                 <MdLogout size={18} />

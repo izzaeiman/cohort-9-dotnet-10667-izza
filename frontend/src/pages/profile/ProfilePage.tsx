@@ -13,7 +13,7 @@ import styles from './Profile.module.css';
 
 const profileSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
-  email: z.email('Please enter a valid email address'),
+  email: z.string().email('Please enter a valid email address'),
   jobTitle: z.string().min(1, 'Job title is required'),
   department: z.string().min(1, 'Department is required'),
   bio: z.string().optional(),
@@ -25,24 +25,27 @@ export const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'activity'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [profileData, setProfileData] = useState<ProfileFormData>({
+    fullName: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    jobTitle: 'Software Engineer',
+    department: '.NET Fullstack Cohort 9',
+    bio: 'Building high-performance SaaS applications with React 19, TypeScript, Vite, and ASP.NET Core Web API.',
+  });
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      fullName: 'Izza Eiman',
-      email: 'izzaeiman0@gmail.com',
-      jobTitle: 'Software Engineer',
-      department: '.NET Fullstack Cohort 9',
-      bio: 'Building high-performance SaaS applications with React 19, TypeScript, Vite, and ASP.NET Core Web API.',
-    },
+    defaultValues: profileData,
   });
 
-  const handleSaveProfile = async () => {
-    // TODO: Connect to ASP.NET Core Web API → await userService.updateProfile();
-    await new Promise((res) => setTimeout(res, 600));
+  const handleSaveProfile = async (data: ProfileFormData) => {
+    // TODO: Connect to ASP.NET Core Web API → await userService.updateProfile(data);
+    await new Promise((res) => setTimeout(res, 400));
+    setProfileData(data);
     setToastMessage('Profile information updated successfully!');
   };
 
@@ -52,19 +55,19 @@ export const ProfilePage = () => {
       <div className={styles.coverHeader}>
         <div className={styles.coverBanner} />
         <div className={styles.profileInfoRow}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '20px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '20px' }}>
             <div className={styles.avatarWrap}>
               <img
                 src="https://i.pravatar.cc/150?img=68"
-                alt="Izza Eiman"
+                alt={`${profileData.fullName} avatar`}
                 className={styles.avatar}
               />
             </div>
             <div className={styles.userMeta}>
-              <h1 className={styles.userName}>Izza Eiman</h1>
+              <h1 className={styles.userName}>{profileData.fullName}</h1>
               <div className={styles.userSub}>
                 <span>
-                  <MdWork size={14} style={{ verticalAlign: 'middle' }} /> Software Engineer (.NET Cohort 9)
+                  <MdWork size={14} style={{ verticalAlign: 'middle' }} /> {profileData.jobTitle} ({profileData.department})
                 </span>
                 <span>
                   <MdLocationOn size={14} style={{ verticalAlign: 'middle' }} /> Islamabad, Pakistan
@@ -76,16 +79,18 @@ export const ProfilePage = () => {
             </div>
           </div>
 
-          <AppButton variant="outlined" size="sm" onClick={() => setToastMessage('Avatar edit modal (UI Demo)')}>
+          <AppButton variant="outlined" size="sm" onClick={() => setToastMessage('Avatar update modal (UI Demo)')}>
             Change Avatar
           </AppButton>
         </div>
       </div>
 
       {/* ── Navigation Tabs ───────────────────────────────────────────────── */}
-      <div className={styles.tabsBar}>
+      <div className={styles.tabsBar} role="tablist">
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === 'profile'}
           className={`${styles.tabBtn} ${activeTab === 'profile' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('profile')}
         >
@@ -93,6 +98,8 @@ export const ProfilePage = () => {
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === 'activity'}
           className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('activity')}
         >
@@ -139,22 +146,18 @@ export const ProfilePage = () => {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#444', display: 'block', marginBottom: '6px' }}>
+              <label htmlFor="prof-bio" className={styles.bioLabel}>
                 Professional Bio
               </label>
               <textarea
-                style={{
-                  width: '100%',
-                  minHeight: '90px',
-                  padding: '12px 14px',
-                  borderRadius: '14px',
-                  border: '1.5px solid #DDDDDD',
-                  fontFamily: 'var(--font-family)',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                }}
+                id="prof-bio"
+                className={styles.bioTextarea}
+                aria-describedby="prof-bio-help"
                 {...register('bio')}
               />
+              <span id="prof-bio-help" style={{ display: 'none' }}>
+                Enter your summary bio
+              </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>

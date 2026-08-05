@@ -92,6 +92,12 @@
   color: #FF7A1A;
 }
 
+.tabBtn:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .tabActive {
   color: #FF7A1A !important;
   border-bottom-color: #FF7A1A !important;
@@ -109,6 +115,32 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.bioLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #444444;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.bioTextarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid #DDDDDD;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.18s ease;
+}
+
+.bioTextarea:focus,
+.bioTextarea:focus-visible {
+  border-color: #FF7A1A;
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
 }
 
 @media (max-width: 768px) {

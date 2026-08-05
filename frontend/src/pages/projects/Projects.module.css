@@ -84,6 +84,13 @@
   width: 240px;
 }
 
+.searchInput:focus,
+.searchInput:focus-visible {
+  border-color: #FF7A1A;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
+}
+
 .searchIcon {
   position: absolute;
   left: 10px;

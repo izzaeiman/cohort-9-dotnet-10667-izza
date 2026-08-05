@@ -7,6 +7,7 @@ import {
   MdNotificationsNone,
   MdLockOutline,
   MdLanguage,
+  MdInfoOutline,
 } from 'react-icons/md';
 
 import AppButton from '../../components/ui/AppButton';
@@ -36,7 +37,7 @@ export const SettingsPage = () => {
   const [weeklyDigest, setWeeklyDigest] = useState(true);
 
   const [language, setLanguage] = useState('en-US');
-  const [timezone, setTimezone] = useState('Asia/Karachi');
+  const [timezone, setTimezone] = useState('America/New_York');
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -56,13 +57,12 @@ export const SettingsPage = () => {
 
   const handleChangePassword = async () => {
     // TODO: Connect to ASP.NET Core Web API → await userService.changePassword(data);
-    await new Promise((res) => setTimeout(res, 700));
+    await new Promise((res) => setTimeout(res, 400));
     reset();
-    setToastMessage('Password updated successfully!');
+    setToastMessage('Coming Soon — Password modification pending ASP.NET Core API integration');
   };
 
   const handleSaveSettings = () => {
-    // TODO: Save preferences to local/server
     setToastMessage('Settings preferences saved!');
   };
 
@@ -79,9 +79,11 @@ export const SettingsPage = () => {
       {/* ── Settings Grid ─────────────────────────────────────────────────── */}
       <div className={styles.grid}>
         {/* Left Side Navigation */}
-        <div className={styles.navCard}>
+        <div className={styles.navCard} role="tablist" aria-label="Settings categories">
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'appearance'}
             className={`${styles.navItem} ${activeTab === 'appearance' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('appearance')}
           >
@@ -90,6 +92,8 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'notifications'}
             className={`${styles.navItem} ${activeTab === 'notifications' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('notifications')}
           >
@@ -98,6 +102,8 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'security'}
             className={`${styles.navItem} ${activeTab === 'security' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('security')}
           >
@@ -106,6 +112,8 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'regional'}
             className={`${styles.navItem} ${activeTab === 'regional' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('regional')}
           >
@@ -125,16 +133,20 @@ export const SettingsPage = () => {
 
               <div className={styles.toggleRow}>
                 <div className={styles.toggleInfo}>
-                  <span className={styles.toggleLabel}>Dark Mode (Theme Toggle)</span>
+                  <label id="darkmode-lbl" htmlFor="darkmode-switch" className={styles.toggleLabel}>
+                    Dark Mode (Theme Toggle)
+                  </label>
                   <span className={styles.toggleSub}>Switch between light and dark UI themes</span>
                 </div>
                 <label className={styles.switch}>
                   <input
+                    id="darkmode-switch"
                     type="checkbox"
                     checked={isDarkMode}
+                    aria-labelledby="darkmode-lbl"
                     onChange={(e) => setIsDarkMode(e.target.checked)}
                   />
-                  <span className={styles.slider} />
+                  <span className={styles.slider} aria-hidden="true" />
                 </label>
               </div>
 
@@ -152,46 +164,58 @@ export const SettingsPage = () => {
 
               <div className={styles.toggleRow}>
                 <div className={styles.toggleInfo}>
-                  <span className={styles.toggleLabel}>Email Task Reminders</span>
+                  <label id="email-reminders-lbl" htmlFor="email-reminders-switch" className={styles.toggleLabel}>
+                    Email Task Reminders
+                  </label>
                   <span className={styles.toggleSub}>Receive email alerts for task assignments and deadlines</span>
                 </div>
                 <label className={styles.switch}>
                   <input
+                    id="email-reminders-switch"
                     type="checkbox"
                     checked={emailAlerts}
+                    aria-labelledby="email-reminders-lbl"
                     onChange={(e) => setEmailAlerts(e.target.checked)}
                   />
-                  <span className={styles.slider} />
+                  <span className={styles.slider} aria-hidden="true" />
                 </label>
               </div>
 
               <div className={styles.toggleRow}>
                 <div className={styles.toggleInfo}>
-                  <span className={styles.toggleLabel}>Desktop Push Notifications</span>
+                  <label id="push-alerts-lbl" htmlFor="push-alerts-switch" className={styles.toggleLabel}>
+                    Desktop Push Notifications
+                  </label>
                   <span className={styles.toggleSub}>Show browser popups when comments or reviews are posted</span>
                 </div>
                 <label className={styles.switch}>
                   <input
+                    id="push-alerts-switch"
                     type="checkbox"
                     checked={pushAlerts}
+                    aria-labelledby="push-alerts-lbl"
                     onChange={(e) => setPushAlerts(e.target.checked)}
                   />
-                  <span className={styles.slider} />
+                  <span className={styles.slider} aria-hidden="true" />
                 </label>
               </div>
 
               <div className={styles.toggleRow}>
                 <div className={styles.toggleInfo}>
-                  <span className={styles.toggleLabel}>Weekly Summary Digest</span>
+                  <label id="digest-lbl" htmlFor="digest-switch" className={styles.toggleLabel}>
+                    Weekly Summary Digest
+                  </label>
                   <span className={styles.toggleSub}>Receive a weekly productivity report on Mondays</span>
                 </div>
                 <label className={styles.switch}>
                   <input
+                    id="digest-switch"
                     type="checkbox"
                     checked={weeklyDigest}
+                    aria-labelledby="digest-lbl"
                     onChange={(e) => setWeeklyDigest(e.target.checked)}
                   />
-                  <span className={styles.slider} />
+                  <span className={styles.slider} aria-hidden="true" />
                 </label>
               </div>
 
@@ -206,6 +230,11 @@ export const SettingsPage = () => {
           {activeTab === 'security' && (
             <div>
               <h3 className={styles.sectionTitle}>Change Password</h3>
+
+              <div className={styles.pendingBanner}>
+                <MdInfoOutline size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                <span>Backend Integration Pending — Password modifications will connect to ASP.NET Core Identity API.</span>
+              </div>
 
               <form onSubmit={handleSubmit(handleChangePassword)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '420px' }}>
                 <AppInput
@@ -266,9 +295,9 @@ export const SettingsPage = () => {
                   id="sel-tz"
                   label="Time Zone"
                   options={[
+                    { value: 'America/New_York', label: 'Eastern Time (America/New_York)' },
                     { value: 'Asia/Karachi', label: '(GMT+05:00) Islamabad, Karachi' },
                     { value: 'UTC', label: '(GMT+00:00) UTC' },
-                    { value: 'America/New_York', label: '(GMT-05:00) Eastern Time' },
                   ]}
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
@@ -287,7 +316,7 @@ export const SettingsPage = () => {
 
       {/* Toast */}
       {toastMessage && (
-        <Toast message={toastMessage} type="success" onClose={() => setToastMessage(null)} />
+        <Toast message={toastMessage} type="info" onClose={() => setToastMessage(null)} />
       )}
     </div>
   );

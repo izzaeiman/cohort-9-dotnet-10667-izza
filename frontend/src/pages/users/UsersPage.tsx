@@ -26,8 +26,8 @@ interface UserItem {
 const MOCK_USERS: UserItem[] = [
   {
     id: 'usr-1',
-    name: 'Izza Eiman',
-    email: 'izzaeiman0@gmail.com',
+    name: 'Jane Doe',
+    email: 'jane.doe@example.com',
     role: 'Administrator',
     department: 'Fullstack Engineering',
     status: 'active',
@@ -36,8 +36,8 @@ const MOCK_USERS: UserItem[] = [
   },
   {
     id: 'usr-2',
-    name: 'Nouman (Mentor)',
-    email: 'nouman@10pearls.com',
+    name: 'John Smith (Mentor)',
+    email: 'john.smith@example.com',
     role: 'Administrator',
     department: 'Tech Lead / Reviewer',
     status: 'active',
@@ -46,8 +46,8 @@ const MOCK_USERS: UserItem[] = [
   },
   {
     id: 'usr-3',
-    name: 'Sarah Connor',
-    email: 'sarah.c@workflow.io',
+    name: 'Alice Carter',
+    email: 'alice@example.com',
     role: 'Regular User',
     department: 'UI/UX Design',
     status: 'active',
@@ -56,8 +56,8 @@ const MOCK_USERS: UserItem[] = [
   },
   {
     id: 'usr-4',
-    name: 'Alex Rivera',
-    email: 'alex.r@workflow.io',
+    name: 'Bob Wilson',
+    email: 'bob@example.com',
     role: 'Regular User',
     department: 'Backend Engineering',
     status: 'offline',
@@ -66,8 +66,8 @@ const MOCK_USERS: UserItem[] = [
   },
   {
     id: 'usr-5',
-    name: 'Elena Rostova',
-    email: 'elena.r@workflow.io',
+    name: 'Diana Evans',
+    email: 'diana@example.com',
     role: 'Regular User',
     department: 'QA & Testing',
     status: 'pending',
@@ -78,7 +78,7 @@ const MOCK_USERS: UserItem[] = [
 
 const inviteUserSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
-  email: z.email('Please enter a valid email address'),
+  email: z.string().email('Please enter a valid email address'),
   role: z.enum(['Administrator', 'Regular User']),
   department: z.string().min(1, 'Department is required'),
 });
@@ -119,7 +119,7 @@ export const UsersPage = () => {
 
   const handleInviteUser = async (data: InviteUserFormData) => {
     // TODO: Connect to ASP.NET Core Web API → await userService.inviteUser(data);
-    await new Promise((res) => setTimeout(res, 600));
+    await new Promise((res) => setTimeout(res, 400));
 
     const newUser: UserItem = {
       id: `usr-${users.length + 1}`,
@@ -160,7 +160,7 @@ export const UsersPage = () => {
       </header>
 
       {/* ── Summary Cards ─────────────────────────────────────────────────── */}
-      <div className={styles.statsGrid}>
+      <div className={styles.statsGrid} aria-label="User metrics">
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Members</span>
           <span className={styles.statVal}>{users.length}</span>
@@ -188,13 +188,14 @@ export const UsersPage = () => {
       {/* ── Controls Bar ──────────────────────────────────────────────────── */}
       <div className={styles.controlsBar}>
         <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}>
+          <span className={styles.searchIcon} aria-hidden="true">
             <MdSearch size={18} />
           </span>
           <input
             type="text"
             className={styles.searchInput}
             placeholder="Search name or email..."
+            aria-label="Search user members by name or email"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -204,7 +205,7 @@ export const UsersPage = () => {
           className={styles.selectFilter}
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          aria-label="Filter by role"
+          aria-label="Filter user members by role"
         >
           <option value="all">All Roles</option>
           <option value="Administrator">Administrators</option>
@@ -261,16 +262,17 @@ export const UsersPage = () => {
                       }`}
                     >
                       <span
+                        aria-hidden="true"
                         style={{
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
                           backgroundColor:
                             u.status === 'active'
-                              ? '#4CAF50'
+                              ? '#2E7D32'
                               : u.status === 'pending'
-                              ? '#FFC107'
-                              : '#999',
+                              ? '#7F5000'
+                              : '#777',
                         }}
                       />
                       {u.status.toUpperCase()}
@@ -281,7 +283,8 @@ export const UsersPage = () => {
                     <button
                       type="button"
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}
-                      title="User Actions"
+                      title={`User actions for ${u.name}`}
+                      aria-label={`User actions for ${u.name}`}
                     >
                       <MdMoreVert size={18} />
                     </button>
@@ -306,7 +309,7 @@ export const UsersPage = () => {
           <AppInput
             id="inv-fullname"
             label="Full Name"
-            placeholder="e.g. David Miller"
+            placeholder="e.g. Charlie Davis"
             error={errors.fullName?.message}
             {...register('fullName')}
           />
@@ -315,7 +318,7 @@ export const UsersPage = () => {
             id="inv-email"
             label="Email Address"
             type="email"
-            placeholder="david@company.com"
+            placeholder="charlie@example.com"
             error={errors.email?.message}
             {...register('email')}
           />
@@ -339,7 +342,7 @@ export const UsersPage = () => {
             {...register('department')}
           />
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
             <AppButton type="button" variant="outlined" size="md" onClick={() => setIsModalOpen(false)}>
               Cancel
             </AppButton>

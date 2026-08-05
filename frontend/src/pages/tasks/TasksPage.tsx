@@ -12,6 +12,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
 import { MOCK_TASKS } from '../../utils/mockDashboardData';
+import { getLocalDate } from '../../utils/dateHelpers';
 import type { TaskItem, TaskPriority, TaskCategory, TaskStatus } from '../../types/dashboard.types';
 import styles from './Tasks.module.css';
 
@@ -46,7 +47,7 @@ export const TasksPage = () => {
       category: 'Frontend',
       priority: 'medium',
       status: 'in_progress',
-      dueDate: new Date().toISOString().split('T')[0],
+      dueDate: getLocalDate(),
     },
   });
 
@@ -65,7 +66,7 @@ export const TasksPage = () => {
 
   const handleCreateTask = async (data: CreateTaskFormData) => {
     // TODO: Connect to ASP.NET Core Web API → await taskService.createTask(data);
-    await new Promise((res) => setTimeout(res, 600));
+    await new Promise((res) => setTimeout(res, 400));
 
     const newTask: TaskItem = {
       id: `TSK-10${tasks.length + 1}`,
@@ -75,7 +76,7 @@ export const TasksPage = () => {
       status: data.status as TaskStatus,
       dueDate: data.dueDate,
       assignees: [
-        { id: 'usr-3', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
+        { id: 'usr-3', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
       ],
     };
 
@@ -116,13 +117,14 @@ export const TasksPage = () => {
       {/* ── Controls & Filter Bar ─────────────────────────────────────────── */}
       <div className={styles.controlsBar}>
         <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}>
+          <span className={styles.searchIcon} aria-hidden="true">
             <MdSearch size={18} />
           </span>
           <input
             type="text"
             className={styles.searchInput}
             placeholder="Search tasks or ID..."
+            aria-label="Search tasks by title or ID"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -133,7 +135,7 @@ export const TasksPage = () => {
             className={styles.selectFilter}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label="Filter by status"
+            aria-label="Filter tasks by status"
           >
             <option value="all">All Statuses</option>
             <option value="in_progress">In Progress</option>
@@ -146,7 +148,7 @@ export const TasksPage = () => {
             className={styles.selectFilter}
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            aria-label="Filter by priority"
+            aria-label="Filter tasks by priority"
           >
             <option value="all">All Priorities</option>
             <option value="high">High</option>
@@ -158,7 +160,7 @@ export const TasksPage = () => {
             className={styles.selectFilter}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            aria-label="Filter by category"
+            aria-label="Filter tasks by category"
           >
             <option value="all">All Categories</option>
             <option value="Frontend">Frontend</option>
@@ -247,7 +249,7 @@ export const TasksPage = () => {
             {...register('dueDate')}
           />
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
             <AppButton type="button" variant="outlined" size="md" onClick={() => setIsModalOpen(false)}>
               Cancel
             </AppButton>

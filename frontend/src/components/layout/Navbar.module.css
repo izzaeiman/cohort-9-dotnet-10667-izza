@@ -30,12 +30,17 @@
   background: #ffffff;
   color: #1F1F1F;
   cursor: pointer;
-  transition: background 0.18s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .menuBtn:hover {
   background: #FFF5EC;
   color: #FF7A1A;
+}
+
+.menuBtn:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 2px;
 }
 
 /* Breadcrumbs */
@@ -56,6 +61,12 @@
 
 .breadcrumbLink:hover {
   color: #FF7A1A;
+}
+
+.breadcrumbLink:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .breadcrumbCurrent {
@@ -95,11 +106,12 @@
   transition: width 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
 
-.searchInput:focus {
+.searchInput:focus,
+.searchInput:focus-visible {
   width: 280px;
   border-color: #FF7A1A;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
 }
 
 .searchIcon {
@@ -146,6 +158,11 @@
   border-color: rgba(255, 122, 26, 0.3);
 }
 
+.iconBtn:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 2px;
+}
+
 .badge {
   position: absolute;
   top: 6px;
@@ -177,6 +194,11 @@
 .userBtn:hover {
   border-color: #FF7A1A;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.userBtn:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 2px;
 }
 
 .avatar {
@@ -219,11 +241,11 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  animation: dropdownFade 0.2s ease both;
+  animation: dropdown-fade 0.2s ease both;
   z-index: 50;
 }
 
-@keyframes dropdownFade {
+@keyframes dropdown-fade {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
@@ -249,6 +271,11 @@
 .dropdownItem:hover {
   background: #FFF5EC;
   color: #FF7A1A;
+}
+
+.dropdownItem:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: -2px;
 }
 
 .dropdownItemDanger {

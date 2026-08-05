@@ -1,0 +1,82 @@
+.card {
+  background: var(--color-card);
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.item:hover {
+  background: var(--color-primary-light);
+  border-color: rgba(255, 122, 26, 0.3);
+  transform: translateX(2px);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dueDate {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.tag--Today {
+  background: var(--color-overdue-bg);
+  color: #D32F2F;
+}
+
+.tag--Tomorrow {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.tag--This\ Week {
+  background: var(--color-completed-bg);
+  color: #2E7D32;
+}

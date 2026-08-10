@@ -7,9 +7,16 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  dismissDisabled?: boolean;
 }
 
-export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
+export const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  dismissDisabled = false,
+}: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
@@ -39,7 +46,9 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
     // 3. Handle Keyboard events (ESC to close, Tab to trap focus)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (!dismissDisabled) {
+          onClose();
+        }
         return;
       }
 
@@ -80,12 +89,24 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
         previousFocusRef.current.focus();
       }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, dismissDisabled]);
 
   if (!isOpen) return null;
 
+  const handleOverlayClick = () => {
+    if (!dismissDisabled) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={styles.overlay} onClick={onClose} aria-modal="true" role="dialog" aria-labelledby={titleId}>
+    <div
+      className={styles.overlay}
+      onClick={handleOverlayClick}
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby={titleId}
+    >
       <div
         ref={modalRef}
         tabIndex={-1}
@@ -99,7 +120,8 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
           <button
             type="button"
             className={styles.closeBtn}
-            onClick={onClose}
+            onClick={() => !dismissDisabled && onClose()}
+            disabled={dismissDisabled}
             aria-label="Close dialog"
           >
             <MdClose size={20} />

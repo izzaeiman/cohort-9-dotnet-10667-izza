@@ -5,22 +5,22 @@ import ProtectedLayout from '../components/layout/ProtectedLayout';
 import ProtectedRoute from '../components/layout/ProtectedRoute';
 import useAuth from '../hooks/useAuth';
 
-// Lazy-loaded Pages for Route Code-Splitting & Optimal Performance
+// Lazy-loaded Admin and Core Auth/Dashboard Pages
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
 const SignupPage = lazy(() => import('../pages/auth/SignupPage'));
-const ForgotPasswordPage = lazy(() => import('../pages/auth/ForgotPasswordPage'));
-
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
 const AdminTasksPage = lazy(() => import('../pages/admin/AdminTasksPage'));
 const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage'));
 const TasksPage = lazy(() => import('../pages/tasks/TasksPage'));
 const TaskDetailPage = lazy(() => import('../pages/tasks/TaskDetailPage'));
-const ProjectsPage = lazy(() => import('../pages/projects/ProjectsPage'));
-const CalendarPage = lazy(() => import('../pages/calendar/CalendarPage'));
-const UsersPage = lazy(() => import('../pages/users/UsersPage'));
-const ProfilePage = lazy(() => import('../pages/profile/ProfilePage'));
-const SettingsPage = lazy(() => import('../pages/settings/SettingsPage'));
 const NotFoundPage = lazy(() => import('../pages/notFound/NotFoundPage'));
+
+const PlaceholderPage = ({ title }: { title: string }) => (
+  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary, #666)' }}>
+    <h2>{title} Module</h2>
+    <p>This module is available in full-stack mode.</p>
+  </div>
+);
 
 const RootIndexRedirect = () => {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -36,7 +36,7 @@ const AppRoutes = () => (
       {/* ── Public Auth Routes ───────────────────────────────────────────── */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/forgot-password" element={<LoginPage />} />
 
       {/* ── Protected Application Shell Routes ─────────────────────────── */}
       <Route element={<ProtectedLayout />}>
@@ -46,11 +46,11 @@ const AppRoutes = () => (
         <Route element={<ProtectedRoute requiredRole="Admin" />}>
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/tasks" element={<AdminTasksPage />} />
-          <Route path="/admin/projects" element={<ProjectsPage />} />
-          <Route path="/admin/users" element={<UsersPage />} />
-          <Route path="/admin/calendar" element={<CalendarPage />} />
-          <Route path="/admin/profile" element={<ProfilePage />} />
-          <Route path="/admin/settings" element={<SettingsPage />} />
+          <Route path="/admin/projects" element={<PlaceholderPage title="Projects" />} />
+          <Route path="/admin/users" element={<PlaceholderPage title="Users" />} />
+          <Route path="/admin/calendar" element={<PlaceholderPage title="Calendar" />} />
+          <Route path="/admin/profile" element={<PlaceholderPage title="Profile" />} />
+          <Route path="/admin/settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
 
         {/* ── Regular User / Member Routes ────────────────────────────── */}
@@ -58,10 +58,10 @@ const AppRoutes = () => (
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/tasks/:id" element={<TaskDetailPage />} />
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/projects" element={<PlaceholderPage title="Projects" />} />
+          <Route path="/calendar" element={<PlaceholderPage title="Calendar" />} />
+          <Route path="/profile" element={<PlaceholderPage title="Profile" />} />
+          <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
       </Route>
 

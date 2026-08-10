@@ -51,7 +51,19 @@
 }
 .badge--overdue .dot { background: #B71C1C; }
 
+.badge--cancelled {
+  background: #F3F4F6;
+  color: #4B5563;
+}
+.badge--cancelled .dot { background: #6B7280; }
+
 /* Priority variants (WCAG AA Compliant contrast text) */
+.badge--priority-critical {
+  background: #FFEBEE;
+  color: #B71C1C;
+  border: 1px solid rgba(183, 28, 28, 0.35);
+}
+
 .badge--priority-high {
   background: #FFEBEE;
   color: #B71C1C;

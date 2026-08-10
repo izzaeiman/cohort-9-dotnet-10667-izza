@@ -1,13 +1,13 @@
 import { Navigate } from 'react-router-dom';
 import MainLayout from './MainLayout';
-import { authService } from '../../services/authService';
+import useAuth from '../../hooks/useAuth';
 
 /**
  * ProtectedLayout — Auth guard wrapper for protected application routes.
- * Checks local auth state and redirects unauthenticated users to /login.
+ * Obtains reactive auth state from AuthContext and redirects unauthenticated users to /login.
  */
 export const ProtectedLayout = () => {
-  const isAuthenticated = authService.isAuthenticated();
+  const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

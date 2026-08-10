@@ -27,7 +27,7 @@ import type { DetailedTaskItem } from '../../data/tasks';
 import { adminTaskService } from '../../services/adminTaskService';
 import { INITIAL_USERS } from '../../data/users';
 import { INITIAL_PROJECTS } from '../../data/projects';
-import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
+import { calculateTaskDeadlineStatus, formatDateDisplay, parseLocalDate } from '../../utils/deadlineHelpers';
 
 import styles from './AdminTasksPage.module.css';
 
@@ -154,13 +154,18 @@ export const AdminTasksPage: React.FC = () => {
         const deadlineInfo = calculateTaskDeadlineStatus(task);
         if (deadlineFilter === 'due_today' && deadlineInfo.state !== 'DUE_TODAY') return false;
         if (deadlineFilter === 'due_tomorrow' && deadlineInfo.state !== 'DUE_TOMORROW') return false;
-        if (
-          deadlineFilter === 'due_this_week' &&
-          deadlineInfo.state !== 'DUE_TODAY' &&
-          deadlineInfo.state !== 'DUE_TOMORROW' &&
-          deadlineInfo.state !== 'APPROACHING_DEADLINE'
-        ) {
-          return false;
+        if (deadlineFilter === 'due_this_week') {
+          if (task.status === 'completed' || task.status === 'cancelled') return false;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const endOfWeek = new Date(today);
+          const dayOfWeek = today.getDay();
+          const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+          endOfWeek.setDate(today.getDate() + daysUntilSunday);
+          endOfWeek.setHours(23, 59, 59, 999);
+
+          const due = parseLocalDate(task.dueDate);
+          if (due < today || due > endOfWeek) return false;
         }
         if (deadlineFilter === 'overdue' && deadlineInfo.state !== 'OVERDUE') return false;
       }

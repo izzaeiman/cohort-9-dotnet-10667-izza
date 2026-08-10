@@ -185,20 +185,39 @@ export const AdminDashboardPage: React.FC = () => {
     },
   ];
 
-  // Status Distribution Chart Data
+  // Status Distribution Chart Data (Mutually Exclusive Buckets)
   const statusDistribution = useMemo(() => {
-    const completed = tasks.filter((t) => t.status === 'completed').length;
-    const inProgress = tasks.filter((t) => t.status === 'in_progress').length;
-    const pending = tasks.filter((t) => t.status === 'pending').length;
-    const overdue = statsSummary.overdueTasks;
+    let completed = 0;
+    let inProgress = 0;
+    let pending = 0;
+    let overdue = 0;
+    let cancelled = 0;
+
+    tasks.forEach((t) => {
+      if (t.status === 'completed') {
+        completed++;
+      } else if (t.status === 'cancelled') {
+        cancelled++;
+      } else {
+        const deadlineInfo = calculateTaskDeadlineStatus(t);
+        if (t.status === 'overdue' || deadlineInfo.state === 'OVERDUE') {
+          overdue++;
+        } else if (t.status === 'in_progress') {
+          inProgress++;
+        } else {
+          pending++;
+        }
+      }
+    });
 
     return [
       { name: 'Completed', value: completed, color: '#10B981' },
       { name: 'In Progress', value: inProgress, color: '#3B82F6' },
       { name: 'Pending', value: pending, color: '#F59E0B' },
       { name: 'Overdue', value: overdue, color: '#EF4444' },
+      { name: 'Cancelled', value: cancelled, color: '#6B7280' },
     ];
-  }, [tasks, statsSummary.overdueTasks]);
+  }, [tasks]);
 
   // Overdue Task List for prominent banner
   const overdueTasksList = useMemo(() => {
@@ -210,10 +229,19 @@ export const AdminDashboardPage: React.FC = () => {
     });
   }, [tasks]);
 
-  // Upcoming Deadlines List
+  // Upcoming Deadlines List (Filtered to upcoming/due this week, sorted ascending by due date)
   const upcomingDeadlinesList = useMemo(() => {
     return tasks
-      .filter((t) => t.status !== 'completed' && t.status !== 'cancelled')
+      .filter((t) => {
+        if (t.status === 'completed' || t.status === 'cancelled') return false;
+        const info = calculateTaskDeadlineStatus(t);
+        return (
+          info.state === 'DUE_TODAY' ||
+          info.state === 'DUE_TOMORROW' ||
+          info.state === 'APPROACHING_DEADLINE'
+        );
+      })
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
       .map((t) => {
         const info = calculateTaskDeadlineStatus(t);
         let dueTag: 'Today' | 'Tomorrow' | 'This Week' = 'This Week';

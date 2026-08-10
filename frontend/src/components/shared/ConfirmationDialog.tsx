@@ -36,7 +36,7 @@ export const ConfirmationDialog = ({
   const effectiveCancelLabel = cancelText || cancelLabel;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel} title={title}>
+    <Modal isOpen={isOpen} onClose={handleCancel} title={title} dismissDisabled={isLoading}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
           <div

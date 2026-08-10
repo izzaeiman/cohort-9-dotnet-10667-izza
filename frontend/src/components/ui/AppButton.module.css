@@ -54,6 +54,18 @@
   box-shadow: 0 2px 8px rgba(255, 122, 26, 0.2);
 }
 
+/* Secondary */
+.btn--secondary {
+  background: var(--color-surface-secondary, #F3F4F6);
+  color: var(--color-text, #1F2937);
+  border-color: var(--color-border, #E5E7EB);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: var(--color-border, #E5E7EB);
+  color: var(--color-text, #1F2937);
+  transform: translateY(-1px);
+}
+
 /* Google / Surface button */
 .btn--google {
   background: var(--color-surface);
@@ -126,6 +138,7 @@
 }
 
 .btn--google .spinner,
+.btn--secondary .spinner,
 .btn--outlined .spinner {
   border: 2.5px solid rgba(255, 122, 26, 0.25);
   border-top-color: var(--color-primary);

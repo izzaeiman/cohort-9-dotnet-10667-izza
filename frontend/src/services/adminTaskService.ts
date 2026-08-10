@@ -1,5 +1,6 @@
 import { INITIAL_TASKS, type DetailedTaskItem } from '../data/tasks';
 import { INITIAL_USERS } from '../data/users';
+import { getLocalDate } from '../utils/dateHelpers';
 
 const STORAGE_KEY = 'workflow_admin_tasks_store';
 
@@ -8,12 +9,23 @@ const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 type TaskChangeListener = () => void;
 const listeners: Set<TaskChangeListener> = new Set();
 
+const isValidTaskRecord = (item: unknown): item is DetailedTaskItem => {
+  if (!item || typeof item !== 'object') return false;
+  const t = item as Partial<DetailedTaskItem>;
+  return (
+    typeof t.id === 'string' &&
+    typeof t.title === 'string' &&
+    typeof t.status === 'string' &&
+    typeof t.priority === 'string'
+  );
+};
+
 const loadTasksFromStorage = (): DetailedTaskItem[] => {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(isValidTaskRecord)) {
         return parsed;
       }
     } catch {
@@ -60,7 +72,7 @@ export const adminTaskService = {
   },
 
   /**
-   * Create new task
+   * Create new task with collision-safe ID and local date helper
    */
   async createTask(
     newTaskData: Omit<
@@ -79,14 +91,20 @@ export const adminTaskService = {
       avatar: 'https://i.pravatar.cc/150?img=68',
     };
 
-    const nextIdNumber = memoryStore.length + 101;
+    const maxSuffix = memoryStore.reduce((max, task) => {
+      const match = task.id.match(/\d+/);
+      const num = match ? parseInt(match[0], 10) : 0;
+      return num > max ? num : max;
+    }, 100);
+
+    const nextIdNumber = maxSuffix + 1;
     const newTask: DetailedTaskItem = {
       ...newTaskData,
       id: `TSK-${nextIdNumber}`,
       assignedUser: assignedUserObj.name,
       assignedUserId: assignedUserObj.id,
-      createdDate: new Date().toISOString().split('T')[0],
-      lastModified: new Date().toISOString().split('T')[0],
+      createdDate: getLocalDate(),
+      lastModified: getLocalDate(),
       assignees: [
         {
           id: assignedUserObj.id,
@@ -147,7 +165,7 @@ export const adminTaskService = {
       assignedUser: updatedAssignedUser,
       assignedUserId: updatedAssignedUserId,
       assignees: updatedAssignees,
-      lastModified: new Date().toISOString().split('T')[0],
+      lastModified: getLocalDate(),
     };
 
     memoryStore[index] = updatedTask;

@@ -18,7 +18,7 @@ export interface AppSelectProps extends SelectHTMLAttributes<HTMLSelectElement> 
 }
 
 const AppSelect = forwardRef<HTMLSelectElement, AppSelectProps>(
-  ({ id, label, options, error, leftIcon, helperText, className, ...rest }, ref) => {
+  ({ id, label, options, error, leftIcon, helperText, className, onFocus, onBlur, ...rest }, ref) => {
     const generatedId = useId();
     const selectId = id || generatedId;
     const [isFocused, setIsFocused] = useState(false);
@@ -40,11 +40,17 @@ const AppSelect = forwardRef<HTMLSelectElement, AppSelectProps>(
             ref={ref}
             id={selectId}
             className={styles.select}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
             aria-describedby={error ? `${selectId}-error` : helperText ? `${selectId}-helper` : undefined}
             aria-invalid={!!error}
             {...rest}
+            onFocus={(e) => {
+              setIsFocused(true);
+              onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              onBlur?.(e);
+            }}
           >
             {options.map((opt) => (
               <option key={opt.value} value={opt.value}>

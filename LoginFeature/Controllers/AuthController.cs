@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using LoginFeature.Models;
 using LoginFeature.Services;
@@ -7,7 +9,7 @@ using LoginFeature.Services;
 namespace LoginFeature.Controllers
 {
     /// <summary>
-    /// Handles user authentication and login operations.
+    /// Handles user authentication, login operations, and session invalidation.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -17,7 +19,7 @@ namespace LoginFeature.Controllers
 
         public AuthController(IAuthService authService)
         {
-            _authService = authService;
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         }
 
         /// <summary>
@@ -58,8 +60,15 @@ namespace LoginFeature.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            await _authService.SignOutAsync(HttpContext);
-            return Ok(new { success = true, message = "Logged out successfully." });
+            try
+            {
+                await _authService.SignOutAsync(HttpContext);
+                return Ok(new { success = true, message = "Logged out successfully." });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { success = false, message = "An error occurred during sign out." });
+            }
         }
     }
 }

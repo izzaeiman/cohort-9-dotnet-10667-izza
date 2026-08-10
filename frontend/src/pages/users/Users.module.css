@@ -1,0 +1,248 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  margin: 4px 0 0;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  background: var(--color-surface);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.statVal {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.controlsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--color-surface);
+  padding: 16px 20px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 9px 14px 9px 36px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-input-bg);
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  outline: none;
+  width: 240px;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.searchInput:focus,
+.searchInput:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  color: var(--color-text-muted);
+  display: flex;
+}
+
+.selectFilter {
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-input-bg);
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.selectFilter option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.selectFilter:focus,
+.selectFilter:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
+}
+
+/* User Table */
+.card {
+  background: var(--color-card);
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: var(--font-family);
+  min-width: 700px;
+}
+
+.th {
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid var(--color-border-subtle);
+}
+
+.tr {
+  border-bottom: 1px solid var(--color-border-subtle);
+  transition: background 0.18s ease;
+}
+
+.tr:hover {
+  background: var(--color-surface-secondary);
+}
+
+.td {
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.nameWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.userEmail {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.roleAdmin {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.roleUser {
+  background: var(--color-in-progress-bg);
+  color: #1565C0;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+
+.statusActive {
+  background: var(--color-completed-bg);
+  color: #1B5E20;
+}
+
+.statusOffline {
+  background: var(--color-input-bg);
+  color: var(--color-text-secondary);
+}
+
+.statusPending {
+  background: var(--color-pending-bg);
+  color: #7F5000;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

@@ -1,0 +1,329 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text, #1f1f1f);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0.25rem 0 0 0;
+  flex-wrap: wrap;
+}
+
+.dateBadge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background-color: var(--surface-secondary, #f3f4f6);
+  color: var(--text, #1f1f1f);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Overdue Warning Banner */
+.overdueBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.bannerHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ef4444;
+  font-size: 0.95rem;
+}
+
+.warningIcon {
+  color: #ef4444;
+}
+
+.overdueGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.overdueCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  background-color: var(--card, #ffffff);
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.overdueTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text, #1f1f1f);
+}
+
+.overdueMeta {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.reassignBtn {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ef4444;
+  background-color: transparent;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reassignBtn:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+/* Quick Actions Card */
+.quickActionsCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  background-color: var(--card, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: var(--shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.05));
+}
+
+.cardSectionTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text, #1f1f1f);
+  margin: 0;
+}
+
+.actionButtonsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e5e7eb);
+  background-color: var(--surface-secondary, #f8f9fa);
+  color: var(--text, #1f1f1f);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionBtn:hover {
+  background-color: var(--surface, #ffffff);
+  border-color: var(--primary, #ff7a1a);
+  color: var(--primary, #ff7a1a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.actionIcon {
+  color: var(--primary, #ff7a1a);
+}
+
+/* Statistics Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* Performance Charts Grid */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.25rem;
+}
+
+/* Content Grid */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.tableSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background-color: var(--card, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: var(--shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.05));
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tableTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text, #1f1f1f);
+  margin: 0;
+}
+
+.tableSub {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0.2rem 0 0 0;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.table th {
+  padding: 0.75rem 0.875rem;
+  background-color: var(--surface-secondary, #f8f9fa);
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  color: var(--text, #1f1f1f);
+  vertical-align: middle;
+}
+
+.tr {
+  transition: background-color 0.15s ease;
+}
+
+.tr:hover {
+  background-color: var(--surface-secondary, rgba(243, 244, 246, 0.5));
+}
+
+.taskCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.taskId {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary, #ff7a1a);
+  font-family: monospace;
+}
+
+.taskName {
+  font-size: 0.875rem;
+  color: var(--text, #1f1f1f);
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.userAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.actionsFlex {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.actionIconBtn {
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--border, #e5e7eb);
+  background-color: var(--surface, #ffffff);
+  color: var(--text-secondary, #4b5563);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionIconBtn:hover {
+  border-color: var(--primary, #ff7a1a);
+  color: var(--primary, #ff7a1a);
+  background-color: var(--surface-secondary, #f3f4f6);
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+  .chartsGrid,
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+}

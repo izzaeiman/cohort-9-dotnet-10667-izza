@@ -86,9 +86,10 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         onSuccess();
         onClose();
       }, 500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSubmitting(false);
-      alert(err.message || 'Failed to update task.');
+      const msg = err instanceof Error ? err.message : 'Failed to update task.';
+      alert(msg);
     }
   };
 

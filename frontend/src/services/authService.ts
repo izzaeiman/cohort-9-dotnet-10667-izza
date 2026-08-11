@@ -55,12 +55,24 @@ export const MOCK_DEVELOPMENT_ACCOUNTS: RegisteredAccount[] = [
   },
 ];
 
+const isValidRegisteredAccount = (acc: unknown): acc is RegisteredAccount => {
+  if (!acc || typeof acc !== 'object') return false;
+  const a = acc as Partial<RegisteredAccount>;
+  return (
+    !!a.user &&
+    typeof a.user === 'object' &&
+    typeof a.user.email === 'string' &&
+    typeof a.user.role === 'string' &&
+    typeof a.passwordHash === 'string'
+  );
+};
+
 const getRegisteredAccounts = (): RegisteredAccount[] => {
   const stored = localStorage.getItem('workflow_registered_accounts');
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(isValidRegisteredAccount)) {
         return parsed;
       }
     } catch {
@@ -126,8 +138,7 @@ export const authService = {
       );
     }
 
-    const assignedRole: UserRole =
-      data.role?.toLowerCase().includes('admin') ? 'Admin' : 'Member';
+    const assignedRole: UserRole = 'Member';
 
     const newUser: AuthUser = {
       id: `usr-${Date.now()}`,

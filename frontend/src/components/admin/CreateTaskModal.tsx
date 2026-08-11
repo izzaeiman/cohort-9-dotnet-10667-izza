@@ -82,9 +82,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         onSuccess();
         onClose();
       }, 500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSubmitting(false);
-      alert(err.message || 'Failed to create task.');
+      const msg = err instanceof Error ? err.message : 'Failed to create task.';
+      alert(msg);
     }
   };
 

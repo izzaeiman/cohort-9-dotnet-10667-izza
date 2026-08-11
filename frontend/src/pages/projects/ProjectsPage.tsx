@@ -74,12 +74,17 @@ export const ProjectsPage = () => {
 
   useEffect(() => {
     let isMounted = true;
-    projectService.getProjects().then((data) => {
-      if (isMounted) {
-        setProjects(data);
-        setIsLoading(false);
-      }
-    });
+    projectService
+      .getProjects()
+      .then((data) => {
+        if (isMounted) setProjects(data);
+      })
+      .catch(() => {
+        if (isMounted) setToastMessage('Failed to load projects. Please retry.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
     return () => {
       isMounted = false;
     };
@@ -97,33 +102,47 @@ export const ProjectsPage = () => {
   }, [projects, searchTerm, categoryFilter, statusFilter]);
 
   const totalPages = Math.ceil(filteredProjects.length / PAGE_SIZE);
+  const safeCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
   const paginatedProjects = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
+    const start = (safeCurrentPage - 1) * PAGE_SIZE;
     return filteredProjects.slice(start, start + PAGE_SIZE);
-  }, [filteredProjects, currentPage]);
+  }, [filteredProjects, safeCurrentPage]);
 
   const handleCreateProject = async (data: CreateProjectFormData) => {
-    const created = await projectService.createProject(data);
-    setProjects((prev) => [created, ...prev]);
-    setIsCreateModalOpen(false);
-    reset();
-    setToastMessage(`Project "${created.name}" created successfully!`);
+    try {
+      const created = await projectService.createProject(data);
+      setProjects((prev) => [created, ...prev]);
+      setIsCreateModalOpen(false);
+      reset();
+      setToastMessage(`Project "${created.name}" created successfully!`);
+    } catch {
+      setToastMessage('Failed to create project.');
+    }
   };
 
   const handleEditProject = async (data: CreateProjectFormData) => {
     if (!editingProject) return;
-    const updated = await projectService.updateProject(editingProject.id, data);
-    setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    setEditingProject(null);
-    setToastMessage('Project details updated successfully!');
+    try {
+      const updated = await projectService.updateProject(editingProject.id, data);
+      setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setEditingProject(null);
+      setToastMessage('Project details updated successfully!');
+    } catch {
+      setToastMessage('Failed to update project.');
+    }
   };
 
   const handleDeleteProject = async () => {
     if (!deletingProject) return;
-    await projectService.deleteProject(deletingProject.id);
-    setProjects((prev) => prev.filter((p) => p.id !== deletingProject.id));
-    setDeletingProject(null);
-    setToastMessage('Project deleted successfully!');
+    try {
+      await projectService.deleteProject(deletingProject.id);
+      setProjects((prev) => prev.filter((p) => p.id !== deletingProject.id));
+      setToastMessage('Project deleted successfully!');
+    } catch {
+      setToastMessage('Failed to delete project.');
+    } finally {
+      setDeletingProject(null);
+    }
   };
 
   if (isLoading) return <PageLoader />;
@@ -419,7 +438,16 @@ export const ProjectsPage = () => {
                         <button
                           type="button"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}
-                          onClick={() => setEditingProject(p)}
+                          aria-label={`Edit project ${p.name}`}
+                          onClick={() => {
+                            setEditingProject(p);
+                            reset({
+                              name: p.name,
+                              description: p.description,
+                              category: p.category,
+                              dueDate: p.dueDate,
+                            });
+                          }}
                         >
                           <MdMoreVert size={18} />
                         </button>

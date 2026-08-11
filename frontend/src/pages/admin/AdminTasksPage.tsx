@@ -215,8 +215,9 @@ export const AdminTasksPage: React.FC = () => {
       setToastMessage(`Task ${deletingTask.id} deleted successfully.`);
       setDeletingTask(null);
       await loadTasks();
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete task.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete task.';
+      alert(msg);
     }
   };
 

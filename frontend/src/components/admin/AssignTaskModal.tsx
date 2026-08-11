@@ -73,9 +73,10 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         onSuccess();
         onClose();
       }, 500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSubmitting(false);
-      alert(err.message || 'Failed to assign task.');
+      const msg = err instanceof Error ? err.message : 'Failed to assign task.';
+      alert(msg);
     }
   };
 

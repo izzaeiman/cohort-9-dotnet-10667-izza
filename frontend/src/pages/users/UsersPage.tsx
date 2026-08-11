@@ -21,7 +21,7 @@ import styles from './Users.module.css';
 const inviteUserSchema = z.object({
   name: z.string().min(1, 'Full name is required'),
   email: z.string().email('Please enter a valid email address'),
-  role: z.string().min(1, 'Role is required'),
+  role: z.enum(['Regular User', 'Administrator'], { required_error: 'Role is required' }),
   department: z.string().min(1, 'Department is required'),
   phone: z.string().optional(),
 });
@@ -58,19 +58,24 @@ export const UsersPage = () => {
       name: '',
       email: '',
       role: 'Regular User',
-      department: 'Software Engineering',
+      department: 'Engineering',
       phone: '',
     },
   });
 
   useEffect(() => {
     let isMounted = true;
-    userService.getUsers().then((data) => {
-      if (isMounted) {
-        setUsers(data);
-        setIsLoading(false);
-      }
-    });
+    userService
+      .getUsers()
+      .then((data) => {
+        if (isMounted) setUsers(data);
+      })
+      .catch(() => {
+        if (isMounted) setToastMessage('Failed to load users. Please retry.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
     return () => {
       isMounted = false;
     };
@@ -89,47 +94,61 @@ export const UsersPage = () => {
   }, [users, searchTerm, roleFilter, statusFilter]);
 
   const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const safeCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
   const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
+    const start = (safeCurrentPage - 1) * PAGE_SIZE;
     return filteredUsers.slice(start, start + PAGE_SIZE);
-  }, [filteredUsers, currentPage]);
+  }, [filteredUsers, safeCurrentPage]);
 
   const handleInviteUser = async (data: InviteUserFormData) => {
-    const newUser = await userService.inviteUser({
-      name: data.name,
-      email: data.email,
-      role: data.role as any,
-      department: data.department,
-      phone: data.phone || '+1 (555) 000-0000',
-    });
+    try {
+      const newUser = await userService.inviteUser({
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        department: data.department,
+        phone: data.phone || '+1 (555) 000-0000',
+      });
 
-    setUsers((prev) => [newUser, ...prev]);
-    setIsInviteModalOpen(false);
-    reset();
-    setToastMessage(`Invitation sent to ${data.email}!`);
+      setUsers((prev) => [newUser, ...prev]);
+      setIsInviteModalOpen(false);
+      reset();
+      setToastMessage(`Invitation sent to ${data.email}!`);
+    } catch {
+      setToastMessage('Failed to send invitation.');
+    }
   };
 
   const handleEditUser = async (data: InviteUserFormData) => {
     if (!editingUser) return;
-    const updated = await userService.updateUser(editingUser.id, {
-      name: data.name,
-      email: data.email,
-      role: data.role as any,
-      department: data.department,
-      phone: data.phone || editingUser.phone,
-    });
+    try {
+      const updated = await userService.updateUser(editingUser.id, {
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        department: data.department,
+        phone: data.phone || editingUser.phone,
+      });
 
-    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-    setEditingUser(null);
-    setToastMessage(`User ${updated.name} updated successfully!`);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      setEditingUser(null);
+      setToastMessage(`User ${updated.name} updated successfully!`);
+    } catch {
+      setToastMessage('Failed to update user.');
+    }
   };
 
   const handleDeleteUser = async () => {
     if (!deletingUser) return;
-    await userService.deleteUser(deletingUser.id);
-    setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id));
-    setDeletingUser(null);
-    setToastMessage('User member deleted successfully!');
+    try {
+      await userService.deleteUser(deletingUser.id);
+      setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id));
+      setToastMessage('User deleted successfully!');
+    } catch {
+      setToastMessage('Failed to delete user.');
+    } finally {
+      setDeletingUser(null);
+    }
   };
 
   if (isLoading) return <PageLoader />;
@@ -303,7 +322,7 @@ export const UsersPage = () => {
                               : '#777',
                         }}
                       />
-                      {u.status.toUpperCase()}
+                      {(u.status ?? 'offline').toUpperCase()}
                     </span>
                   </td>
                   <td className={styles.td}>{u.lastActive}</td>
@@ -352,7 +371,7 @@ export const UsersPage = () => {
                             reset({
                               name: u.name,
                               email: u.email,
-                              role: u.role,
+                              role: u.role === 'Administrator' ? 'Administrator' : 'Regular User',
                               department: u.department,
                               phone: u.phone,
                             });

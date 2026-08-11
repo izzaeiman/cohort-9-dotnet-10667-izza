@@ -14,7 +14,7 @@ export const NotFoundPage = () => {
           The page you are looking for does not exist, has been moved, or is temporarily unavailable.
         </p>
         <div style={{ width: '100%', marginTop: '12px' }}>
-          <AppButton variant="primary" size="lg" fullWidth onClick={() => navigate('/dashboard')}>
+          <AppButton variant="primary" size="lg" fullWidth onClick={() => navigate('/')}>
             Back to Dashboard
           </AppButton>
         </div>

@@ -37,12 +37,8 @@ export const profileService = {
     // Sync with auth user session
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
-      const updatedAuthUser = {
-        ...currentUser,
-        name: data.name || currentUser.name,
-        email: data.email || currentUser.email,
-      };
-      localStorage.setItem('workflow_user', JSON.stringify(updatedAuthUser));
+      currentUser.name = data.name || currentUser.name;
+      currentUser.email = data.email || currentUser.email;
     }
     return { ...currentProfile };
   },

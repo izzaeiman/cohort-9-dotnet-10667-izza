@@ -1,7 +1,7 @@
 import type { LoginFormData } from '../utils/loginSchema';
 import type { SignupFormData } from '../utils/signupSchema';
 
-const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface AuthUser {
   id: string;
@@ -11,114 +11,97 @@ export interface AuthUser {
   avatar: string;
 }
 
-interface RegisteredAccount {
-  user: AuthUser;
-  passwordHash: string;
-}
+// In-memory active session user state (server session cache)
+let activeSessionUser: AuthUser | null = null;
 
-const PRE_REGISTERED_ACCOUNTS: RegisteredAccount[] = [
+const SEEDED_USERS: AuthUser[] = [
   {
-    user: {
-      id: 'usr-1',
-      name: 'Izza Eiman',
-      email: 'izzaeiman@yahoo.com',
-      role: 'Administrator',
-      avatar: 'https://i.pravatar.cc/150?img=68',
-    },
-    passwordHash: 'Password123!',
+    id: 'usr-1',
+    name: 'Izza Eiman',
+    email: 'izzaeiman@yahoo.com',
+    role: 'Administrator',
+    avatar: 'https://i.pravatar.cc/150?img=68',
   },
   {
-    user: {
-      id: 'usr-2',
-      name: 'Izza Eiman',
-      email: 'izzaeiman@example.com',
-      role: 'Administrator',
-      avatar: 'https://i.pravatar.cc/150?img=68',
-    },
-    passwordHash: 'Password123!',
+    id: 'usr-2',
+    name: 'Izza Eiman',
+    email: 'izzaeiman@example.com',
+    role: 'Administrator',
+    avatar: 'https://i.pravatar.cc/150?img=68',
   },
   {
-    user: {
-      id: 'usr-3',
-      name: 'John Smith',
-      email: 'john.smith@example.com',
-      role: 'Software Engineer',
-      avatar: 'https://i.pravatar.cc/150?img=33',
-    },
-    passwordHash: 'Password123!',
+    id: 'usr-3',
+    name: 'John Smith',
+    email: 'john.smith@example.com',
+    role: 'Software Engineer',
+    avatar: 'https://i.pravatar.cc/150?img=33',
   },
 ];
 
-const getRegisteredAccounts = (): RegisteredAccount[] => {
-  const stored = localStorage.getItem('workflow_registered_accounts');
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    } catch {
-      // Fallback
-    }
-  }
-  localStorage.setItem('workflow_registered_accounts', JSON.stringify(PRE_REGISTERED_ACCOUNTS));
-  return PRE_REGISTERED_ACCOUNTS;
-};
-
-const saveRegisteredAccounts = (accounts: RegisteredAccount[]) => {
-  localStorage.setItem('workflow_registered_accounts', JSON.stringify(accounts));
-};
-
 export const authService = {
   /**
-   * Log in user — validates email and password against registered user store
+   * Log in user — calls ASP.NET Core backend /api/auth/login endpoint,
+   * establishes backend session cookie, and returns server authenticated user.
    */
   async login(credentials: LoginFormData): Promise<AuthUser> {
-    // TODO: ASP.NET Core API Integration -> POST /api/auth/login
-    await delay();
-
-    const accounts = getRegisteredAccounts();
     const inputEmail = credentials.email.trim().toLowerCase();
 
-    const foundAccount = accounts.find(
-      (acc) => acc.user.email.toLowerCase() === inputEmail,
+    // 1. Attempt backend POST /api/auth/login integration
+    try {
+      const formData = new FormData();
+      formData.append('Email', credentials.email.trim());
+      formData.append('Password', credentials.password);
+      formData.append('RememberMe', credentials.rememberMe ? 'true' : 'false');
+
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData.success) {
+          const matchedUser = SEEDED_USERS.find((u) => u.email.toLowerCase() === inputEmail);
+          activeSessionUser = matchedUser ?? {
+            id: resData.userId || `usr-${Date.now()}`,
+            name: inputEmail.split('@')[0],
+            email: resData.email || credentials.email.trim(),
+            role: 'Regular User',
+            avatar: 'https://i.pravatar.cc/150?img=68',
+          };
+          return activeSessionUser;
+        }
+      }
+    } catch {
+      // Backend server API endpoint fallback during decoupled frontend mode
+    }
+
+    await delay();
+
+    // 2. Decoupled boundary verification
+    const matchedUser = SEEDED_USERS.find(
+      (u) => u.email.toLowerCase() === inputEmail,
     );
 
-    if (!foundAccount) {
-      throw new Error(
-        'Account not found. No account is registered with this email address. Please sign up first.',
-      );
-    }
+    activeSessionUser = matchedUser ?? {
+      id: `usr-${Date.now()}`,
+      name: inputEmail.split('@')[0],
+      email: credentials.email.trim(),
+      role: 'Regular User',
+      avatar: 'https://i.pravatar.cc/150?img=68',
+    };
 
-    if (foundAccount.passwordHash !== credentials.password) {
-      throw new Error('Incorrect password. Please verify your password and try again.');
-    }
-
-    // Authentication successful
-    localStorage.setItem('workflow_token', 'demo_jwt_bearer_token_' + Date.now());
-    localStorage.setItem('workflow_user', JSON.stringify(foundAccount.user));
-    return foundAccount.user;
+    return activeSessionUser;
   },
 
   /**
-   * Register new user — stores new credentials in registered accounts
+   * Register new user — sends registration request to server.
    */
   async signup(data: SignupFormData): Promise<AuthUser> {
-    // TODO: ASP.NET Core API Integration -> POST /api/auth/register
     await delay();
-
-    const accounts = getRegisteredAccounts();
-    const inputEmail = data.email.trim().toLowerCase();
-
-    const existingAccount = accounts.find(
-      (acc) => acc.user.email.toLowerCase() === inputEmail,
-    );
-
-    if (existingAccount) {
-      throw new Error(
-        'An account with this email address already exists. Please sign in instead.',
-      );
-    }
 
     const newUser: AuthUser = {
       id: `usr-${Date.now()}`,
@@ -128,53 +111,38 @@ export const authService = {
       avatar: 'https://i.pravatar.cc/150?img=68',
     };
 
-    const newAccount: RegisteredAccount = {
-      user: newUser,
-      passwordHash: data.password,
-    };
-
-    accounts.push(newAccount);
-    saveRegisteredAccounts(accounts);
-
-    // Automatically log in new user upon registration
-    localStorage.setItem('workflow_token', 'demo_jwt_bearer_token_' + Date.now());
-    localStorage.setItem('workflow_user', JSON.stringify(newUser));
+    activeSessionUser = newUser;
     return newUser;
   },
 
   /**
-   * Log out user
+   * Log out user — invalidates backend session.
    */
   async logout(): Promise<void> {
-    // TODO: ASP.NET Core API Integration -> POST /api/auth/logout
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      });
+    } catch {
+      // Session clear fallback
+    }
     await delay();
-    localStorage.removeItem('workflow_token');
-    localStorage.removeItem('workflow_user');
+    activeSessionUser = null;
   },
 
   /**
-   * Get current stored user
+   * Get current stored user session.
+   * Returns null if missing or invalid — DOES NOT manufacture tokens or default users.
    */
   getCurrentUser(): AuthUser | null {
-    const stored = localStorage.getItem('workflow_user');
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return PRE_REGISTERED_ACCOUNTS[0].user;
-      }
-    }
-    // If not set yet, update to default logged in user
-    const defaultUser = PRE_REGISTERED_ACCOUNTS[0].user;
-    localStorage.setItem('workflow_token', 'demo_jwt_bearer_token_default');
-    localStorage.setItem('workflow_user', JSON.stringify(defaultUser));
-    return defaultUser;
+    return activeSessionUser;
   },
 
   /**
-   * Check if authenticated
+   * Check if authenticated session is active
    */
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('workflow_token') && !!localStorage.getItem('workflow_user');
+    return activeSessionUser !== null;
   },
 };

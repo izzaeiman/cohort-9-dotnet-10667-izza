@@ -40,6 +40,43 @@ const SEEDED_USERS: AuthUser[] = [
 
 export const authService = {
   /**
+   * Hydrate active session from backend session endpoint or active tab session cache
+   */
+  async hydrateSession(): Promise<AuthUser | null> {
+    try {
+      const response = await fetch('/api/auth/session', {
+        headers: { Accept: 'application/json' },
+      });
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData.user) {
+          activeSessionUser = resData.user;
+          sessionStorage.setItem('workflow_session_user', JSON.stringify(resData.user));
+          return activeSessionUser;
+        }
+      }
+    } catch {
+      // Backend session endpoint offline in decoupled mode
+    }
+
+    const cached = sessionStorage.getItem('workflow_session_user');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object' && parsed.email) {
+          activeSessionUser = parsed;
+          return activeSessionUser;
+        }
+      } catch {
+        sessionStorage.removeItem('workflow_session_user');
+      }
+    }
+
+    activeSessionUser = null;
+    return null;
+  },
+
+  /**
    * Log in user — calls ASP.NET Core backend /api/auth/login endpoint,
    * establishes backend session cookie, and returns server authenticated user.
    */
@@ -72,6 +109,7 @@ export const authService = {
             role: 'Regular User',
             avatar: 'https://i.pravatar.cc/150?img=68',
           };
+          sessionStorage.setItem('workflow_session_user', JSON.stringify(activeSessionUser));
           return activeSessionUser;
         }
       }
@@ -94,6 +132,7 @@ export const authService = {
       avatar: 'https://i.pravatar.cc/150?img=68',
     };
 
+    sessionStorage.setItem('workflow_session_user', JSON.stringify(activeSessionUser));
     return activeSessionUser;
   },
 
@@ -112,23 +151,31 @@ export const authService = {
     };
 
     activeSessionUser = newUser;
+    sessionStorage.setItem('workflow_session_user', JSON.stringify(newUser));
     return newUser;
   },
 
   /**
-   * Log out user — invalidates backend session.
+   * Log out user — invalidates backend session after server confirmation.
    */
   async logout(): Promise<void> {
     try {
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { Accept: 'application/json' },
       });
-    } catch {
-      // Session clear fallback
+      if (!response.ok) {
+        throw new Error('Logout failed: Server returned an unsuccessful status.');
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('Logout failed')) {
+        throw err;
+      }
     }
+
     await delay();
     activeSessionUser = null;
+    sessionStorage.removeItem('workflow_session_user');
   },
 
   /**

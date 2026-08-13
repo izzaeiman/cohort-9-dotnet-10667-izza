@@ -6,6 +6,7 @@ import type { SignupFormData } from '../utils/signupSchema';
 export interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (data: LoginFormData) => Promise<void>;
   signup: (data: SignupFormData) => Promise<void>;
   logout: () => Promise<void>;

@@ -1,0 +1,28 @@
+# .NET Build outputs
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+**/bin/
+**/obj/
+
+# Node dependencies & build artifacts
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE / Editor configuration
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

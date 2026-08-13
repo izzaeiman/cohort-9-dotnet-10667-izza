@@ -70,7 +70,7 @@ export const SettingsPage = () => {
   };
 
   const handleSaveSettings = () => {
-    setToastMessage('Settings preferences saved!');
+    setToastMessage('Settings preferences updated for current session.');
   };
 
   return (

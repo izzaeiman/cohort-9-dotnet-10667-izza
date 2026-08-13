@@ -401,7 +401,12 @@ export const UsersPage = () => {
           title="No members found"
           description="No users matched your current search filters."
           actionLabel="Clear Search"
-          onAction={() => setSearchTerm('')}
+          onAction={() => {
+            setSearchTerm('');
+            setRoleFilter('all');
+            setStatusFilter('all');
+            setCurrentPage(1);
+          }}
         />
       )}
 

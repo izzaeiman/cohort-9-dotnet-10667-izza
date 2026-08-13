@@ -10,11 +10,13 @@ import styles from './TaskTable.module.css';
 interface TaskTableProps {
   tasks: TaskItem[];
   onViewAll?: () => void;
+  onSelectTask?: (task: TaskItem) => void;
 }
 
-export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onViewAll, onSelectTask }: TaskTableProps) => {
   const [activeMenuTaskId, setActiveMenuTaskId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const safeTasks = tasks ?? [];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -26,10 +28,11 @@ export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleAction = (actionName: string, taskId: string) => {
+  const handleAction = (task: TaskItem) => {
     setActiveMenuTaskId(null);
-    // TODO: Connect task action to ASP.NET Core Web API
-    alert(`${actionName} action triggered for task ${taskId}`);
+    if (onSelectTask) {
+      onSelectTask(task);
+    }
   };
 
   return (
@@ -61,7 +64,7 @@ export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
+          {safeTasks.map((task) => (
             <tr key={task.id} className={styles.tr}>
               <td className={styles.td}>
                 <div className={styles.taskTitle}>
@@ -104,25 +107,9 @@ export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
                       type="button"
                       className={styles.menuItem}
                       role="menuitem"
-                      onClick={() => handleAction('View Details', task.id)}
+                      onClick={() => handleAction(task)}
                     >
                       View Details
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.menuItem}
-                      role="menuitem"
-                      onClick={() => handleAction('Edit Task', task.id)}
-                    >
-                      Edit Task
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                      role="menuitem"
-                      onClick={() => handleAction('Delete Task', task.id)}
-                    >
-                      Delete Task
                     </button>
                   </div>
                 )}

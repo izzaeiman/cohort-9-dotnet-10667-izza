@@ -13,12 +13,26 @@ interface TaskStatusChartProps {
 }
 
 export const TaskStatusChart = ({ data }: TaskStatusChartProps) => {
+  const safeData = data ?? [];
+
   return (
     <div style={{ width: '100%', height: 260 }}>
+      {/* Screen-reader accessible data text alternative */}
+      <div className="sr-only" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>
+        <h4>Task Status Distribution Summary</h4>
+        <ul>
+          {safeData.map((item) => (
+            <li key={item.name}>
+              {item.name}: {item.value} tasks
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={data}
+            data={safeData}
             cx="50%"
             cy="48%"
             innerRadius={60}
@@ -26,7 +40,7 @@ export const TaskStatusChart = ({ data }: TaskStatusChartProps) => {
             paddingAngle={4}
             dataKey="value"
           >
-            {data.map((entry) => (
+            {safeData.map((entry) => (
               <Cell key={entry.name} fill={entry.color} stroke="none" />
             ))}
           </Pie>

@@ -8,8 +8,9 @@ interface AvatarGroupProps {
 }
 
 export const AvatarGroup = ({ assignees, max = 3, size = 28 }: AvatarGroupProps) => {
-  const visible = assignees.slice(0, max);
-  const extra = assignees.length - max;
+  const safeAssignees = assignees ?? [];
+  const visible = safeAssignees.slice(0, max);
+  const extra = safeAssignees.length - max;
 
   return (
     <div className={styles.group}>

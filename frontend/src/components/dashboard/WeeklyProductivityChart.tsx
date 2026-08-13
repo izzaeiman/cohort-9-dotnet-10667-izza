@@ -14,10 +14,24 @@ interface WeeklyProductivityChartProps {
 }
 
 export const WeeklyProductivityChart = ({ data }: WeeklyProductivityChartProps) => {
+  const safeData = data ?? [];
+
   return (
     <div style={{ width: '100%', height: 260 }}>
+      {/* Screen-reader accessible data text alternative */}
+      <div className="sr-only" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>
+        <h4>Weekly Productivity Overview</h4>
+        <ul>
+          {safeData.map((item) => (
+            <li key={item.day}>
+              {item.day}: {item.completed} completed, {item.created} created
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <AreaChart data={safeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#FF7A1A" stopOpacity={0.4} />

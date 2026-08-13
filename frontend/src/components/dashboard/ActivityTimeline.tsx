@@ -7,6 +7,8 @@ interface ActivityTimelineProps {
 }
 
 export const ActivityTimeline = ({ activities }: ActivityTimelineProps) => {
+  const safeActivities = activities ?? [];
+
   return (
     <div className={styles.card}>
       <SectionTitle
@@ -15,7 +17,7 @@ export const ActivityTimeline = ({ activities }: ActivityTimelineProps) => {
       />
 
       <div className={styles.timeline}>
-        {activities.map((item) => (
+        {safeActivities.map((item) => (
           <div key={item.id} className={styles.item}>
             <span className={`${styles.dot} ${styles[`dot--${item.type}`]}`} />
             <img src={item.avatar} alt={item.user} className={styles.avatar} />

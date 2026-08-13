@@ -21,30 +21,32 @@ const ICON_MAP = {
 };
 
 export const DashboardCard = ({ data }: DashboardCardProps) => {
-  const Icon = ICON_MAP[data.iconType];
+  const iconType = data?.iconType ?? 'pending';
+  const Icon = ICON_MAP[iconType] || MdPendingActions;
+  const isPositive = data?.isPositive ?? true;
 
   return (
     <div className={styles.card}>
       <div className={styles.topRow}>
-        <span className={styles.title}>{data.title}</span>
-        <div className={`${styles.iconWrap} ${styles[`iconWrap--${data.iconType}`]}`}>
+        <span className={styles.title}>{data?.title ?? ''}</span>
+        <div className={`${styles.iconWrap} ${styles[`iconWrap--${iconType}`]}`}>
           <Icon />
         </div>
       </div>
 
       <div className={styles.valueRow}>
-        <span className={styles.value}>{data.value}</span>
+        <span className={styles.value}>{data?.value ?? 0}</span>
         <span
           className={`${styles.trend} ${
-            data.isPositive ? styles.trendPositive : styles.trendNegative
+            isPositive ? styles.trendPositive : styles.trendNegative
           }`}
         >
-          {data.isPositive ? <MdTrendingUp size={14} /> : <MdTrendingDown size={14} />}
-          {data.change}
+          {isPositive ? <MdTrendingUp size={14} /> : <MdTrendingDown size={14} />}
+          {data?.change ?? ''}
         </span>
       </div>
 
-      <div className={styles.period}>{data.period}</div>
+      <div className={styles.period}>{data?.period ?? ''}</div>
     </div>
   );
 };

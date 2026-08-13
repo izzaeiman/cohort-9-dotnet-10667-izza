@@ -1,10 +1,12 @@
-# .NET Build outputs
+# .NET Build outputs & Logs
 bin/
 obj/
 [Bb]in/
 [Oo]bj/
 **/bin/
 **/obj/
+Logs/
+*.log
 
 # Node dependencies & build artifacts
 node_modules/

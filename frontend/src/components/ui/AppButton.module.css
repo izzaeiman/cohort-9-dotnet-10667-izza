@@ -126,7 +126,8 @@
 }
 
 .btn--google .spinner,
-.btn--outlined .spinner {
+.btn--outlined .spinner,
+.btn--ghost .spinner {
   border: 2.5px solid rgba(255, 122, 26, 0.25);
   border-top-color: #FF7A1A;
 }

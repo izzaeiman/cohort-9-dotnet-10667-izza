@@ -95,6 +95,7 @@
   left: 10px;
   color: #AAAAAA;
   display: flex;
+  pointer-events: none;
 }
 
 .selectFilter {

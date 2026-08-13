@@ -86,11 +86,14 @@ export const ProfilePage = () => {
       </div>
 
       {/* ── Navigation Tabs ───────────────────────────────────────────────── */}
-      <div className={styles.tabsBar} role="tablist">
+      <div className={styles.tabsBar} role="tablist" aria-label="Profile section tabs">
         <button
           type="button"
           role="tab"
+          id="tab-profile"
+          aria-controls="panel-profile"
           aria-selected={activeTab === 'profile'}
+          tabIndex={activeTab === 'profile' ? 0 : -1}
           className={`${styles.tabBtn} ${activeTab === 'profile' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('profile')}
         >
@@ -99,7 +102,10 @@ export const ProfilePage = () => {
         <button
           type="button"
           role="tab"
+          id="tab-activity"
+          aria-controls="panel-activity"
           aria-selected={activeTab === 'activity'}
+          tabIndex={activeTab === 'activity' ? 0 : -1}
           className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('activity')}
         >
@@ -109,7 +115,7 @@ export const ProfilePage = () => {
 
       {/* ── Tab Content ───────────────────────────────────────────────────── */}
       {activeTab === 'profile' ? (
-        <div className={styles.card}>
+        <div id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" className={styles.card}>
           <form onSubmit={handleSubmit(handleSaveProfile)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className={styles.formGrid}>
               <AppInput
@@ -168,7 +174,9 @@ export const ProfilePage = () => {
           </form>
         </div>
       ) : (
-        <ActivityTimeline activities={MOCK_ACTIVITIES} />
+        <div id="panel-activity" role="tabpanel" aria-labelledby="tab-activity">
+          <ActivityTimeline activities={MOCK_ACTIVITIES} />
+        </div>
       )}
 
       {/* Toast */}

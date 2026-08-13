@@ -83,5 +83,5 @@ ol {
 }
 
 .page-enter {
-  animation: fadeIn 0.3s ease both;
+  animation: fade-in 0.3s ease both;
 }

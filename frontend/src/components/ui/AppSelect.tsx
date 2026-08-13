@@ -21,6 +21,16 @@ const AppSelect = forwardRef<HTMLSelectElement, AppSelectProps>(
   ({ id, label, options, error, leftIcon, helperText, className, ...rest }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
 
+    const handleFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
+      setIsFocused(true);
+      rest.onFocus?.(e);
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
+      setIsFocused(false);
+      rest.onBlur?.(e);
+    };
+
     return (
       <div className={clsx(styles.wrapper, className)}>
         <label htmlFor={id} className={styles.label}>
@@ -38,11 +48,11 @@ const AppSelect = forwardRef<HTMLSelectElement, AppSelectProps>(
             ref={ref}
             id={id}
             className={styles.select}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
             aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
             aria-invalid={!!error}
             {...rest}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
           >
             {options.map((opt) => (
               <option key={opt.value} value={opt.value}>

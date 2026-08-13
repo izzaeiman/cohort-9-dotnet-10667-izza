@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { MdPersonAdd, MdSearch, MdMoreVert } from 'react-icons/md';
+import { MdPersonAdd, MdSearch } from 'react-icons/md';
 
 import AppButton from '../../components/ui/AppButton';
 import AppInput from '../../components/ui/AppInput';
@@ -138,6 +138,11 @@ export const UsersPage = () => {
     setToastMessage(`Invitation sent to ${data.email}!`);
   };
 
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('all');
+  };
+
   return (
     <div className={styles.page}>
       {/* ── Header ────────────────────────────────────────────────────────── */}
@@ -224,9 +229,6 @@ export const UsersPage = () => {
                 <th className={styles.th}>Department</th>
                 <th className={styles.th}>Status</th>
                 <th className={styles.th}>Last Active</th>
-                <th className={styles.th} style={{ textAlign: 'right' }}>
-                  Action
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -279,16 +281,6 @@ export const UsersPage = () => {
                     </span>
                   </td>
                   <td className={styles.td}>{u.lastActive}</td>
-                  <td className={styles.td} style={{ textAlign: 'right' }}>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}
-                      title={`User actions for ${u.name}`}
-                      aria-label={`User actions for ${u.name}`}
-                    >
-                      <MdMoreVert size={18} />
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -299,7 +291,7 @@ export const UsersPage = () => {
           title="No members found"
           description="No users matched your current search filters."
           actionLabel="Clear Search"
-          onAction={() => setSearchTerm('')}
+          onAction={handleClearFilters}
         />
       )}
 

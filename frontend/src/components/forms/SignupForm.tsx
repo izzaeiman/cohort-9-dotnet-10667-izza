@@ -199,8 +199,13 @@ const SignupForm = ({
           <span className={styles.checkmark} aria-hidden="true" />
           <span>
             I agree to the{' '}
-            <span className={styles.termsLink}>Terms of Service</span> and{' '}
-            <span className={styles.termsLink}>Privacy Policy</span>
+            <a href="#terms" onClick={(e) => e.preventDefault()} className={styles.termsLink}>
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#privacy" onClick={(e) => e.preventDefault()} className={styles.termsLink}>
+              Privacy Policy
+            </a>
           </span>
         </label>
         {errors.agreeToTerms?.message && (

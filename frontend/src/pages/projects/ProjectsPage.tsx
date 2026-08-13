@@ -119,6 +119,17 @@ export const ProjectsPage = () => {
     );
   }, [projects, searchTerm]);
 
+  const distinctTeamMemberCount = useMemo(() => {
+    const memberSet = new Set<string>();
+    projects.forEach((p) => {
+      if (p.lead?.id) memberSet.add(p.lead.id);
+      p.team?.forEach((m) => {
+        if (m.id) memberSet.add(m.id);
+      });
+    });
+    return memberSet.size;
+  }, [projects]);
+
   const handleCreateProject = async (data: CreateProjectFormData) => {
     // TODO: Connect to ASP.NET Core Web API → await projectService.createProject(data);
     await new Promise((res) => setTimeout(res, 400));
@@ -184,7 +195,7 @@ export const ProjectsPage = () => {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Team Members</span>
-          <span className={styles.statVal}>5</span>
+          <span className={styles.statVal}>{distinctTeamMemberCount}</span>
         </div>
       </div>
 

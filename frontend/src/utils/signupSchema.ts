@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const USER_ROLES = ['Regular User', 'Administrator'] as const;
+export const USER_ROLES = ['Regular User'] as const;
 
 export const signupSchema = z
   .object({
@@ -8,9 +8,9 @@ export const signupSchema = z
       .string()
       .min(1, 'Full name is required')
       .min(2, 'Full name must be at least 2 characters'),
-    email: z.email('Please enter a valid email address'),
+    email: z.string().email('Please enter a valid email address'),
     role: z.enum(USER_ROLES, {
-      error: 'Please select a valid role',
+      message: 'Please select a valid role',
     }),
     password: z
       .string()

@@ -1,0 +1,27 @@
+# .NET Build outputs
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+**/bin/
+**/obj/
+
+# Node dependencies & build artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

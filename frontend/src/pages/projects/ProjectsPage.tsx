@@ -419,7 +419,15 @@ export const ProjectsPage = () => {
                         <button
                           type="button"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}
-                          onClick={() => setEditingProject(p)}
+                          onClick={() => {
+                            setEditingProject(p);
+                            reset({
+                              name: p.name,
+                              description: p.description,
+                              category: p.category,
+                              dueDate: p.dueDate,
+                            });
+                          }}
                         >
                           <MdMoreVert size={18} />
                         </button>

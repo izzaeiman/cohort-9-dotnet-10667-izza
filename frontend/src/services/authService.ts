@@ -124,14 +124,11 @@ export const authService = {
       (u) => u.email.toLowerCase() === inputEmail,
     );
 
-    activeSessionUser = matchedUser ?? {
-      id: `usr-${Date.now()}`,
-      name: inputEmail.split('@')[0],
-      email: credentials.email.trim(),
-      role: 'Regular User',
-      avatar: 'https://i.pravatar.cc/150?img=68',
-    };
+    if (!matchedUser) {
+      throw new Error('Invalid email or password.');
+    }
 
+    activeSessionUser = matchedUser;
     sessionStorage.setItem('workflow_session_user', JSON.stringify(activeSessionUser));
     return activeSessionUser;
   },

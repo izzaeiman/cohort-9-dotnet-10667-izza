@@ -143,7 +143,7 @@ export const authService = {
       id: `usr-${Date.now()}`,
       name: data.fullName.trim(),
       email: data.email.trim(),
-      role: data.role || 'Regular User',
+      role: 'Regular User',
       avatar: 'https://i.pravatar.cc/150?img=68',
     };
 

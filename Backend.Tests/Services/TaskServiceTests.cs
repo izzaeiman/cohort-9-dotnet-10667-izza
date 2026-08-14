@@ -31,6 +31,8 @@ namespace Backend.Tests.Services
             );
         }
 
+        // ── Existing tests ────────────────────────────────────────────────────
+
         [Fact]
         public async Task Test5_GetTaskByIdAsync_RegularUser_AccessesOwnTask()
         {
@@ -97,7 +99,7 @@ namespace Backend.Tests.Services
         [Fact]
         public async Task Test8_CreateTaskAsync_InvalidAssignedUser_IsRejected()
         {
-            // Arrange
+            // Arrange — Administrator tries to assign to non-existent user
             var dto = new CreateTaskDto
             {
                 Title = "New Task",
@@ -174,20 +176,22 @@ namespace Backend.Tests.Services
         [Fact]
         public async Task Test11_CreateTaskAsync_RegularUser_AssigningOtherUser_ThrowsUnauthorized()
         {
-            // Arrange
+            // Arrange — Finding #5: authorization check runs BEFORE user lookup,
+            // so no GetByIdAsync mock setup is needed here.
             var dto = new CreateTaskDto
             {
                 Title = "Illegal Assignment",
                 AssignedUserId = "usr-other"
             };
 
-            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-other")).ReturnsAsync(new User { Id = "usr-other", Name = "Other" });
-
             // Act & Assert
             var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
                 _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
 
             Assert.Equal("Regular users cannot assign tasks to other users.", exception.Message);
+
+            // Verify: authorization check short-circuits before the DB user lookup
+            _userRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -280,6 +284,87 @@ namespace Backend.Tests.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal("usr-engineer", result.AssignedUserId);
+        }
+
+        // ── New tests (CodeRabbit findings #4, #5) ───────────────────────────
+
+        [Fact]
+        public async Task Test16_CreateTaskAsync_NullTitle_ThrowsArgumentException()
+        {
+            // Finding #4: null title rejected before any DB call
+            var dto = new CreateTaskDto { Title = null!, AssignedUserId = null };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
+
+            Assert.Contains("title", ex.Message, StringComparison.OrdinalIgnoreCase);
+            _userRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Test17_CreateTaskAsync_EmptyTitle_ThrowsArgumentException()
+        {
+            // Finding #4: empty title rejected
+            var dto = new CreateTaskDto { Title = string.Empty };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
+
+            Assert.Contains("title", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test18_CreateTaskAsync_WhitespaceTitle_ThrowsArgumentException()
+        {
+            // Finding #4: whitespace-only title rejected
+            var dto = new CreateTaskDto { Title = "   " };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
+
+            Assert.Contains("title", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test19_CreateTaskAsync_ValidTitleWithWhitespace_TrimsAndSucceeds()
+        {
+            // Finding #4: valid title with surrounding whitespace is trimmed
+            var dto = new CreateTaskDto { Title = "  My Task  " };
+            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-regular"))
+                .ReturnsAsync(new User { Id = "usr-regular", Name = "Regular" });
+            _taskRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<TaskItem>()))
+                .ReturnsAsync((TaskItem t) => t);
+
+            var result = await _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser);
+
+            Assert.Equal("My Task", result.Title);
+        }
+
+        [Fact]
+        public async Task Test20_UpdateTaskAsync_WhitespaceTitle_ThrowsArgumentException()
+        {
+            // Finding #4: whitespace-only title on update is rejected before DB call
+            var dto = new UpdateTaskDto { Title = "   " };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.UpdateTaskAsync(1, dto, "usr-regular", UserRoles.RegularUser));
+
+            Assert.Contains("title", ex.Message, StringComparison.OrdinalIgnoreCase);
+            _taskRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Test21_CreateTaskAsync_RegularUser_AuthCheckBeforeDbLookup()
+        {
+            // Finding #5: for Regular User assigning another user, authorization check fires
+            // BEFORE any DB lookup — GetByIdAsync should never be called.
+            var dto = new CreateTaskDto { Title = "Task", AssignedUserId = "usr-other" };
+
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
+
+            Assert.Equal("Regular users cannot assign tasks to other users.", ex.Message);
+            _userRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<string>()), Times.Never);
         }
     }
 }

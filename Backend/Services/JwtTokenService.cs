@@ -22,8 +22,10 @@ namespace Backend.Services
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
 
+            // Key must be configured — no hardcoded fallback in production
             var jwtKey = _configuration["Jwt:Key"]
-                ?? "SuperSecretDevelopmentJwtKeyThatIsAtLeast32BytesLong123456!";
+                ?? throw new InvalidOperationException(
+                    "JWT signing key is not configured. Set 'Jwt:Key' in configuration or the JWT_KEY environment variable.");
 
             var issuer = _configuration["Jwt:Issuer"] ?? "WorkFlowApi";
             var audience = _configuration["Jwt:Audience"] ?? "WorkFlowClient";

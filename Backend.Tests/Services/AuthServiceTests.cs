@@ -33,6 +33,8 @@ namespace Backend.Tests.Services
             );
         }
 
+        // ── Existing tests (unchanged) ────────────────────────────────────────
+
         [Fact]
         public async Task Test1_RegisterAsync_CreatesRegularUserByDefault()
         {
@@ -56,9 +58,9 @@ namespace Backend.Tests.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal("john@company.com", result.User.Email);
-            Assert.Equal("Regular User", result.User.Role);
+            Assert.Equal(UserRoles.RegularUser, result.User.Role);
             Assert.Equal("valid-jwt-token", result.Token);
-            _userRepositoryMock.Verify(r => r.CreateAsync(It.Is<User>(u => u.Role == "Regular User")), Times.Once);
+            _userRepositoryMock.Verify(r => r.CreateAsync(It.Is<User>(u => u.Role == UserRoles.RegularUser)), Times.Once);
         }
 
         [Fact]
@@ -96,7 +98,7 @@ namespace Backend.Tests.Services
                 Name = "John Engineer",
                 Email = "john@company.com",
                 PasswordHash = "HashedPassword123!",
-                Role = "Regular User"
+                Role = UserRoles.RegularUser
             };
 
             _userRepositoryMock.Setup(r => r.GetByEmailAsync("john@company.com")).ReturnsAsync(existingUser);
@@ -130,7 +132,7 @@ namespace Backend.Tests.Services
                 Name = "John Engineer",
                 Email = "john@company.com",
                 PasswordHash = "HashedPassword123!",
-                Role = "Regular User"
+                Role = UserRoles.RegularUser
             };
 
             _userRepositoryMock.Setup(r => r.GetByEmailAsync("john@company.com")).ReturnsAsync(existingUser);
@@ -140,6 +142,75 @@ namespace Backend.Tests.Services
             // Act & Assert
             var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _authService.LoginAsync(dto));
             Assert.Equal("Invalid email or password.", exception.Message);
+        }
+
+        // ── New tests (CodeRabbit findings #8, #9) ───────────────────────────
+
+        [Fact]
+        public async Task Test16_RegisterAsync_NullEmail_ThrowsArgumentException()
+        {
+            // Finding #8: service-layer null guard before Trim()
+            var dto = new RegisterDto { Name = "Alice", Email = null!, Password = "Password123!" };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => _authService.RegisterAsync(dto));
+            Assert.Equal("dto", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Test17_RegisterAsync_WhitespaceEmail_ThrowsArgumentException()
+        {
+            // Finding #8: whitespace email guard
+            var dto = new RegisterDto { Name = "Alice", Email = "   ", Password = "Password123!" };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => _authService.RegisterAsync(dto));
+            Assert.Equal("dto", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Test18_RegisterAsync_NullName_ThrowsArgumentException()
+        {
+            // Finding #8: null name guard
+            var dto = new RegisterDto { Name = null!, Email = "alice@co.com", Password = "Password123!" };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => _authService.RegisterAsync(dto));
+            Assert.Equal("dto", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Test19_LoginAsync_NullEmail_ThrowsArgumentException()
+        {
+            // Finding #8: null email guard on login
+            var dto = new LoginDto { Email = null!, Password = "Password123!" };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => _authService.LoginAsync(dto));
+            Assert.Equal("dto", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Test20_LoginAsync_NullPassword_ThrowsArgumentException()
+        {
+            // Finding #8: null password guard on login
+            var dto = new LoginDto { Email = "alice@co.com", Password = null! };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => _authService.LoginAsync(dto));
+            Assert.Equal("dto", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Test21_LoginAsync_UserNotFound_ThrowsUnauthorized_WithDummyHashVerify()
+        {
+            // Finding #9: timing-safe user-not-found path still throws UnauthorizedAccessException
+            // (dummy hash verify happens internally but result remains the same generic error)
+            var dto = new LoginDto { Email = "ghost@company.com", Password = "AnyPassword!" };
+
+            _userRepositoryMock.Setup(r => r.GetByEmailAsync("ghost@company.com")).ReturnsAsync((User?)null);
+
+            // The dummy hash verify uses a real PasswordHasher<User>, not our mock, so we don't set it up.
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _authService.LoginAsync(dto));
+            Assert.Equal("Invalid email or password.", ex.Message);
+
+            // Ensure no token was generated (short-circuit path)
+            _jwtTokenServiceMock.Verify(j => j.GenerateToken(It.IsAny<User>()), Times.Never);
         }
     }
 }

@@ -30,7 +30,8 @@ namespace Backend.Services
             _logger.LogInformation("Retrieving tasks for UserId: {UserId}, Role: {Role}", currentUserId, currentUserRole);
 
             IEnumerable<TaskItem> tasks;
-            if (currentUserRole == "Administrator")
+            // Finding #3: use centralized UserRoles constant
+            if (currentUserRole == UserRoles.Administrator)
             {
                 tasks = await _taskRepository.GetAllAsync();
             }
@@ -51,9 +52,12 @@ namespace Backend.Services
                 return null;
             }
 
-            if (currentUserRole != "Administrator" && task.AssignedUserId != currentUserId)
+            // Finding #3: use centralized UserRoles constant
+            if (currentUserRole != UserRoles.Administrator && task.AssignedUserId != currentUserId)
             {
-                _logger.LogWarning("Forbidden task access attempt: UserId {UserId} attempted to view Task ID {TaskId} assigned to {AssignedUserId}.", currentUserId, id, task.AssignedUserId);
+                _logger.LogWarning(
+                    "Forbidden task access attempt: UserId {UserId} attempted to view Task ID {TaskId}.",
+                    currentUserId, id);
                 return null;
             }
 
@@ -64,23 +68,34 @@ namespace Backend.Services
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
+            // Finding #4: reject null, empty, or whitespace-only titles before any DB call
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                throw new ArgumentException("Task title cannot be null, empty, or whitespace.", nameof(dto));
+
             string? targetAssignedUserId = dto.AssignedUserId;
             if (string.IsNullOrWhiteSpace(targetAssignedUserId))
             {
                 targetAssignedUserId = currentUserId;
             }
 
+            // Finding #5: enforce Regular User authorization BEFORE any unnecessary DB lookup
+            // Finding #3: use centralized UserRoles constant
+            if (currentUserRole != UserRoles.Administrator && targetAssignedUserId != currentUserId)
+            {
+                _logger.LogWarning(
+                    "Forbidden task creation attempt: Regular User {UserId} attempted to assign task to {AssignedUserId}.",
+                    currentUserId, targetAssignedUserId);
+                throw new UnauthorizedAccessException("Regular users cannot assign tasks to other users.");
+            }
+
+            // Validate assigned user exists (after authorization check)
             var assignedUser = await _userRepository.GetByIdAsync(targetAssignedUserId);
             if (assignedUser == null)
             {
-                _logger.LogWarning("Task creation failed: Assigned user ID '{AssignedUserId}' does not exist.", targetAssignedUserId);
+                _logger.LogWarning(
+                    "Task creation failed: Assigned user ID '{AssignedUserId}' does not exist.",
+                    targetAssignedUserId);
                 throw new ArgumentException($"Assigned user with ID '{targetAssignedUserId}' does not exist.");
-            }
-
-            if (currentUserRole != "Administrator" && targetAssignedUserId != currentUserId)
-            {
-                _logger.LogWarning("Forbidden task creation attempt: Regular User {UserId} attempted to assign task to {AssignedUserId}.", currentUserId, targetAssignedUserId);
-                throw new UnauthorizedAccessException("Regular users cannot assign tasks to other users.");
             }
 
             var newTask = new TaskItem
@@ -97,7 +112,9 @@ namespace Backend.Services
             };
 
             var created = await _taskRepository.CreateAsync(newTask);
-            _logger.LogInformation("Task created successfully: Task ID {TaskId}, Title '{Title}', AssignedTo {AssignedUserId}.", created.Id, created.Title, created.AssignedUserId);
+            _logger.LogInformation(
+                "Task created successfully: Task ID {TaskId}, Title '{Title}', AssignedTo {AssignedUserId}.",
+                created.Id, created.Title, created.AssignedUserId);
 
             return MapToTaskDto(created);
         }
@@ -106,6 +123,10 @@ namespace Backend.Services
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
+            // Finding #4: reject null, empty, or whitespace-only titles before any DB call
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                throw new ArgumentException("Task title cannot be null, empty, or whitespace.", nameof(dto));
+
             var existingTask = await _taskRepository.GetByIdAsync(id);
             if (existingTask == null)
             {
@@ -113,26 +134,36 @@ namespace Backend.Services
                 return null;
             }
 
-            if (currentUserRole != "Administrator" && existingTask.AssignedUserId != currentUserId)
+            // Authorization: Regular User cannot update tasks they don't own
+            // Finding #3: use centralized UserRoles constant
+            if (currentUserRole != UserRoles.Administrator && existingTask.AssignedUserId != currentUserId)
             {
-                _logger.LogWarning("Forbidden task update attempt: UserId {UserId} attempted to update Task ID {TaskId}.", currentUserId, id);
+                _logger.LogWarning(
+                    "Forbidden task update attempt: UserId {UserId} attempted to update Task ID {TaskId}.",
+                    currentUserId, id);
                 throw new UnauthorizedAccessException("You do not have permission to update this task.");
             }
 
             string? targetAssignedUserId = dto.AssignedUserId ?? existingTask.AssignedUserId;
             if (!string.IsNullOrEmpty(targetAssignedUserId))
             {
+                // Finding #5: for Regular Users, enforce re-assignment restriction BEFORE the DB lookup
+                if (currentUserRole != UserRoles.Administrator && targetAssignedUserId != currentUserId)
+                {
+                    _logger.LogWarning(
+                        "Forbidden task re-assignment attempt: Regular User {UserId} attempted to assign Task ID {TaskId} to {AssignedUserId}.",
+                        currentUserId, id, targetAssignedUserId);
+                    throw new UnauthorizedAccessException("Regular users cannot reassign tasks to other users.");
+                }
+
+                // Validate assigned user exists (after authorization check)
                 var assignedUser = await _userRepository.GetByIdAsync(targetAssignedUserId);
                 if (assignedUser == null)
                 {
-                    _logger.LogWarning("Task update failed: Assigned user ID '{AssignedUserId}' does not exist.", targetAssignedUserId);
+                    _logger.LogWarning(
+                        "Task update failed: Assigned user ID '{AssignedUserId}' does not exist.",
+                        targetAssignedUserId);
                     throw new ArgumentException($"Assigned user with ID '{targetAssignedUserId}' does not exist.");
-                }
-
-                if (currentUserRole != "Administrator" && targetAssignedUserId != currentUserId)
-                {
-                    _logger.LogWarning("Forbidden task re-assignment attempt: Regular User {UserId} attempted to assign Task ID {TaskId} to {AssignedUserId}.", currentUserId, id, targetAssignedUserId);
-                    throw new UnauthorizedAccessException("Regular users cannot reassign tasks to other users.");
                 }
             }
 
@@ -146,7 +177,9 @@ namespace Backend.Services
             existingTask.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _taskRepository.UpdateAsync(existingTask);
-            _logger.LogInformation("Task updated successfully: Task ID {TaskId}, UpdatedAt {UpdatedAt}.", updated.Id, updated.UpdatedAt);
+            _logger.LogInformation(
+                "Task updated successfully: Task ID {TaskId}, UpdatedAt {UpdatedAt}.",
+                updated.Id, updated.UpdatedAt);
 
             return MapToTaskDto(updated);
         }
@@ -160,9 +193,12 @@ namespace Backend.Services
                 return false;
             }
 
-            if (currentUserRole != "Administrator" && existingTask.AssignedUserId != currentUserId)
+            // Finding #3: use centralized UserRoles constant
+            if (currentUserRole != UserRoles.Administrator && existingTask.AssignedUserId != currentUserId)
             {
-                _logger.LogWarning("Forbidden task deletion attempt: UserId {UserId} attempted to delete Task ID {TaskId}.", currentUserId, id);
+                _logger.LogWarning(
+                    "Forbidden task deletion attempt: UserId {UserId} attempted to delete Task ID {TaskId}.",
+                    currentUserId, id);
                 throw new UnauthorizedAccessException("You do not have permission to delete this task.");
             }
 

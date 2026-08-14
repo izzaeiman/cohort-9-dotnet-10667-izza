@@ -29,6 +29,16 @@ namespace Backend.Middleware
                 var traceId = context.TraceIdentifier;
                 _logger.LogError(ex, "An unhandled exception occurred during request processing. TraceId: {TraceId}", traceId);
 
+                // Finding #11: if the response has already started (e.g. streaming began),
+                // we cannot change headers or status — re-throw so the server handles it properly.
+                if (context.Response.HasStarted)
+                {
+                    _logger.LogWarning(
+                        "Response already started for TraceId: {TraceId}. Cannot write error response; re-throwing.",
+                        traceId);
+                    throw;
+                }
+
                 await HandleExceptionAsync(context, traceId);
             }
         }

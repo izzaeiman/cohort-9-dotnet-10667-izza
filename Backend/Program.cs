@@ -20,6 +20,8 @@ using Backend.Services;
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(new ConfigurationBuilder()
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+        .AddEnvironmentVariables()
         .Build())
     .CreateLogger();
 
@@ -30,14 +32,36 @@ try
     var builder = WebApplication.CreateBuilder(args);
     builder.Host.UseSerilog();
 
-    // 1. Add DbContext with SQL Server configuration
+    // 1. Validate JWT key at startup — fail fast if missing or too short
+    var jwtKey = builder.Configuration["Jwt:Key"]
+        ?? Environment.GetEnvironmentVariable("JWT_KEY");
+
+    if (string.IsNullOrWhiteSpace(jwtKey))
+    {
+        throw new InvalidOperationException(
+            "JWT signing key is not configured. " +
+            "Set 'Jwt:Key' in appsettings.Development.json, user-secrets, " +
+            "or the JWT_KEY environment variable.");
+    }
+
+    const int MinJwtKeyBytes = 32;
+    if (Encoding.UTF8.GetByteCount(jwtKey) < MinJwtKeyBytes)
+    {
+        throw new InvalidOperationException(
+            $"JWT signing key is too short. Minimum {MinJwtKeyBytes} bytes required for HMAC-SHA256.");
+    }
+
+    var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "WorkFlowApi";
+    var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "WorkFlowClient";
+
+    // 2. Add DbContext with SQL Server configuration
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString));
 
-    // 2. Configure CORS for Frontend Integration
+    // 3. Configure CORS for Frontend Integration
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowReactFrontend", policy =>
@@ -49,7 +73,7 @@ try
         });
     });
 
-    // 3. Register Repositories & Services
+    // 4. Register Repositories & Services
     builder.Services.AddScoped<IUserRepository, UserRepository>();
     builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 
@@ -58,15 +82,10 @@ try
     builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
     builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-    // 4. Register Controllers
+    // 5. Register Controllers
     builder.Services.AddControllers();
 
-    // 5. Configure JWT Bearer Authentication & Authorization
-    var jwtKey = builder.Configuration["Jwt:Key"]
-        ?? "SuperSecretDevelopmentJwtKeyThatIsAtLeast32BytesLong123456!";
-    var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "WorkFlowApi";
-    var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "WorkFlowClient";
-
+    // 6. Configure JWT Bearer Authentication & Authorization
     builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -74,7 +93,8 @@ try
     })
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false;
+        // RequireHttpsMetadata must be true in all non-development environments
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -94,7 +114,7 @@ try
         options.AddPolicy("RequireAdministrator", policy => policy.RequireRole(UserRoles.Administrator));
     });
 
-    // 6. OpenAPI/Swagger Explorer
+    // 7. OpenAPI/Swagger Explorer
     builder.Services.AddOpenApi();
 
     var app = builder.Build();

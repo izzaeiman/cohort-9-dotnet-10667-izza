@@ -1,8 +1,14 @@
 import { INITIAL_PROJECTS, type ProjectItem } from '../data/projects';
+import { INITIAL_USERS } from '../data/users';
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let projectsStore: ProjectItem[] = [...INITIAL_PROJECTS];
+
+let lastProjectId = Math.max(...projectsStore.map(p => {
+  const num = parseInt(p.id.replace('PRJ-', ''), 10);
+  return isNaN(num) ? 0 : num;
+}), 4);
 
 export const projectService = {
   /**
@@ -30,14 +36,20 @@ export const projectService = {
   async createProject(newProjectData: Omit<ProjectItem, 'id' | 'progress' | 'completedTasks' | 'totalTasks' | 'lead' | 'team' | 'status'>): Promise<ProjectItem> {
     // TODO: ASP.NET Core API Integration -> POST /api/projects
     await delay();
+    lastProjectId++;
+    const leadUser = INITIAL_USERS.find(u => u.id === 'usr-1') || {
+      id: 'usr-1',
+      name: 'Izza Eiman',
+      avatar: 'https://i.pravatar.cc/150?img=68'
+    };
     const newProject: ProjectItem = {
       ...newProjectData,
-      id: `PRJ-0${projectsStore.length + 1}`,
+      id: `PRJ-${lastProjectId.toString().padStart(2, '0')}`,
       progress: 0,
       completedTasks: 0,
       totalTasks: 10,
-      lead: { id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
-      team: [{ id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' }],
+      lead: { id: leadUser.id, name: leadUser.name, avatar: leadUser.avatar },
+      team: [{ id: leadUser.id, name: leadUser.name, avatar: leadUser.avatar }],
       status: 'in_progress',
     };
     projectsStore = [newProject, ...projectsStore];

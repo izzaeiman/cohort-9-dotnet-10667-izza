@@ -96,7 +96,14 @@ export const ProjectsPage = () => {
     });
   }, [projects, searchTerm, categoryFilter, statusFilter]);
 
-  const totalPages = Math.ceil(filteredProjects.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filteredProjects.length / PAGE_SIZE) || 1;
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedProjects = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredProjects.slice(start, start + PAGE_SIZE);
@@ -419,15 +426,7 @@ export const ProjectsPage = () => {
                         <button
                           type="button"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}
-                          onClick={() => {
-                            setEditingProject(p);
-                            reset({
-                              name: p.name,
-                              description: p.description,
-                              category: p.category,
-                              dueDate: p.dueDate,
-                            });
-                          }}
+                          onClick={() => setEditingProject(p)}
                         >
                           <MdMoreVert size={18} />
                         </button>

@@ -22,9 +22,9 @@ export const INITIAL_PROJECTS: ProjectItem[] = [
     completedTasks: 18,
     totalTasks: 23,
     dueDate: '2026-08-15',
-    lead: { id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
+    lead: { id: 'usr-1', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
     team: [
-      { id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
+      { id: 'usr-1', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
       { id: 'usr-3', name: 'Alice Carter', avatar: 'https://i.pravatar.cc/150?img=32' },
       { id: 'usr-4', name: 'Bob Wilson', avatar: 'https://i.pravatar.cc/150?img=12' },
     ],
@@ -58,7 +58,7 @@ export const INITIAL_PROJECTS: ProjectItem[] = [
     lead: { id: 'usr-3', name: 'Alice Carter', avatar: 'https://i.pravatar.cc/150?img=32' },
     team: [
       { id: 'usr-3', name: 'Alice Carter', avatar: 'https://i.pravatar.cc/150?img=32' },
-      { id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
+      { id: 'usr-1', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
     ],
     status: 'completed',
   },
@@ -74,7 +74,7 @@ export const INITIAL_PROJECTS: ProjectItem[] = [
     lead: { id: 'usr-5', name: 'Charlie Davis', avatar: 'https://i.pravatar.cc/150?img=59' },
     team: [
       { id: 'usr-5', name: 'Charlie Davis', avatar: 'https://i.pravatar.cc/150?img=59' },
-      { id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' },
+      { id: 'usr-1', name: 'Izza Eiman', avatar: 'https://i.pravatar.cc/150?img=68' },
     ],
     status: 'pending',
   },

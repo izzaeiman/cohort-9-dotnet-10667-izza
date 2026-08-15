@@ -5,6 +5,11 @@ const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let tasksStore: DetailedTaskItem[] = [...INITIAL_TASKS];
 
+let lastTaskId = Math.max(...tasksStore.map(t => {
+  const num = parseInt(t.id.replace('TSK-', ''), 10);
+  return isNaN(num) ? 0 : num;
+}), 100);
+
 export const taskService = {
   /**
    * Fetch all tasks
@@ -31,9 +36,10 @@ export const taskService = {
   async createTask(newTaskData: Omit<DetailedTaskItem, 'id' | 'createdDate' | 'lastModified' | 'comments' | 'attachments'>): Promise<DetailedTaskItem> {
     // TODO: ASP.NET Core API Integration -> POST /api/tasks
     await delay();
+    lastTaskId++;
     const newTask: DetailedTaskItem = {
       ...newTaskData,
-      id: `TSK-${100 + tasksStore.length + 1}`,
+      id: `TSK-${lastTaskId}`,
       createdDate: new Date().toISOString().split('T')[0],
       lastModified: new Date().toISOString().split('T')[0],
       comments: [],

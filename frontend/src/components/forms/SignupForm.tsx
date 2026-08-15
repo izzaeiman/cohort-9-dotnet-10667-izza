@@ -81,7 +81,7 @@ const SignupForm = ({
 
       {/* Server error */}
       {serverError && (
-        <div className={styles.serverError} role="alert">
+        <div className={styles.serverError} role="alert" aria-live="polite">
           <span className={styles.errorIcon}>⚠️</span>
           {serverError}
         </div>
@@ -176,7 +176,7 @@ const SignupForm = ({
             type="button"
             className={styles.eyeBtn}
             onClick={() => setShowConfirmPassword((p) => !p)}
-            aria-label={showConfirmPassword ? 'Hide confirmation password' : 'Show confirmation password'}
+            aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
           >
             {showConfirmPassword ? <MdVisibilityOff size={18} /> : <MdVisibility size={18} />}
           </button>
@@ -191,8 +191,6 @@ const SignupForm = ({
             id="signup-terms"
             type="checkbox"
             className={styles.checkbox}
-            aria-invalid={!!errors.agreeToTerms}
-            aria-describedby={errors.agreeToTerms ? 'signup-terms-error' : undefined}
             {...register('agreeToTerms')}
           />
           <span className={styles.checkmark} aria-hidden="true" />
@@ -203,7 +201,7 @@ const SignupForm = ({
           </span>
         </label>
         {errors.agreeToTerms?.message && (
-          <p id="signup-terms-error" className={styles.errorText} role="alert">
+          <p className={styles.errorText} role="alert">
             {errors.agreeToTerms.message}
           </p>
         )}

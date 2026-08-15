@@ -36,12 +36,26 @@ export const SettingsPage = () => {
 
   const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'security' | 'regional'>('appearance');
 
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [pushAlerts, setPushAlerts] = useState(true);
-  const [weeklyDigest, setWeeklyDigest] = useState(true);
+  const getStoredSettings = () => {
+    const stored = localStorage.getItem('workflow_settings');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        // Fallback
+      }
+    }
+    return null;
+  };
 
-  const [language, setLanguage] = useState('en-US');
-  const [timezone, setTimezone] = useState('America/New_York');
+  const storedSettings = getStoredSettings();
+
+  const [emailAlerts, setEmailAlerts] = useState(storedSettings?.emailAlerts ?? true);
+  const [pushAlerts, setPushAlerts] = useState(storedSettings?.pushAlerts ?? true);
+  const [weeklyDigest, setWeeklyDigest] = useState(storedSettings?.weeklyDigest ?? true);
+
+  const [language, setLanguage] = useState(storedSettings?.language ?? 'en-US');
+  const [timezone, setTimezone] = useState(storedSettings?.timezone ?? 'America/New_York');
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -70,7 +84,19 @@ export const SettingsPage = () => {
   };
 
   const handleSaveSettings = () => {
-    setToastMessage('Settings preferences saved!');
+    try {
+      const settings = {
+        emailAlerts,
+        pushAlerts,
+        weeklyDigest,
+        language,
+        timezone,
+      };
+      localStorage.setItem('workflow_settings', JSON.stringify(settings));
+      setToastMessage('Settings preferences saved!');
+    } catch {
+      setToastMessage('Failed to save settings preferences.');
+    }
   };
 
   return (

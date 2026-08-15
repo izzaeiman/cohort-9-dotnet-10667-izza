@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Backend.DTOs;
+using Backend.Models;
 using Backend.Services;
 
 namespace Backend.Controllers
@@ -97,7 +98,7 @@ namespace Backend.Controllers
         /// Protected endpoint demonstrating Administrator role-based authorization.
         /// </summary>
         [HttpGet("admin-only")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = UserRoles.Administrator)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public IActionResult AdminOnly()

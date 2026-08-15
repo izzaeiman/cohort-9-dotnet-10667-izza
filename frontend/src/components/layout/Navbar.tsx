@@ -174,8 +174,8 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
               className={styles.avatar}
             />
             <div className={styles.userInfo}>
-              <span className={styles.userName}>{user?.name || 'Izza Eiman'}</span>
-              <span className={styles.userRole}>{user?.role || 'Software Engineer'}</span>
+              <span className={styles.userName}>{user?.name || 'Guest User'}</span>
+              <span className={styles.userRole}>{user?.role || 'Member'}</span>
             </div>
             <MdExpandMore size={18} color="#888" aria-hidden="true" />
           </button>
@@ -183,8 +183,31 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
           {/* User Dropdown Menu */}
           {isUserDropdownOpen && (
             <div className={styles.dropdown} role="menu" aria-label="Account actions">
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border, #e5e7eb)' }}>
+                <strong style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text, #1f1f1f)' }}>
+                  {user?.name}
+                </strong>
+                <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary, #6b7280)' }}>
+                  {user?.email}
+                </span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    marginTop: '4px',
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    backgroundColor: user?.role === 'Admin' ? 'rgba(255, 122, 26, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                    color: user?.role === 'Admin' ? '#FF7A1A' : '#3B82F6',
+                  }}
+                >
+                  {user?.role} Role
+                </span>
+              </div>
+
               <Link
-                to="/profile"
+                to={user?.role === 'Admin' ? '/admin/profile' : '/profile'}
                 className={styles.dropdownItem}
                 role="menuitem"
                 onClick={() => setIsUserDropdownOpen(false)}
@@ -193,7 +216,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
                 <span>My Profile</span>
               </Link>
               <Link
-                to="/settings"
+                to={user?.role === 'Admin' ? '/admin/settings' : '/settings'}
                 className={styles.dropdownItem}
                 role="menuitem"
                 onClick={() => setIsUserDropdownOpen(false)}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +17,9 @@ import Pagination from '../../components/shared/Pagination';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PageLoader from '../../components/common/PageLoader';
 
-import { taskService } from '../../services/taskService';
+import { adminTaskService } from '../../services/adminTaskService';
+import { authService } from '../../services/authService';
+import { isAdminUser } from '../../components/layout/AdminRoute';
 import { getLocalDate } from '../../utils/dateHelpers';
 import type { DetailedTaskItem } from '../../data/tasks';
 import type { TaskPriority, TaskCategory, TaskStatus } from '../../types/dashboard.types';
@@ -27,8 +29,8 @@ const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required').min(3, 'Title must be at least 3 characters'),
   description: z.string().optional(),
   category: z.enum(['Frontend', 'Backend', 'UI/UX Design', 'DevOps', 'Database']),
-  priority: z.enum(['high', 'medium', 'low']),
-  status: z.enum(['completed', 'in_progress', 'pending', 'overdue']),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled', 'overdue']),
   dueDate: z.string().min(1, 'Due date is required'),
 });
 
@@ -38,6 +40,9 @@ const PAGE_SIZE = 5;
 
 export const TasksPage = () => {
   const navigate = useNavigate();
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = isAdminUser(currentUser);
+
   const [tasks, setTasks] = useState<DetailedTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -77,22 +82,39 @@ export const TasksPage = () => {
     },
   });
 
+  const loadTasks = async () => {
+    try {
+      setIsLoading(true);
+      const data = await adminTaskService.getAllTasks();
+      setTasks(data);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-    taskService.getTasks().then((data) => {
-      if (isMounted) {
-        setTasks(data);
-        setIsLoading(false);
-      }
+    loadTasks();
+    const unsub = adminTaskService.subscribe(() => {
+      loadTasks();
     });
-    return () => {
-      isMounted = false;
-    };
+    return () => unsub();
   }, []);
+
+  // Filter tasks based on logged-in user role (Member sees only assigned tasks; Admin sees all)
+  const roleFilteredTasks = useMemo(() => {
+    if (isAdmin) return tasks;
+    return tasks.filter(
+      (t) =>
+        t.assignedUserId === currentUser?.id ||
+        (t.assignedUser &&
+          currentUser?.name &&
+          t.assignedUser.toLowerCase() === currentUser.name.toLowerCase()),
+    );
+  }, [tasks, isAdmin, currentUser]);
 
   // Filter & Sort tasks
   const filteredAndSortedTasks = useMemo(() => {
-    const result = tasks.filter((t) => {
+    const result = roleFilteredTasks.filter((t) => {
       const matchesSearch =
         t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -106,41 +128,53 @@ export const TasksPage = () => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'priority') {
         const pOrder: Record<string, number> = { high: 1, medium: 2, low: 3 };
-        return pOrder[a.priority] - pOrder[b.priority];
+        return (pOrder[a.priority] || 0) - (pOrder[b.priority] || 0);
       }
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
 
     return result;
-  }, [tasks, searchTerm, statusFilter, priorityFilter, categoryFilter, sortBy]);
+  }, [roleFilteredTasks, searchTerm, statusFilter, priorityFilter, categoryFilter, sortBy]);
 
   // Paginated dataset
-  const totalPages = Math.ceil(filteredAndSortedTasks.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filteredAndSortedTasks.length / PAGE_SIZE) || 1;
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedTasks = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredAndSortedTasks.slice(start, start + PAGE_SIZE);
   }, [filteredAndSortedTasks, currentPage]);
 
   const handleCreateTask = async (data: CreateTaskFormData) => {
-    const created = await taskService.createTask({
+    const created = await adminTaskService.createTask({
       title: data.title,
       description: data.description || '',
       category: data.category as TaskCategory,
       priority: data.priority as TaskPriority,
       status: data.status as TaskStatus,
+      project: 'Task Management System SaaS',
+      startDate: new Date().toISOString().split('T')[0],
+      startTime: '09:00 AM',
       dueDate: data.dueDate,
-      assignees: [{ id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' }],
+      dueTime: '05:00 PM',
+      assignedUser: currentUser?.name || 'Jane Doe',
+      assignedUserId: currentUser?.id || 'usr-1',
     });
 
-    setTasks((prev) => [created, ...prev]);
     setIsCreateModalOpen(false);
     reset();
     setToastMessage(`Task "${created.title}" created successfully!`);
+    await loadTasks();
   };
 
   const handleEditTask = async (data: CreateTaskFormData) => {
     if (!editingTask) return;
-    const updated = await taskService.updateTask(editingTask.id, {
+    await adminTaskService.updateTask(editingTask.id, {
       title: data.title,
       description: data.description || '',
       category: data.category as TaskCategory,
@@ -149,27 +183,27 @@ export const TasksPage = () => {
       dueDate: data.dueDate,
     });
 
-    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     setEditingTask(null);
     setToastMessage('Task updated successfully!');
+    await loadTasks();
   };
 
   const handleDeleteSingle = async () => {
     if (!deletingTask) return;
-    await taskService.deleteTask(deletingTask.id);
-    setTasks((prev) => prev.filter((t) => t.id !== deletingTask.id));
+    await adminTaskService.deleteTask(deletingTask.id);
     setDeletingTask(null);
     setToastMessage('Task deleted successfully!');
+    await loadTasks();
   };
 
   const handleBulkDelete = async () => {
     for (const id of selectedTaskIds) {
-      await taskService.deleteTask(id);
+      await adminTaskService.deleteTask(id);
     }
-    setTasks((prev) => prev.filter((t) => !selectedTaskIds.includes(t.id)));
     setSelectedTaskIds([]);
     setIsBulkDeleteOpen(false);
     setToastMessage(`${selectedTaskIds.length} tasks deleted successfully!`);
+    await loadTasks();
   };
 
   const toggleSelectAll = () => {
@@ -193,9 +227,11 @@ export const TasksPage = () => {
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Task Management</h1>
+          <h1 className={styles.title}>{isAdmin ? 'Tasks Overview' : 'My Assigned Tasks'}</h1>
           <p className={styles.subtitle}>
-            Organize, prioritize, and track deliverables across your team
+            {isAdmin
+              ? 'Organize, prioritize, and track deliverables across your team'
+              : `Welcome back, ${currentUser?.name}! View and update your active task assignments.`}
           </p>
         </div>
 
@@ -368,14 +404,14 @@ export const TasksPage = () => {
                     />
                   </td>
                   <td className={styles.td}>
-                    <div
+                    <Link
+                      to={`/tasks/${t.id}`}
                       className={styles.taskTitle}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/tasks/${t.id}`)}
+                      style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}
                     >
                       <span className={styles.taskTitleHover}>{t.title}</span>
                       <span className={styles.taskId}>{t.id}</span>
-                    </div>
+                    </Link>
                   </td>
                   <td className={styles.td}>
                     <StatusBadge priority={t.priority} size="sm" />

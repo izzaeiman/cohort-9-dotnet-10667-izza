@@ -13,8 +13,10 @@ namespace Backend.DTOs
         [StringLength(2000, ErrorMessage = "Description cannot exceed 2000 characters")]
         public string? Description { get; set; }
 
+        [EnumDataType(typeof(TaskStatusEnum), ErrorMessage = "Invalid status value")]
         public TaskStatusEnum Status { get; set; } = TaskStatusEnum.Pending;
 
+        [EnumDataType(typeof(TaskPriorityEnum), ErrorMessage = "Invalid priority value")]
         public TaskPriorityEnum Priority { get; set; } = TaskPriorityEnum.Medium;
 
         [StringLength(100, ErrorMessage = "Category cannot exceed 100 characters")]

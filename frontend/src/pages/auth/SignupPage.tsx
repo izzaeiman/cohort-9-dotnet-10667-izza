@@ -5,7 +5,7 @@ import { type SignupFormData } from '../../utils/signupSchema';
 import SignupForm from '../../components/forms/SignupForm';
 import WorkFlowLogo from '../../components/ui/WorkFlowLogo';
 import LoginIllustration from '../../components/ui/LoginIllustration';
-import { authService } from '../../services/authService';
+import useAuth from '../../hooks/useAuth';
 import styles from './Signup.module.css';
 
 const FEATURES = [
@@ -16,6 +16,7 @@ const FEATURES = [
 
 export const SignupPage = () => {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
@@ -23,8 +24,12 @@ export const SignupPage = () => {
     setServerError('');
     setIsLoading(true);
     try {
-      await authService.signup(data);
-      navigate('/dashboard', { replace: true });
+      const registeredUser = await signup(data);
+      if (registeredUser.role === 'Admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setServerError(err.message);

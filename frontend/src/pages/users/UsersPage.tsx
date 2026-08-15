@@ -21,7 +21,7 @@ import styles from './Users.module.css';
 const inviteUserSchema = z.object({
   name: z.string().min(1, 'Full name is required'),
   email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['Administrator', 'Regular User']),
+  role: z.string().min(1, 'Role is required'),
   department: z.string().min(1, 'Department is required'),
   phone: z.string().optional(),
 });
@@ -88,7 +88,14 @@ export const UsersPage = () => {
     });
   }, [users, searchTerm, roleFilter, statusFilter]);
 
-  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredUsers.slice(start, start + PAGE_SIZE);
@@ -98,7 +105,7 @@ export const UsersPage = () => {
     const newUser = await userService.inviteUser({
       name: data.name,
       email: data.email,
-      role: data.role,
+      role: data.role as any,
       department: data.department,
       phone: data.phone || '+1 (555) 000-0000',
     });
@@ -114,7 +121,7 @@ export const UsersPage = () => {
     const updated = await userService.updateUser(editingUser.id, {
       name: data.name,
       email: data.email,
-      role: data.role,
+      role: data.role as any,
       department: data.department,
       phone: data.phone || editingUser.phone,
     });
@@ -420,7 +427,7 @@ export const UsersPage = () => {
             id="inv-email"
             label="Email Address"
             type="email"
-            placeholder="charlie@example.com"
+            placeholder="charlie@example.test"
             error={errors.email?.message}
             {...register('email')}
           />

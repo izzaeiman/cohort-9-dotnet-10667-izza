@@ -1,41 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   MdArrowBack,
   MdEdit,
   MdDelete,
+  MdAssignmentInd,
   MdAttachFile,
   MdSend,
   MdDownload,
 } from 'react-icons/md';
 
 import AppButton from '../../components/ui/AppButton';
-import AppInput from '../../components/ui/AppInput';
-import AppSelect from '../../components/ui/AppSelect';
 import StatusBadge from '../../components/ui/StatusBadge';
+import TaskDeadlineBadge from '../../components/ui/TaskDeadlineBadge';
 import AvatarGroup from '../../components/ui/AvatarGroup';
-import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PageLoader from '../../components/common/PageLoader';
-import { taskService } from '../../services/taskService';
+
+import EditTaskModal from '../../components/admin/EditTaskModal';
+import AssignTaskModal from '../../components/admin/AssignTaskModal';
+
+import { adminTaskService } from '../../services/adminTaskService';
 import type { DetailedTaskItem, TaskComment } from '../../data/tasks';
-import type { TaskPriority, TaskCategory, TaskStatus } from '../../types/dashboard.types';
+import { formatDateDisplay } from '../../utils/deadlineHelpers';
 import styles from './TaskDetail.module.css';
-
-const editTaskSchema = z.object({
-  title: z.string().min(1, 'Task title is required').min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(1, 'Description is required'),
-  category: z.enum(['Frontend', 'Backend', 'UI/UX Design', 'DevOps', 'Database']),
-  priority: z.enum(['high', 'medium', 'low']),
-  status: z.enum(['completed', 'in_progress', 'pending', 'overdue']),
-  dueDate: z.string().min(1, 'Due date is required'),
-});
-
-type EditTaskFormData = z.infer<typeof editTaskSchema>;
 
 export const TaskDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,51 +33,38 @@ export const TaskDetailPage = () => {
   const [task, setTask] = useState<DetailedTaskItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<EditTaskFormData>({
-    resolver: zodResolver(editTaskSchema),
-  });
+  const loadTask = async () => {
+    if (!id) {
+      setTask(null);
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const data = await adminTaskService.getTaskById(id);
+      setTask(data);
+    } catch {
+      setTask(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!id) return;
-    let isMounted = true;
-    taskService
-      .getTaskById(id)
-      .then((data) => {
-        if (isMounted) {
-          if (data) {
-            setTask(data);
-            reset({
-              title: data.title,
-              description: data.description,
-              category: data.category as TaskCategory,
-              priority: data.priority as TaskPriority,
-              status: data.status as TaskStatus,
-              dueDate: data.dueDate,
-            });
-          }
-          setIsLoading(false);
-        }
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [id, reset]);
+    loadTask();
+  }, [id]);
 
   if (isLoading) return <PageLoader />;
 
   if (!task) {
     return (
       <div className={styles.page}>
-        <button type="button" className={styles.backBtn} onClick={() => navigate('/tasks')}>
+        <button type="button" className={styles.backBtn} onClick={() => navigate('/admin/tasks')}>
           <MdArrowBack size={18} /> Back to Tasks
         </button>
         <div style={{ padding: '40px', textAlign: 'center' }}>
@@ -99,45 +75,53 @@ export const TaskDetailPage = () => {
     );
   }
 
-  const handleUpdateTask = async (data: EditTaskFormData) => {
-    const updated = await taskService.updateTask(task.id, data);
-    setTask(updated);
-    setIsEditModalOpen(false);
-    setToastMessage('Task details updated successfully!');
-  };
-
   const handleDeleteTask = async () => {
-    await taskService.deleteTask(task.id);
+    await adminTaskService.deleteTask(task.id);
     setIsDeleteOpen(false);
-    navigate('/tasks');
+    navigate('/admin/tasks');
   };
 
-  const handleAddComment = (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCommentText.trim()) return;
 
     const newComment: TaskComment = {
       id: `c-${Date.now()}`,
-      author: 'Jane Doe',
+      author: 'Izza Eiman (Admin)',
       avatar: 'https://i.pravatar.cc/150?img=68',
       content: newCommentText.trim(),
       createdAt: 'Just now',
     };
 
-    setTask((prev) => (prev ? { ...prev, comments: [...prev.comments, newComment] } : null));
-    setNewCommentText('');
-    setToastMessage('Comment posted!');
+    const updatedComments = [...task.comments, newComment];
+
+    try {
+      const updatedTask = await adminTaskService.updateTask(task.id, { comments: updatedComments });
+      setTask(updatedTask);
+      setNewCommentText('');
+      setToastMessage('Comment posted successfully!');
+    } catch (err: any) {
+      setToastMessage(err.message || 'Failed to post comment.');
+    }
   };
 
   return (
     <div className={styles.page}>
       {/* Top Bar Navigation & Actions */}
       <div className={styles.topBar}>
-        <button type="button" className={styles.backBtn} onClick={() => navigate('/tasks')}>
+        <button type="button" className={styles.backBtn} onClick={() => navigate(-1)}>
           <MdArrowBack size={18} /> Back to Tasks
         </button>
 
         <div className={styles.actionRow}>
+          <AppButton
+            variant="outlined"
+            size="sm"
+            leftIcon={<MdAssignmentInd size={16} />}
+            onClick={() => setIsAssignModalOpen(true)}
+          >
+            Assign / Reassign
+          </AppButton>
           <AppButton
             variant="outlined"
             size="sm"
@@ -170,16 +154,17 @@ export const TaskDetailPage = () => {
               <StatusBadge priority={task.priority} size="md" />
               <span
                 style={{
-                  background: '#F8F8F8',
+                  background: 'var(--surface-secondary, #F8F8F8)',
                   padding: '4px 10px',
                   borderRadius: '6px',
                   fontSize: '0.8rem',
                   fontWeight: 600,
-                  color: '#666',
+                  color: 'var(--text-secondary, #666)',
                 }}
               >
                 {task.category}
               </span>
+              <TaskDeadlineBadge task={task} />
             </div>
           </div>
 
@@ -216,7 +201,9 @@ export const TaskDetailPage = () => {
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#888', fontSize: '0.875rem' }}>No attachments uploaded yet.</p>
+              <p style={{ color: 'var(--text-secondary, #888)', fontSize: '0.875rem' }}>
+                No attachments uploaded yet.
+              </p>
             )}
           </div>
 
@@ -253,20 +240,55 @@ export const TaskDetailPage = () => {
           </div>
         </div>
 
-        {/* Right Column: Metadata Sidebar */}
+        {/* Right Column: Detailed Metadata Sidebar */}
         <div className={styles.card} style={{ height: 'fit-content' }}>
-          <h3 className={styles.sectionHeading} style={{ borderBottom: '1px solid #F0F0F0', paddingBottom: '12px' }}>
-            Task Details
+          <h3
+            className={styles.sectionHeading}
+            style={{
+              borderBottom: '1px solid var(--border, #F0F0F0)',
+              paddingBottom: '12px',
+            }}
+          >
+            Task Metadata
           </h3>
 
           <div className={styles.metaRow}>
-            <span className={styles.metaLabel}>Assignees</span>
-            <AvatarGroup assignees={task.assignees} size={30} />
+            <span className={styles.metaLabel}>Assigned User</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AvatarGroup assignees={task.assignees} size={28} />
+              <span className={styles.metaVal}>{task.assignedUser}</span>
+            </div>
           </div>
 
           <div className={styles.metaRow}>
-            <span className={styles.metaLabel}>Due Date</span>
-            <span className={styles.metaVal}>{task.dueDate}</span>
+            <span className={styles.metaLabel}>Project</span>
+            <span className={styles.metaVal}>{task.project}</span>
+          </div>
+
+          <div className={styles.metaRow}>
+            <span className={styles.metaLabel}>Start Date & Time</span>
+            <span className={styles.metaVal}>
+              {formatDateDisplay(task.startDate, task.startTime)}
+            </span>
+          </div>
+
+          <div className={styles.metaRow}>
+            <span className={styles.metaLabel}>Due Date & Time</span>
+            <span className={styles.metaVal}>
+              {formatDateDisplay(task.dueDate, task.dueTime)}
+            </span>
+          </div>
+
+          {task.timeLimit && (
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>Time Limit</span>
+              <span className={styles.metaVal}>{task.timeLimit} Days</span>
+            </div>
+          )}
+
+          <div className={styles.metaRow}>
+            <span className={styles.metaLabel}>Time Remaining</span>
+            <TaskDeadlineBadge task={task} />
           </div>
 
           <div className={styles.metaRow}>
@@ -282,81 +304,20 @@ export const TaskDetailPage = () => {
       </div>
 
       {/* Edit Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Task">
-        <form onSubmit={handleSubmit(handleUpdateTask)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <AppInput
-            id="edit-title"
-            label="Task Title"
-            error={errors.title?.message}
-            {...register('title')}
-          />
+      <EditTaskModal
+        isOpen={isEditModalOpen}
+        task={task}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={loadTask}
+      />
 
-          <AppInput
-            id="edit-desc"
-            label="Description"
-            error={errors.description?.message}
-            {...register('description')}
-          />
-
-          <AppSelect
-            id="edit-category"
-            label="Category"
-            options={[
-              { value: 'Frontend', label: 'Frontend' },
-              { value: 'Backend', label: 'Backend' },
-              { value: 'UI/UX Design', label: 'UI/UX Design' },
-              { value: 'DevOps', label: 'DevOps' },
-              { value: 'Database', label: 'Database' },
-            ]}
-            error={errors.category?.message}
-            {...register('category')}
-          />
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <AppSelect
-              id="edit-priority"
-              label="Priority"
-              options={[
-                { value: 'high', label: 'High' },
-                { value: 'medium', label: 'Medium' },
-                { value: 'low', label: 'Low' },
-              ]}
-              error={errors.priority?.message}
-              {...register('priority')}
-            />
-
-            <AppSelect
-              id="edit-status"
-              label="Status"
-              options={[
-                { value: 'in_progress', label: 'In Progress' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'completed', label: 'Completed' },
-                { value: 'overdue', label: 'Overdue' },
-              ]}
-              error={errors.status?.message}
-              {...register('status')}
-            />
-          </div>
-
-          <AppInput
-            id="edit-duedate"
-            label="Due Date"
-            type="date"
-            error={errors.dueDate?.message}
-            {...register('dueDate')}
-          />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-            <AppButton type="button" variant="outlined" size="md" onClick={() => setIsEditModalOpen(false)}>
-              Cancel
-            </AppButton>
-            <AppButton type="submit" variant="primary" size="md" isLoading={isSubmitting}>
-              Save Changes
-            </AppButton>
-          </div>
-        </form>
-      </Modal>
+      {/* Assign Modal */}
+      <AssignTaskModal
+        isOpen={isAssignModalOpen}
+        task={task}
+        onClose={() => setIsAssignModalOpen(false)}
+        onSuccess={loadTask}
+      />
 
       {/* Delete Confirmation */}
       <ConfirmationDialog
@@ -365,7 +326,7 @@ export const TaskDetailPage = () => {
         onConfirm={handleDeleteTask}
         title="Delete Task"
         message={`Are you sure you want to delete "${task.title}" (${task.id})? This action cannot be undone.`}
-        confirmLabel="Delete Task"
+        confirmText="Delete Task"
         isDanger
       />
 

@@ -301,4 +301,5 @@
   .mobileMenuBtn, .menuBtn { display: flex; }
   .searchWrap { display: none; }
   .userInfo { display: none; }
+  .breadcrumb, .breadcrumbs { display: none; }
 }

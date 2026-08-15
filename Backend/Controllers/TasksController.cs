@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Backend.DTOs;
+using Backend.Models;
 using Backend.Services;
 
 namespace Backend.Controllers
@@ -166,7 +167,7 @@ namespace Backend.Controllers
 
         private string GetUserRole()
         {
-            return User.FindFirstValue(ClaimTypes.Role) ?? "Regular User";
+            return User.FindFirstValue(ClaimTypes.Role) ?? UserRoles.RegularUser;
         }
     }
 }

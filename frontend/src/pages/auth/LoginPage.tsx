@@ -5,7 +5,7 @@ import { type LoginFormData } from '../../utils/loginSchema';
 import LoginForm from '../../components/forms/LoginForm';
 import WorkFlowLogo from '../../components/ui/WorkFlowLogo';
 import LoginIllustration from '../../components/ui/LoginIllustration';
-import { authService } from '../../services/authService';
+import useAuth from '../../hooks/useAuth';
 import styles from './Login.module.css';
 
 const FEATURES = [
@@ -16,6 +16,7 @@ const FEATURES = [
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
@@ -23,8 +24,13 @@ export const LoginPage = () => {
     setServerError('');
     setIsLoading(true);
     try {
-      await authService.login(data);
-      navigate('/dashboard', { replace: true });
+      const authenticatedUser = await login(data);
+      // Phase 6: Dynamic Role-Based Login Redirection
+      if (authenticatedUser.role === 'Admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setServerError(err.message);

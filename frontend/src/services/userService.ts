@@ -4,6 +4,11 @@ const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let usersStore: UserItem[] = [...INITIAL_USERS];
 
+let lastUserId = Math.max(...usersStore.map(u => {
+  const num = parseInt(u.id.replace('usr-', ''), 10);
+  return isNaN(num) ? 0 : num;
+}), 5);
+
 export const userService = {
   /**
    * Fetch all user members
@@ -20,12 +25,13 @@ export const userService = {
   async inviteUser(data: Omit<UserItem, 'id' | 'status' | 'lastActive' | 'avatar'>): Promise<UserItem> {
     // TODO: ASP.NET Core API Integration -> POST /api/users/invite
     await delay();
+    lastUserId++;
     const newUser: UserItem = {
       ...data,
-      id: `usr-${usersStore.length + 1}`,
+      id: `usr-${lastUserId}`,
       status: 'pending',
       lastActive: 'Invited',
-      avatar: `https://i.pravatar.cc/150?img=${(usersStore.length % 50) + 12}`,
+      avatar: `https://i.pravatar.cc/150?img=${(lastUserId % 50) + 12}`,
     };
     usersStore = [newUser, ...usersStore];
     return newUser;

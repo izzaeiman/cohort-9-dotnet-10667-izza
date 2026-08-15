@@ -366,5 +366,91 @@ namespace Backend.Tests.Services
             Assert.Equal("Regular users cannot assign tasks to other users.", ex.Message);
             _userRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<string>()), Times.Never);
         }
+
+        [Fact]
+        public async Task Test22_UpdateTaskAsync_EmptyAssignedUserId_RetainsExistingAssignee()
+        {
+            // Arrange
+            var existingTask = new TaskItem
+            {
+                Id = 10,
+                Title = "Original Title",
+                AssignedUserId = "usr-regular"
+            };
+
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(10)).ReturnsAsync(existingTask);
+            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-regular")).ReturnsAsync(new User { Id = "usr-regular", Name = "Regular" });
+            _taskRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<TaskItem>())).ReturnsAsync((TaskItem t) => t);
+
+            var updateDto = new UpdateTaskDto
+            {
+                Title = "Updated Title",
+                AssignedUserId = string.Empty
+            };
+
+            // Act
+            var result = await _taskService.UpdateTaskAsync(10, updateDto, "usr-regular", UserRoles.RegularUser);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("usr-regular", result.AssignedUserId); // Stays regular, not overwritten by empty
+            _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.AssignedUserId == "usr-regular")), Times.Once);
+        }
+
+        [Fact]
+        public async Task Test23_UpdateTaskAsync_WhitespaceAssignedUserId_RetainsExistingAssignee()
+        {
+            // Arrange
+            var existingTask = new TaskItem
+            {
+                Id = 10,
+                Title = "Original Title",
+                AssignedUserId = "usr-regular"
+            };
+
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(10)).ReturnsAsync(existingTask);
+            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-regular")).ReturnsAsync(new User { Id = "usr-regular", Name = "Regular" });
+            _taskRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<TaskItem>())).ReturnsAsync((TaskItem t) => t);
+
+            var updateDto = new UpdateTaskDto
+            {
+                Title = "Updated Title",
+                AssignedUserId = "   "
+            };
+
+            // Act
+            var result = await _taskService.UpdateTaskAsync(10, updateDto, "usr-regular", UserRoles.RegularUser);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("usr-regular", result.AssignedUserId); // Stays regular, not overwritten by whitespace
+            _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.AssignedUserId == "usr-regular")), Times.Once);
+        }
+
+        [Theory]
+        [InlineData(null, "Regular User")]
+        [InlineData("", "Regular User")]
+        [InlineData("   ", "Regular User")]
+        [InlineData("usr-1", null)]
+        [InlineData("usr-1", "")]
+        [InlineData("usr-1", "   ")]
+        public async Task Test24_TaskService_PublicMethods_ValidateIdentity_ThrowArgumentException(string? currentUserId, string? currentUserRole)
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.GetTasksAsync(currentUserId!, currentUserRole!));
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.GetTaskByIdAsync(1, currentUserId!, currentUserRole!));
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.CreateTaskAsync(new CreateTaskDto { Title = "Task" }, currentUserId!, currentUserRole!));
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.UpdateTaskAsync(1, new UpdateTaskDto { Title = "Task" }, currentUserId!, currentUserRole!));
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.DeleteTaskAsync(1, currentUserId!, currentUserRole!));
+        }
     }
 }

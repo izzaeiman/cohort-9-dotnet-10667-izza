@@ -25,12 +25,25 @@ namespace Backend.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        private static void ValidateIdentity(string currentUserId, string currentUserRole)
+        {
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                throw new ArgumentException("User ID cannot be null, empty, or whitespace.", nameof(currentUserId));
+            }
+            if (string.IsNullOrWhiteSpace(currentUserRole))
+            {
+                throw new ArgumentException("User role cannot be null, empty, or whitespace.", nameof(currentUserRole));
+            }
+        }
+
         public async Task<IEnumerable<TaskDto>> GetTasksAsync(string currentUserId, string currentUserRole)
         {
+            ValidateIdentity(currentUserId, currentUserRole);
+
             _logger.LogInformation("Retrieving tasks for UserId: {UserId}, Role: {Role}", currentUserId, currentUserRole);
 
             IEnumerable<TaskItem> tasks;
-            // Finding #3: use centralized UserRoles constant
             if (currentUserRole == UserRoles.Administrator)
             {
                 tasks = await _taskRepository.GetAllAsync();
@@ -45,6 +58,8 @@ namespace Backend.Services
 
         public async Task<TaskDto?> GetTaskByIdAsync(int id, string currentUserId, string currentUserRole)
         {
+            ValidateIdentity(currentUserId, currentUserRole);
+
             var task = await _taskRepository.GetByIdAsync(id);
             if (task == null)
             {
@@ -52,7 +67,6 @@ namespace Backend.Services
                 return null;
             }
 
-            // Finding #3: use centralized UserRoles constant
             if (currentUserRole != UserRoles.Administrator && task.AssignedUserId != currentUserId)
             {
                 _logger.LogWarning(
@@ -66,9 +80,10 @@ namespace Backend.Services
 
         public async Task<TaskDto> CreateTaskAsync(CreateTaskDto dto, string currentUserId, string currentUserRole)
         {
+            ValidateIdentity(currentUserId, currentUserRole);
+
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // Finding #4: reject null, empty, or whitespace-only titles before any DB call
             if (string.IsNullOrWhiteSpace(dto.Title))
                 throw new ArgumentException("Task title cannot be null, empty, or whitespace.", nameof(dto));
 
@@ -78,8 +93,6 @@ namespace Backend.Services
                 targetAssignedUserId = currentUserId;
             }
 
-            // Finding #5: enforce Regular User authorization BEFORE any unnecessary DB lookup
-            // Finding #3: use centralized UserRoles constant
             if (currentUserRole != UserRoles.Administrator && targetAssignedUserId != currentUserId)
             {
                 _logger.LogWarning(
@@ -88,7 +101,6 @@ namespace Backend.Services
                 throw new UnauthorizedAccessException("Regular users cannot assign tasks to other users.");
             }
 
-            // Validate assigned user exists (after authorization check)
             var assignedUser = await _userRepository.GetByIdAsync(targetAssignedUserId);
             if (assignedUser == null)
             {
@@ -121,9 +133,10 @@ namespace Backend.Services
 
         public async Task<TaskDto?> UpdateTaskAsync(int id, UpdateTaskDto dto, string currentUserId, string currentUserRole)
         {
+            ValidateIdentity(currentUserId, currentUserRole);
+
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // Finding #4: reject null, empty, or whitespace-only titles before any DB call
             if (string.IsNullOrWhiteSpace(dto.Title))
                 throw new ArgumentException("Task title cannot be null, empty, or whitespace.", nameof(dto));
 
@@ -134,8 +147,6 @@ namespace Backend.Services
                 return null;
             }
 
-            // Authorization: Regular User cannot update tasks they don't own
-            // Finding #3: use centralized UserRoles constant
             if (currentUserRole != UserRoles.Administrator && existingTask.AssignedUserId != currentUserId)
             {
                 _logger.LogWarning(
@@ -144,27 +155,30 @@ namespace Backend.Services
                 throw new UnauthorizedAccessException("You do not have permission to update this task.");
             }
 
-            string? targetAssignedUserId = dto.AssignedUserId ?? existingTask.AssignedUserId;
-            if (!string.IsNullOrEmpty(targetAssignedUserId))
-            {
-                // Finding #5: for Regular Users, enforce re-assignment restriction BEFORE the DB lookup
-                if (currentUserRole != UserRoles.Administrator && targetAssignedUserId != currentUserId)
-                {
-                    _logger.LogWarning(
-                        "Forbidden task re-assignment attempt: Regular User {UserId} attempted to assign Task ID {TaskId} to {AssignedUserId}.",
-                        currentUserId, id, targetAssignedUserId);
-                    throw new UnauthorizedAccessException("Regular users cannot reassign tasks to other users.");
-                }
+            string? targetAssignedUserId = string.IsNullOrWhiteSpace(dto.AssignedUserId)
+                ? existingTask.AssignedUserId
+                : dto.AssignedUserId;
 
-                // Validate assigned user exists (after authorization check)
-                var assignedUser = await _userRepository.GetByIdAsync(targetAssignedUserId);
-                if (assignedUser == null)
-                {
-                    _logger.LogWarning(
-                        "Task update failed: Assigned user ID '{AssignedUserId}' does not exist.",
-                        targetAssignedUserId);
-                    throw new ArgumentException($"Assigned user with ID '{targetAssignedUserId}' does not exist.");
-                }
+            if (string.IsNullOrWhiteSpace(targetAssignedUserId))
+            {
+                throw new ArgumentException("Task must have a valid assignee.", nameof(dto));
+            }
+
+            if (currentUserRole != UserRoles.Administrator && targetAssignedUserId != currentUserId)
+            {
+                _logger.LogWarning(
+                    "Forbidden task re-assignment attempt: Regular User {UserId} attempted to assign Task ID {TaskId} to {AssignedUserId}.",
+                    currentUserId, id, targetAssignedUserId);
+                throw new UnauthorizedAccessException("Regular users cannot reassign tasks to other users.");
+            }
+
+            var assignedUser = await _userRepository.GetByIdAsync(targetAssignedUserId);
+            if (assignedUser == null)
+            {
+                _logger.LogWarning(
+                    "Task update failed: Assigned user ID '{AssignedUserId}' does not exist.",
+                    targetAssignedUserId);
+                throw new ArgumentException($"Assigned user with ID '{targetAssignedUserId}' does not exist.");
             }
 
             existingTask.Title = dto.Title.Trim();
@@ -186,6 +200,8 @@ namespace Backend.Services
 
         public async Task<bool> DeleteTaskAsync(int id, string currentUserId, string currentUserRole)
         {
+            ValidateIdentity(currentUserId, currentUserRole);
+
             var existingTask = await _taskRepository.GetByIdAsync(id);
             if (existingTask == null)
             {
@@ -193,7 +209,6 @@ namespace Backend.Services
                 return false;
             }
 
-            // Finding #3: use centralized UserRoles constant
             if (currentUserRole != UserRoles.Administrator && existingTask.AssignedUserId != currentUserId)
             {
                 _logger.LogWarning(

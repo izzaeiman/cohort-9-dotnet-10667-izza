@@ -1,65 +1,60 @@
-import { INITIAL_USERS, type UserItem } from '../data/users';
-
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
-
-let usersStore: UserItem[] = [...INITIAL_USERS];
-
-let lastUserId = Math.max(...usersStore.map(u => {
-  const num = parseInt(u.id.replace('usr-', ''), 10);
-  return isNaN(num) ? 0 : num;
-}), 5);
+import apiClient from './api';
+import type { UserItem } from '../data/users';
 
 export const userService = {
   /**
-   * Fetch all user members
+   * Fetch all user members from backend API
    */
   async getUsers(): Promise<UserItem[]> {
-    // TODO: ASP.NET Core API Integration -> GET /api/users
-    await delay();
-    return [...usersStore];
+    const response = await apiClient.get('/users');
+    return response.data.map((u: any): UserItem => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: (u.role === 'Administrator' ? 'Administrator' : 'Regular User') as 'Administrator' | 'Regular User',
+      status: 'active',
+      lastActive: 'Active now',
+      avatar: u.role === 'Administrator' ? 'https://i.pravatar.cc/150?img=68' : 'https://i.pravatar.cc/150?img=33',
+      department: u.role === 'Administrator' ? 'Management' : 'Development',
+      phone: '+1 555-0199',
+    }));
   },
 
   /**
-   * Invite a new user member
+   * Invite a new user member (Mock fallback)
    */
   async inviteUser(data: Omit<UserItem, 'id' | 'status' | 'lastActive' | 'avatar'>): Promise<UserItem> {
-    // TODO: ASP.NET Core API Integration -> POST /api/users/invite
-    await delay();
-    lastUserId++;
     const newUser: UserItem = {
       ...data,
-      id: `usr-${lastUserId}`,
+      id: `usr-${Math.floor(Math.random() * 1000)}`,
       status: 'pending',
       lastActive: 'Invited',
-      avatar: `https://i.pravatar.cc/150?img=${(lastUserId % 50) + 12}`,
+      avatar: 'https://i.pravatar.cc/150?img=12',
     };
-    usersStore = [newUser, ...usersStore];
     return newUser;
   },
 
   /**
-   * Update user details
+   * Update user details (Mock fallback)
    */
   async updateUser(id: string, data: Partial<UserItem>): Promise<UserItem> {
-    // TODO: ASP.NET Core API Integration -> PUT /api/users/{id}
-    await delay();
-    const index = usersStore.findIndex((u) => u.id === id);
-    if (index === -1) {
-      throw new Error(`User ${id} not found`);
-    }
-    const updated = { ...usersStore[index], ...data };
-    usersStore[index] = updated;
-    return updated;
+    return {
+      id,
+      name: data.name || '',
+      email: data.email || '',
+      role: (data.role || 'Regular User') as 'Administrator' | 'Regular User',
+      status: data.status || 'active',
+      lastActive: 'Active now',
+      avatar: 'https://i.pravatar.cc/150?img=33',
+      department: data.department || 'Development',
+      phone: data.phone || '+1 555-0199',
+    };
   },
 
   /**
-   * Delete a user member
+   * Delete a user member (Mock fallback)
    */
   async deleteUser(id: string): Promise<boolean> {
-    // TODO: ASP.NET Core API Integration -> DELETE /api/users/{id}
-    await delay();
-    const initialLength = usersStore.length;
-    usersStore = usersStore.filter((u) => u.id !== id);
-    return usersStore.length < initialLength;
+    return true;
   },
 };

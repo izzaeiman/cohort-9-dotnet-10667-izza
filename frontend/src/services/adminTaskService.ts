@@ -1,184 +1,192 @@
-import { INITIAL_TASKS, type DetailedTaskItem } from '../data/tasks';
-import { INITIAL_USERS } from '../data/users';
-
-const STORAGE_KEY = 'workflow_admin_tasks_store';
-
-const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
+import apiClient from './api';
+import type { DetailedTaskItem } from '../data/tasks';
+import type { TaskPriority, TaskStatus, TaskCategory } from '../types/dashboard.types';
 
 type TaskChangeListener = () => void;
 const listeners: Set<TaskChangeListener> = new Set();
 
-const loadTasksFromStorage = (): DetailedTaskItem[] => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    } catch {
-      // Fallback to INITIAL_TASKS
-    }
-  }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_TASKS));
-  return [...INITIAL_TASKS];
-};
-
-const saveTasksToStorage = (tasks: DetailedTaskItem[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+const notifyListeners = () => {
   listeners.forEach((listener) => listener());
 };
 
-let memoryStore: DetailedTaskItem[] = loadTasksFromStorage();
+// Map backend task DTO to frontend DetailedTaskItem
+const mapBackendTaskToFrontend = (t: any): DetailedTaskItem => {
+  const stringId = `TSK-${t.id}`;
+
+  let status: TaskStatus = 'pending';
+  if (t.status === 'InProgress' || t.status === 1) status = 'in_progress';
+  else if (t.status === 'Completed' || t.status === 2) status = 'completed';
+  else if (t.status === 'Pending' || t.status === 0) status = 'pending';
+
+  let priority: TaskPriority = 'medium';
+  if (t.priority === 'Low' || t.priority === 0) priority = 'low';
+  else if (t.priority === 'Medium' || t.priority === 1) priority = 'medium';
+  else if (t.priority === 'High' || t.priority === 2) priority = 'high';
+
+  const dueDateStr = t.dueDate ? t.dueDate.split('T')[0] : '';
+  const createdDateStr = t.createdAt ? t.createdAt.split('T')[0] : '';
+  const modifiedDateStr = t.updatedAt ? t.updatedAt.split('T')[0] : '';
+
+  // Choose a consistent avatar image based on assigned user ID
+  const avatarNum = t.assignedUserId ? (parseInt(t.assignedUserId.replace(/\D/g, ''), 10) || 1) % 50 : 12;
+  const avatarUrl = `https://i.pravatar.cc/150?img=${avatarNum}`;
+
+  return {
+    id: stringId,
+    title: t.title,
+    description: t.description || '',
+    priority,
+    category: (t.category || 'General') as TaskCategory,
+    status,
+    dueDate: dueDateStr,
+    assignedUser: t.assignedUserName || 'Unassigned',
+    assignedUserId: t.assignedUserId || '',
+    project: 'Task Management System SaaS',
+    startDate: createdDateStr,
+    startTime: '09:00 AM',
+    dueTime: '05:00 PM',
+    timeLimit: 8,
+    createdDate: createdDateStr,
+    lastModified: modifiedDateStr,
+    assignees: t.assignedUserId ? [
+      {
+        id: t.assignedUserId,
+        name: t.assignedUserName || 'Unassigned',
+        avatar: avatarUrl,
+      }
+    ] : [],
+    comments: [],
+    attachments: [],
+  };
+};
+
+// Map frontend data to backend DTO format
+const mapFrontendToBackendCreate = (data: any) => {
+  let status = 'Pending';
+  if (data.status === 'in_progress') status = 'InProgress';
+  else if (data.status === 'completed') status = 'Completed';
+
+  let priority = 'Medium';
+  if (data.priority === 'low') priority = 'Low';
+  else if (data.priority === 'high') priority = 'High';
+
+  return {
+    title: data.title,
+    description: data.description || '',
+    status,
+    priority,
+    category: data.category || 'General',
+    dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+    assignedUserId: data.assignedUserId || null,
+  };
+};
+
+const mapFrontendToBackendUpdate = (data: any) => {
+  const result: any = {};
+  if (data.title !== undefined) result.title = data.title;
+  if (data.description !== undefined) result.description = data.description;
+  if (data.category !== undefined) result.category = data.category;
+
+  if (data.status !== undefined) {
+    let status = 'Pending';
+    if (data.status === 'in_progress') status = 'InProgress';
+    else if (data.status === 'completed') status = 'Completed';
+    result.status = status;
+  }
+
+  if (data.priority !== undefined) {
+    let priority = 'Medium';
+    if (data.priority === 'low') priority = 'Low';
+    else if (data.priority === 'high') priority = 'High';
+    result.priority = priority;
+  }
+
+  if (data.dueDate !== undefined) {
+    result.dueDate = data.dueDate ? new Date(data.dueDate).toISOString() : null;
+  }
+
+  if (data.assignedUserId !== undefined) {
+    result.assignedUserId = data.assignedUserId || null;
+  }
+
+  return result;
+};
 
 export const adminTaskService = {
-  /**
-   * Subscribe to task data changes across components
-   */
   subscribe(listener: TaskChangeListener): () => void {
     listeners.add(listener);
     return () => listeners.delete(listener);
   },
 
-  /**
-   * Fetch all tasks (Admin view)
-   */
   async getAllTasks(): Promise<DetailedTaskItem[]> {
-    await delay();
-    memoryStore = loadTasksFromStorage();
-    return [...memoryStore];
+    const response = await apiClient.get('/tasks');
+    return response.data.map(mapBackendTaskToFrontend);
   },
 
-  /**
-   * Fetch single task by ID
-   */
   async getTaskById(id: string): Promise<DetailedTaskItem | null> {
-    await delay();
-    memoryStore = loadTasksFromStorage();
-    const task = memoryStore.find((t) => t.id === id);
-    return task ? { ...task } : null;
+    const rawId = parseInt(id.replace('TSK-', ''), 10);
+    if (isNaN(rawId)) return null;
+
+    try {
+      const response = await apiClient.get(`/tasks/${rawId}`);
+      return mapBackendTaskToFrontend(response.data);
+    } catch {
+      return null;
+    }
   },
 
-  /**
-   * Create new task
-   */
   async createTask(
     newTaskData: Omit<
       DetailedTaskItem,
       'id' | 'createdDate' | 'lastModified' | 'comments' | 'attachments' | 'assignees'
     > & { assignedUserId?: string },
   ): Promise<DetailedTaskItem> {
-    await delay();
-    memoryStore = loadTasksFromStorage();
-
-    const assignedUserObj = INITIAL_USERS.find(
-      (u) => u.id === newTaskData.assignedUserId || u.name === newTaskData.assignedUser,
-    ) || {
-      id: newTaskData.assignedUserId || 'usr-1',
-      name: newTaskData.assignedUser || 'Unassigned',
-      avatar: 'https://i.pravatar.cc/150?img=68',
-    };
-
-    const maxId = Math.max(...memoryStore.map(t => {
-      const num = parseInt(t.id.replace('TSK-', ''), 10);
-      return isNaN(num) ? 0 : num;
-    }), 100);
-    const nextIdNumber = maxId + 1;
-    const newTask: DetailedTaskItem = {
-      ...newTaskData,
-      id: `TSK-${nextIdNumber}`,
-      assignedUser: assignedUserObj.name,
-      assignedUserId: assignedUserObj.id,
-      createdDate: new Date().toISOString().split('T')[0],
-      lastModified: new Date().toISOString().split('T')[0],
-      assignees: [
-        {
-          id: assignedUserObj.id,
-          name: assignedUserObj.name,
-          avatar: assignedUserObj.avatar,
-        },
-      ],
-      comments: [],
-      attachments: [],
-    };
-
-    memoryStore = [newTask, ...memoryStore];
-    saveTasksToStorage(memoryStore);
-    return newTask;
+    const payload = mapFrontendToBackendCreate(newTaskData);
+    const response = await apiClient.post('/tasks', payload);
+    const created = mapBackendTaskToFrontend(response.data);
+    notifyListeners();
+    return created;
   },
 
-  /**
-   * Update task by ID
-   */
   async updateTask(
     id: string,
     updatedData: Partial<DetailedTaskItem>,
   ): Promise<DetailedTaskItem> {
-    await delay();
-    memoryStore = loadTasksFromStorage();
-
-    const index = memoryStore.findIndex((t) => t.id === id);
-    if (index === -1) {
-      throw new Error(`Task with ID ${id} not found.`);
+    const rawId = parseInt(id.replace('TSK-', ''), 10);
+    if (isNaN(rawId)) {
+      throw new Error(`Invalid task ID: ${id}`);
     }
 
-    const current = memoryStore[index];
+    const payload = mapFrontendToBackendUpdate(updatedData);
 
-    let updatedAssignedUser = updatedData.assignedUser || current.assignedUser;
-    let updatedAssignedUserId = updatedData.assignedUserId || current.assignedUserId;
-    let updatedAssignees = current.assignees;
-
-    if (updatedData.assignedUserId || updatedData.assignedUser) {
-      const foundUser = INITIAL_USERS.find(
-        (u) => u.id === updatedData.assignedUserId || u.name === updatedData.assignedUser,
-      );
-      if (foundUser) {
-        updatedAssignedUser = foundUser.name;
-        updatedAssignedUserId = foundUser.id;
-        updatedAssignees = [
-          {
-            id: foundUser.id,
-            name: foundUser.name,
-            avatar: foundUser.avatar,
-          },
-        ];
-      }
+    // Check if the update is just comments (local-only property)
+    if (Object.keys(payload).length === 0 && updatedData.comments !== undefined) {
+      const current = await this.getTaskById(id);
+      if (!current) throw new Error(`Task with ID ${id} not found.`);
+      const updatedTask = { ...current, comments: updatedData.comments };
+      notifyListeners();
+      return updatedTask;
     }
 
-    const updatedTask: DetailedTaskItem = {
-      ...current,
-      ...updatedData,
-      assignedUser: updatedAssignedUser,
-      assignedUserId: updatedAssignedUserId,
-      assignees: updatedAssignees,
-      lastModified: new Date().toISOString().split('T')[0],
-    };
-
-    memoryStore[index] = updatedTask;
-    saveTasksToStorage(memoryStore);
-    return updatedTask;
+    const response = await apiClient.put(`/tasks/${rawId}`, payload);
+    const updated = mapBackendTaskToFrontend(response.data);
+    notifyListeners();
+    return updated;
   },
 
-  /**
-   * Delete task by ID
-   */
   async deleteTask(id: string): Promise<boolean> {
-    await delay();
-    memoryStore = loadTasksFromStorage();
+    const rawId = parseInt(id.replace('TSK-', ''), 10);
+    if (isNaN(rawId)) return false;
 
-    const initialLen = memoryStore.length;
-    memoryStore = memoryStore.filter((t) => t.id !== id);
-
-    if (memoryStore.length < initialLen) {
-      saveTasksToStorage(memoryStore);
+    try {
+      await apiClient.delete(`/tasks/${rawId}`);
+      notifyListeners();
       return true;
+    } catch {
+      return false;
     }
-    return false;
   },
 
-  /**
-   * Assign or Reassign task to a user
-   */
   async assignTask(
     taskId: string,
     userId: string,
@@ -188,30 +196,10 @@ export const adminTaskService = {
     newDueTime?: string,
     newTimeLimit?: number,
   ): Promise<DetailedTaskItem> {
-    await delay();
-    memoryStore = loadTasksFromStorage();
-
-    const task = memoryStore.find((t) => t.id === taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found.`);
-    }
-
-    const foundUser = INITIAL_USERS.find((u) => u.id === userId);
-    if (!foundUser) {
-      throw new Error(`User with ID ${userId} not found.`);
-    }
-
     const updated = await this.updateTask(taskId, {
-      assignedUser: foundUser.name,
-      assignedUserId: foundUser.id,
-      assignees: [{ id: foundUser.id, name: foundUser.name, avatar: foundUser.avatar }],
-      ...(newStartDate && { startDate: newStartDate }),
-      ...(newStartTime && { startTime: newStartTime }),
+      assignedUserId: userId,
       ...(newDueDate && { dueDate: newDueDate }),
-      ...(newDueTime && { dueTime: newDueTime }),
-      ...(newTimeLimit !== undefined && { timeLimit: newTimeLimit }),
     });
-
     return updated;
   },
 };

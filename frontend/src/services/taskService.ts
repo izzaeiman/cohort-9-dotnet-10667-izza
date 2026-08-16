@@ -1,81 +1,44 @@
-import { INITIAL_TASKS, type DetailedTaskItem } from '../data/tasks';
-
-// Simulated delay helper
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
-
-let tasksStore: DetailedTaskItem[] = [...INITIAL_TASKS];
-
-let lastTaskId = Math.max(...tasksStore.map(t => {
-  const num = parseInt(t.id.replace('TSK-', ''), 10);
-  return isNaN(num) ? 0 : num;
-}), 100);
+import { adminTaskService } from './adminTaskService';
+import type { DetailedTaskItem } from '../data/tasks';
 
 export const taskService = {
   /**
    * Fetch all tasks
    */
   async getTasks(): Promise<DetailedTaskItem[]> {
-    // TODO: ASP.NET Core API Integration -> GET /api/tasks
-    await delay();
-    return [...tasksStore];
+    return await adminTaskService.getAllTasks();
   },
 
   /**
    * Fetch single task by ID
    */
   async getTaskById(id: string): Promise<DetailedTaskItem | null> {
-    // TODO: ASP.NET Core API Integration -> GET /api/tasks/{id}
-    await delay();
-    const task = tasksStore.find((t) => t.id === id);
-    return task ? { ...task } : null;
+    return await adminTaskService.getTaskById(id);
   },
 
   /**
    * Create a new task
    */
-  async createTask(newTaskData: Omit<DetailedTaskItem, 'id' | 'createdDate' | 'lastModified' | 'comments' | 'attachments'>): Promise<DetailedTaskItem> {
-    // TODO: ASP.NET Core API Integration -> POST /api/tasks
-    await delay();
-    lastTaskId++;
-    const newTask: DetailedTaskItem = {
-      ...newTaskData,
-      id: `TSK-${lastTaskId}`,
-      createdDate: new Date().toISOString().split('T')[0],
-      lastModified: new Date().toISOString().split('T')[0],
-      comments: [],
-      attachments: [],
-    };
-    tasksStore = [newTask, ...tasksStore];
-    return newTask;
+  async createTask(
+    newTaskData: Omit<
+      DetailedTaskItem,
+      'id' | 'createdDate' | 'lastModified' | 'comments' | 'attachments'
+    > & { assignedUserId?: string }
+  ): Promise<DetailedTaskItem> {
+    return await adminTaskService.createTask(newTaskData);
   },
 
   /**
    * Update an existing task
    */
   async updateTask(id: string, updatedData: Partial<DetailedTaskItem>): Promise<DetailedTaskItem> {
-    // TODO: ASP.NET Core API Integration -> PUT /api/tasks/{id}
-    await delay();
-    const index = tasksStore.findIndex((t) => t.id === id);
-    if (index === -1) {
-      throw new Error(`Task with ID ${id} not found`);
-    }
-    const updatedTask = {
-      ...tasksStore[index],
-      ...updatedData,
-      lastModified: new Date().toISOString().split('T')[0],
-    };
-    tasksStore[index] = updatedTask;
-    return updatedTask;
+    return await adminTaskService.updateTask(id, updatedData);
   },
 
   /**
    * Delete a task by ID
    */
   async deleteTask(id: string): Promise<boolean> {
-    // TODO: ASP.NET Core API Integration -> DELETE /api/tasks/{id}
-    await delay();
-    const initialLength = tasksStore.length;
-    tasksStore = tasksStore.filter((t) => t.id !== id);
-    return tasksStore.length < initialLength;
+    return await adminTaskService.deleteTask(id);
   },
 };

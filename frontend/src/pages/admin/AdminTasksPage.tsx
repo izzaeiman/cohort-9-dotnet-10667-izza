@@ -25,7 +25,7 @@ import AssignTaskModal from '../../components/admin/AssignTaskModal';
 
 import type { DetailedTaskItem } from '../../data/tasks';
 import { adminTaskService } from '../../services/adminTaskService';
-import { INITIAL_USERS } from '../../data/users';
+import { userService } from '../../services/userService';
 import { INITIAL_PROJECTS } from '../../data/projects';
 import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
 
@@ -63,6 +63,9 @@ export const AdminTasksPage: React.FC = () => {
   const [assigningTask, setAssigningTask] = useState<DetailedTaskItem | null>(null);
   const [deletingTask, setDeletingTask] = useState<DetailedTaskItem | null>(null);
 
+  // Users State
+  const [users, setUsers] = useState<any[]>([]);
+
   // Fetch Tasks
   const loadTasks = async () => {
     try {
@@ -79,6 +82,9 @@ export const AdminTasksPage: React.FC = () => {
 
   useEffect(() => {
     loadTasks();
+    userService.getUsers()
+      .then(data => setUsers(data || []))
+      .catch(err => console.error('Failed to load users for filter', err));
     const unsubscribe = adminTaskService.subscribe(() => {
       loadTasks();
     });
@@ -334,7 +340,7 @@ export const AdminTasksPage: React.FC = () => {
               onChange={(e) => setUserFilter(e.target.value)}
             >
               <option value="all">All Users</option>
-              {INITIAL_USERS.map((u) => (
+              {users.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name}
                 </option>

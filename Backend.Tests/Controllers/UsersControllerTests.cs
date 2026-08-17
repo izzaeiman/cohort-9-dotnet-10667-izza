@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
@@ -20,6 +22,18 @@ namespace Backend.Tests.Controllers
         {
             _userRepositoryMock = new Mock<IUserRepository>();
             _controller = new UsersController(_userRepositoryMock.Object);
+
+            // Mock HttpContext and User
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "admin-1"),
+                new Claim(ClaimTypes.Role, "Administrator")
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
         }
 
         [Fact]

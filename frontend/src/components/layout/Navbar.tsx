@@ -175,7 +175,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
             />
             <div className={styles.userInfo}>
               <span className={styles.userName}>{user?.name || 'Guest User'}</span>
-              <span className={styles.userRole}>{user?.role || 'Member'}</span>
+              <span className={styles.userRole}>{user?.role || 'Regular User'}</span>
             </div>
             <MdExpandMore size={18} color="#888" aria-hidden="true" />
           </button>
@@ -198,8 +198,8 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
                     borderRadius: '9999px',
                     fontSize: '0.7rem',
                     fontWeight: 700,
-                    backgroundColor: user?.role === 'Admin' ? 'rgba(255, 122, 26, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                    color: user?.role === 'Admin' ? '#FF7A1A' : '#3B82F6',
+                    backgroundColor: user?.role === 'Administrator' ? 'rgba(255, 122, 26, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                    color: user?.role === 'Administrator' ? '#FF7A1A' : '#3B82F6',
                   }}
                 >
                   {user?.role} Role
@@ -207,7 +207,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
               </div>
 
               <Link
-                to={user?.role === 'Admin' ? '/admin/profile' : '/profile'}
+                to={user?.role === 'Administrator' ? '/admin/profile' : '/profile'}
                 className={styles.dropdownItem}
                 role="menuitem"
                 onClick={() => setIsUserDropdownOpen(false)}
@@ -216,7 +216,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
                 <span>My Profile</span>
               </Link>
               <Link
-                to={user?.role === 'Admin' ? '/admin/settings' : '/settings'}
+                to={user?.role === 'Administrator' ? '/admin/settings' : '/settings'}
                 className={styles.dropdownItem}
                 role="menuitem"
                 onClick={() => setIsUserDropdownOpen(false)}

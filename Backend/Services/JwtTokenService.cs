@@ -21,7 +21,10 @@ namespace Backend.Services
         public string GenerateToken(User user)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
-
+            if (string.IsNullOrWhiteSpace(user.Id)) throw new ArgumentException("User Id is required.", nameof(user));
+            if (string.IsNullOrWhiteSpace(user.Email)) throw new ArgumentException("User Email is required.", nameof(user));
+            if (string.IsNullOrWhiteSpace(user.Name)) throw new ArgumentException("User Name is required.", nameof(user));
+            if (string.IsNullOrWhiteSpace(user.Role)) throw new ArgumentException("User Role is required.", nameof(user));
             // Key must be configured — no hardcoded fallback in production
             var jwtKey = _configuration["Jwt:Key"]
                 ?? Environment.GetEnvironmentVariable("JWT_KEY")

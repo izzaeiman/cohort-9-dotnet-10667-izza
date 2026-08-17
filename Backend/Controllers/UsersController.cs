@@ -35,7 +35,7 @@ namespace Backend.Controllers
             {
                 Id = u.Id,
                 Name = u.Name,
-                Email = u.Email,
+                Email = User.IsInRole("Administrator") ? u.Email : string.Empty,
                 Role = u.Role
             });
 

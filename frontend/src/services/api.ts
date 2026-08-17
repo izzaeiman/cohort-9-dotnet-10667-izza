@@ -7,6 +7,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000,
 });
 
 // Automatically inject JWT token into all outgoing backend API requests
@@ -23,21 +24,25 @@ apiClient.interceptors.request.use(
   }
 );
 
+const handleUnauthorized = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('workflow_token');
+    localStorage.removeItem('workflow_user');
+    
+    // Avoid redirect loops if already on login/signup pages
+    const path = window.location.pathname;
+    if (path !== '/login' && path !== '/signup') {
+      window.location.href = '/login';
+    }
+  }
+};
+
 // Automatically handle 401 Unauthorized responses to clean up expired sessions
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('workflow_token');
-      localStorage.removeItem('workflow_user');
-      
-      // Avoid redirect loops if already on login/signup pages
-      if (typeof window !== 'undefined') {
-        const path = window.location.pathname;
-        if (path !== '/login' && path !== '/signup') {
-          window.location.href = '/login';
-        }
-      }
+    if (error?.response?.status === 401) {
+      handleUnauthorized();
     }
     return Promise.reject(error);
   }

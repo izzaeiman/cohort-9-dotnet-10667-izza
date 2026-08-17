@@ -35,7 +35,7 @@ export const profileService = {
         ...seeded,
         name: currentUser.name,
         email: currentUser.email,
-        role: (currentUser.role === 'Admin' ? 'Administrator' : 'Regular User') as any,
+        role: currentUser.role,
         avatar: currentUser.avatar
       };
       localStorage.setItem(storageKey, JSON.stringify(profile));
@@ -47,7 +47,7 @@ export const profileService = {
       id: currentUser.id,
       name: currentUser.name,
       email: currentUser.email,
-      role: (currentUser.role === 'Admin' ? 'Administrator' : 'Regular User') as any,
+      role: currentUser.role,
       department: currentUser.department || 'Engineering',
       phone: '',
       status: 'active',

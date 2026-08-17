@@ -143,6 +143,7 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Backend service terminated unexpectedly.");
+    throw;
 }
 finally
 {

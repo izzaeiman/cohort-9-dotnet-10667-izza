@@ -5,7 +5,7 @@ import Modal from '../common/Modal';
 import AppInput from '../ui/AppInput';
 import AppSelect from '../ui/AppSelect';
 import AppButton from '../ui/AppButton';
-import { INITIAL_USERS } from '../../data/users';
+import { userService } from '../../services/userService';
 import { INITIAL_PROJECTS } from '../../data/projects';
 import type { DetailedTaskItem } from '../../data/tasks';
 import { adminTaskService } from '../../services/adminTaskService';
@@ -28,6 +28,18 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoadingUsers(true);
+      userService.getUsers()
+        .then(data => setUsers(data || []))
+        .catch(err => console.error('Failed to load users for assignment', err))
+        .finally(() => setIsLoadingUsers(false));
+    }
+  }, [isOpen]);
 
   const {
     register,
@@ -43,7 +55,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
     if (task) {
       setValue('title', task.title);
       setValue('description', task.description || '');
-      setValue('assignedUserId', task.assignedUserId || 'usr-1');
+      setValue('assignedUserId', task.assignedUserId || '');
       setValue('project', task.project || INITIAL_PROJECTS[0]?.name);
       setValue('category', task.category || 'Frontend');
       setValue('priority', task.priority || 'medium');
@@ -61,7 +73,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const handleFormSubmit = async (data: TaskFormData) => {
     try {
       setIsSubmitting(true);
-      const selectedUser = INITIAL_USERS.find((u) => u.id === data.assignedUserId);
+      const selectedUser = users.find((u) => u.id === data.assignedUserId);
 
       await adminTaskService.updateTask(task.id, {
         title: data.title.trim(),
@@ -119,10 +131,13 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               label="Assigned User *"
               {...register('assignedUserId')}
               error={errors.assignedUserId?.message}
-              options={INITIAL_USERS.map((u) => ({
-                value: u.id,
-                label: `${u.name} (${u.role})`,
-              }))}
+              options={[
+                { value: '', label: isLoadingUsers ? 'Loading...' : 'Select User...' },
+                ...users.map((u) => ({
+                  value: u.id,
+                  label: `${u.name} (${u.role})`,
+                }))
+              ]}
             />
 
             <AppSelect

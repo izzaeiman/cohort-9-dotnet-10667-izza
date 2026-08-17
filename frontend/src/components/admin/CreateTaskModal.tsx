@@ -5,8 +5,7 @@ import Modal from '../common/Modal';
 import AppInput from '../ui/AppInput';
 import AppSelect from '../ui/AppSelect';
 import AppButton from '../ui/AppButton';
-import { INITIAL_USERS } from '../../data/users';
-import { INITIAL_PROJECTS } from '../../data/projects';
+import { userService } from '../../services/userService';
 import { adminTaskService } from '../../services/adminTaskService';
 import { taskFormSchema, type TaskFormData } from '../../utils/taskSchema';
 import Toast from '../common/Toast';
@@ -25,6 +24,18 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsLoadingUsers(true);
+      userService.getUsers()
+        .then(data => setUsers(data || []))
+        .catch(err => console.error('Failed to load users for assignment', err))
+        .finally(() => setIsLoadingUsers(false));
+    }
+  }, [isOpen]);
 
   const defaultStartDate = new Date().toISOString().split('T')[0];
   const defaultDueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -41,8 +52,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     defaultValues: {
       title: '',
       description: '',
-      assignedUserId: 'usr-1',
-      project: INITIAL_PROJECTS[0]?.name || 'Task Management System SaaS',
+      assignedUserId: '',
+      project: 'Task Management System SaaS',
       category: 'Frontend',
       priority: 'medium',
       status: 'pending',
@@ -57,7 +68,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const handleFormSubmit = async (data: TaskFormData) => {
     try {
       setIsSubmitting(true);
-      const selectedUser = INITIAL_USERS.find((u) => u.id === data.assignedUserId);
+      const selectedUser = users.find((u) => u.id === data.assignedUserId);
 
       await adminTaskService.createTask({
         title: data.title.trim(),
@@ -82,9 +93,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         onSuccess();
         onClose();
       }, 500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSubmitting(false);
-      alert(err.message || 'Failed to create task.');
+      alert(err instanceof Error ? err.message : 'Failed to create task.');
     }
   };
 
@@ -117,20 +128,23 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               label="Assigned User *"
               {...register('assignedUserId')}
               error={errors.assignedUserId?.message}
-              options={INITIAL_USERS.map((u) => ({
-                value: u.id,
-                label: `${u.name} (${u.role})`,
-              }))}
+              options={[
+                { value: '', label: isLoadingUsers ? 'Loading...' : 'Select User...' },
+                ...users.map((u) => ({
+                  value: u.id,
+                  label: `${u.name} (${u.role})`,
+                }))
+              ]}
             />
 
             <AppSelect
               label="Project *"
               {...register('project')}
               error={errors.project?.message}
-              options={INITIAL_PROJECTS.map((p) => ({
-                value: p.name,
-                label: p.name,
-              }))}
+              options={[
+                { value: 'Task Management System SaaS', label: 'Task Management System SaaS' },
+                { value: 'Internal Tools', label: 'Internal Tools' },
+              ]}
             />
           </div>
 

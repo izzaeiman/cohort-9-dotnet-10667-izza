@@ -37,11 +37,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const isAdmin = useCallback((): boolean => {
-    return hasRole('Admin');
+    return hasRole('Administrator');
   }, [hasRole]);
 
   const isMember = useCallback((): boolean => {
-    return hasRole('Member');
+    return hasRole('Regular User');
   }, [hasRole]);
 
   return (

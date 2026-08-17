@@ -4,7 +4,7 @@ import apiClient from './api';
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export type UserRole = 'Admin' | 'Member';
+export type UserRole = 'Administrator' | 'Regular User';
 
 export interface AuthUser {
   id: string;
@@ -26,7 +26,7 @@ export const MOCK_DEVELOPMENT_ACCOUNTS: RegisteredAccount[] = [
       id: 'usr-1',
       name: 'Izza Eiman',
       email: 'admin@example.test',
-      role: 'Admin',
+      role: 'Administrator',
       avatar: 'https://i.pravatar.cc/150?img=68',
       department: 'Engineering Management',
     },
@@ -37,7 +37,7 @@ export const MOCK_DEVELOPMENT_ACCOUNTS: RegisteredAccount[] = [
       id: 'usr-2',
       name: 'Regular User',
       email: 'member@example.test',
-      role: 'Member',
+      role: 'Regular User',
       avatar: 'https://i.pravatar.cc/150?img=33',
       department: 'Frontend Development',
     },
@@ -48,7 +48,7 @@ export const MOCK_DEVELOPMENT_ACCOUNTS: RegisteredAccount[] = [
       id: 'usr-3',
       name: 'Ali Khan',
       email: 'ali.khan@example.test',
-      role: 'Member',
+      role: 'Regular User',
       avatar: 'https://i.pravatar.cc/150?img=12',
       department: 'Fullstack Development',
     },
@@ -119,12 +119,11 @@ export const authService = {
         password: credentials.password
       });
 
-      if (response.data && response.data.token) {
+      if (response.data?.token && response.data?.user) {
         const token = response.data.token;
         const userDto = response.data.user;
 
-        // Map backend roles (Administrator -> Admin, anything else -> Member)
-        const mappedRole: UserRole = userDto.role === 'Administrator' ? 'Admin' : 'Member';
+        const mappedRole: UserRole = userDto.role === 'Administrator' ? 'Administrator' : 'Regular User';
 
         const authUser: AuthUser = {
           id: userDto.id,
@@ -167,7 +166,7 @@ export const authService = {
       }
 
       const assignedRole: UserRole =
-        data.role?.toLowerCase().includes('admin') ? 'Admin' : 'Member';
+        data.role?.toLowerCase().includes('admin') ? 'Administrator' : 'Regular User';
 
       const newUser: AuthUser = {
         id: `usr-${Date.now()}`,
@@ -200,11 +199,11 @@ export const authService = {
         password: data.password
       });
 
-      if (response.data && response.data.token) {
+      if (response.data?.token && response.data?.user) {
         const token = response.data.token;
         const userDto = response.data.user;
 
-        const mappedRole: UserRole = userDto.role === 'Administrator' ? 'Admin' : 'Member';
+        const mappedRole: UserRole = userDto.role === 'Administrator' ? 'Administrator' : 'Regular User';
 
         const authUser: AuthUser = {
           id: userDto.id,
@@ -255,7 +254,7 @@ export const authService = {
         parsed.id.trim() !== '' &&
         typeof parsed.email === 'string' &&
         parsed.email.trim() !== '' &&
-        (parsed.role === 'Admin' || parsed.role === 'Member')
+        (parsed.role === 'Administrator' || parsed.role === 'Regular User')
       ) {
         return parsed;
       }

@@ -43,7 +43,7 @@ const AppRoutes = () => (
         <Route index element={<RootIndexRedirect />} />
 
         {/* ── Admin Only Routes ────────────────────────────────────────── */}
-        <Route element={<ProtectedRoute requiredRole="Admin" />}>
+        <Route element={<ProtectedRoute requiredRole="Administrator" />}>
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/tasks" element={<AdminTasksPage />} />
           <Route path="/admin/projects" element={<ProjectsPage />} />
@@ -54,7 +54,7 @@ const AppRoutes = () => (
         </Route>
 
         {/* ── Regular User / Member Routes ────────────────────────────── */}
-        <Route element={<ProtectedRoute requiredRole="Member" />}>
+        <Route element={<ProtectedRoute requiredRole="Regular User" />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/tasks/:id" element={<TaskDetailPage />} />

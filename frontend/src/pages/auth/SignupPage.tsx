@@ -25,7 +25,7 @@ export const SignupPage = () => {
     setIsLoading(true);
     try {
       const registeredUser = await signup(data);
-      if (registeredUser.role === 'Admin') {
+      if (registeredUser.role === 'Administrator') {
         navigate('/admin/dashboard', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });

@@ -8,7 +8,7 @@ export const isAdminUser = (user: { role?: string } | null): boolean => {
 };
 
 export const AdminRoute: React.FC = () => {
-  return <ProtectedRoute requiredRole="Admin" />;
+  return <ProtectedRoute requiredRole="Administrator" />;
 };
 
 export default AdminRoute;

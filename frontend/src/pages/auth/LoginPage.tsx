@@ -26,7 +26,7 @@ export const LoginPage = () => {
     try {
       const authenticatedUser = await login(data);
       // Phase 6: Dynamic Role-Based Login Redirection
-      if (authenticatedUser.role === 'Admin') {
+      if (authenticatedUser.role === 'Administrator') {
         navigate('/admin/dashboard', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });

@@ -23,4 +23,24 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Automatically handle 401 Unauthorized responses to clean up expired sessions
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('workflow_token');
+      localStorage.removeItem('workflow_user');
+      
+      // Avoid redirect loops if already on login/signup pages
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        if (path !== '/login' && path !== '/signup') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default apiClient;

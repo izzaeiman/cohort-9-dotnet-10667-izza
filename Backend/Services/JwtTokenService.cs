@@ -24,6 +24,7 @@ namespace Backend.Services
 
             // Key must be configured — no hardcoded fallback in production
             var jwtKey = _configuration["Jwt:Key"]
+                ?? Environment.GetEnvironmentVariable("JWT_KEY")
                 ?? throw new InvalidOperationException(
                     "JWT signing key is not configured. Set 'Jwt:Key' in configuration or the JWT_KEY environment variable.");
 

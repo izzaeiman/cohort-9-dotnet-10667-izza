@@ -34,3 +34,6 @@ Desktop.ini
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Executables and Installers
+*.exe

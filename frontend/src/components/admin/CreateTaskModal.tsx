@@ -26,16 +26,30 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
+
+  const loadUsers = React.useCallback(() => {
+    setIsLoadingUsers(true);
+    setUsersError(null);
+    setUsers([]);
+    userService.getUsers()
+      .then(data => {
+        setUsers(data || []);
+        setUsersError(null);
+      })
+      .catch(err => {
+        console.error('Failed to load users for assignment', err);
+        setUsers([]);
+        setUsersError('Unable to load users. Please try again.');
+      })
+      .finally(() => setIsLoadingUsers(false));
+  }, []);
 
   React.useEffect(() => {
     if (isOpen) {
-      setIsLoadingUsers(true);
-      userService.getUsers()
-        .then(data => setUsers(data || []))
-        .catch(err => console.error('Failed to load users for assignment', err))
-        .finally(() => setIsLoadingUsers(false));
+      loadUsers();
     }
-  }, [isOpen]);
+  }, [isOpen, loadUsers]);
 
   const defaultStartDate = new Date().toISOString().split('T')[0];
   const defaultDueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -124,18 +138,32 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           </div>
 
           <div className={styles.grid2}>
-            <AppSelect
-              label="Assigned User *"
-              {...register('assignedUserId')}
-              error={errors.assignedUserId?.message}
-              options={[
-                { value: '', label: isLoadingUsers ? 'Loading...' : 'Select User...' },
-                ...users.map((u) => ({
-                  value: u.id,
-                  label: `${u.name} (${u.role})`,
-                }))
-              ]}
-            />
+            <div>
+              <AppSelect
+                label="Assigned User *"
+                {...register('assignedUserId')}
+                error={errors.assignedUserId?.message}
+                options={[
+                  { value: '', label: isLoadingUsers ? 'Loading...' : 'Select User...' },
+                  ...users.map((u) => ({
+                    value: u.id,
+                    label: `${u.name} (${u.role})`,
+                  }))
+                ]}
+              />
+              {usersError && (
+                <div style={{ marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className={styles.errorText}>{usersError}</span>
+                  <button 
+                    type="button" 
+                    onClick={loadUsers} 
+                    style={{ background: 'none', border: 'none', color: '#0070f3', cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: '0.875rem' }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+            </div>
 
             <AppSelect
               label="Project *"
@@ -232,7 +260,12 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             <AppButton variant="secondary" type="button" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </AppButton>
-            <AppButton variant="primary" type="submit" isLoading={isSubmitting}>
+            <AppButton 
+              variant="primary" 
+              type="submit" 
+              isLoading={isSubmitting}
+              disabled={isLoadingUsers || usersError !== null}
+            >
               Create Task
             </AppButton>
           </div>

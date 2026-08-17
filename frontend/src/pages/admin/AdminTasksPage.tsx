@@ -67,11 +67,16 @@ export const AdminTasksPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
 
   // Fetch Tasks
-  const loadTasks = async () => {
+  const loadTasks = async (filters: {
+    search?: string;
+    status?: string;
+    priority?: string;
+    assignedUserId?: string;
+  }) => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await adminTaskService.getAllTasks();
+      const data = await adminTaskService.getAllTasks(filters);
       setTasks(data);
     } catch (err: any) {
       setError(err.message || 'Unable to load tasks.');
@@ -80,16 +85,35 @@ export const AdminTasksPage: React.FC = () => {
     }
   };
 
+  const reloadTasks = () => {
+    loadTasks({
+      search: searchQuery,
+      status: statusFilter,
+      priority: priorityFilter,
+      assignedUserId: userFilter,
+    });
+  };
+
   useEffect(() => {
-    loadTasks();
+    const timer = setTimeout(() => {
+      loadTasks({
+        search: searchQuery,
+        status: statusFilter,
+        priority: priorityFilter,
+        assignedUserId: userFilter,
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, statusFilter, priorityFilter, userFilter]);
+
+  useEffect(() => {
     userService.getUsers()
       .then(data => setUsers(data || []))
       .catch(err => console.error('Failed to load users for filter', err));
-    const unsubscribe = adminTaskService.subscribe(() => {
-      loadTasks();
-    });
+    const unsubscribe = adminTaskService.subscribe(reloadTasks);
     return () => unsubscribe();
-  }, []);
+  }, [searchQuery, statusFilter, priorityFilter, userFilter]);
 
   // Calculate Statistics dynamically
   const stats = useMemo(() => {
@@ -112,50 +136,15 @@ export const AdminTasksPage: React.FC = () => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, priorityFilter, userFilter, projectFilter, deadlineFilter, sortBy, sortOrder]);
 
-  // Filtered & Sorted Tasks
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      // 1. Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesTitle = task.title.toLowerCase().includes(q);
-        const matchesDesc = (task.description || '').toLowerCase().includes(q);
-        const matchesUser = (task.assignedUser || '').toLowerCase().includes(q);
-        const matchesProject = (task.project || '').toLowerCase().includes(q);
-        const matchesCategory = (task.category || '').toLowerCase().includes(q);
-        if (!matchesTitle && !matchesDesc && !matchesUser && !matchesProject && !matchesCategory) {
-          return false;
-        }
-      }
-
-      // 2. Status Filter
-      if (statusFilter !== 'all') {
-        if (statusFilter === 'overdue') {
-          const deadlineInfo = calculateTaskDeadlineStatus(task);
-          if (task.status !== 'overdue' && deadlineInfo.state !== 'OVERDUE') return false;
-        } else if (task.status !== statusFilter) {
-          return false;
-        }
-      }
-
-      // 3. Priority Filter
-      if (priorityFilter !== 'all' && task.priority !== priorityFilter) {
-        return false;
-      }
-
-      // 4. User Filter
-      if (userFilter !== 'all') {
-        if (task.assignedUserId !== userFilter && task.assignedUser !== userFilter) {
-          return false;
-        }
-      }
-
-      // 5. Project Filter
+  // Sorted Tasks (Filtering moved to backend)
+  const sortedTasks = useMemo(() => {
+    return [...tasks].filter((task) => {
+      // 5. Project Filter (Not supported in backend yet, keep client side)
       if (projectFilter !== 'all' && task.project !== projectFilter) {
         return false;
       }
 
-      // 6. Deadline Filter
+      // 6. Deadline Filter (Complex logic, keep client side)
       if (deadlineFilter !== 'all') {
         const deadlineInfo = calculateTaskDeadlineStatus(task);
         if (deadlineFilter === 'due_today' && deadlineInfo.state !== 'DUE_TODAY') return false;
@@ -190,16 +179,16 @@ export const AdminTasksPage: React.FC = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [tasks, searchQuery, statusFilter, priorityFilter, userFilter, projectFilter, deadlineFilter, sortBy, sortOrder]);
+  }, [tasks, projectFilter, deadlineFilter, sortBy, sortOrder]);
 
   // Pagination Calculations
-  const totalPages = Math.ceil(filteredTasks.length / ITEMS_PER_PAGE) || 1;
+  const totalPages = Math.ceil(sortedTasks.length / ITEMS_PER_PAGE) || 1;
   const validCurrentPage = Math.min(currentPage, totalPages);
 
   const paginatedTasks = useMemo(() => {
     const start = (validCurrentPage - 1) * ITEMS_PER_PAGE;
-    return filteredTasks.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredTasks, validCurrentPage]);
+    return sortedTasks.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedTasks, validCurrentPage]);
 
   // Handlers
   const handleClearFilters = () => {
@@ -220,7 +209,7 @@ export const AdminTasksPage: React.FC = () => {
       await adminTaskService.deleteTask(deletingTask.id);
       setToastMessage(`Task ${deletingTask.id} deleted successfully.`);
       setDeletingTask(null);
-      await loadTasks();
+      reloadTasks();
     } catch (err: any) {
       alert(err.message || 'Failed to delete task.');
     }
@@ -417,11 +406,11 @@ export const AdminTasksPage: React.FC = () => {
       ) : error ? (
         <div className={styles.errorBox}>
           <p>{error}</p>
-          <AppButton variant="outlined" onClick={loadTasks}>
+          <AppButton variant="outlined" onClick={reloadTasks}>
             Retry Loading
           </AppButton>
         </div>
-      ) : filteredTasks.length === 0 ? (
+      ) : sortedTasks.length === 0 ? (
         <EmptyState
           title="No tasks match your filter criteria"
           description="Try adjusting your search query, status, user, or project filters to find what you are looking for."
@@ -532,7 +521,7 @@ export const AdminTasksPage: React.FC = () => {
             currentPage={validCurrentPage}
             totalPages={totalPages}
             onPageChange={(page) => setCurrentPage(page)}
-            totalItems={filteredTasks.length}
+            totalItems={sortedTasks.length}
             pageSize={ITEMS_PER_PAGE}
           />
         </div>
@@ -542,21 +531,21 @@ export const AdminTasksPage: React.FC = () => {
       <CreateTaskModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={loadTasks}
+        onSuccess={reloadTasks}
       />
 
       <EditTaskModal
         isOpen={!!editingTask}
         task={editingTask}
         onClose={() => setEditingTask(null)}
-        onSuccess={loadTasks}
+        onSuccess={reloadTasks}
       />
 
       <AssignTaskModal
         isOpen={!!assigningTask}
         task={assigningTask}
         onClose={() => setAssigningTask(null)}
-        onSuccess={loadTasks}
+        onSuccess={reloadTasks}
       />
 
       <ConfirmationDialog

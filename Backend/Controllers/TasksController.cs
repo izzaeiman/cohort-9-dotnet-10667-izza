@@ -30,12 +30,12 @@ namespace Backend.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskDto>))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetTasks()
+        public async Task<IActionResult> GetTasks([FromQuery] TaskQueryDto query)
         {
             var userId = GetUserId();
             var userRole = GetUserRole();
 
-            var tasks = await _taskService.GetTasksAsync(userId, userRole);
+            var tasks = await _taskService.GetTasksAsync(userId, userRole, query);
             return Ok(tasks);
         }
 

@@ -37,7 +37,7 @@ namespace Backend.Services
             }
         }
 
-        public async Task<IEnumerable<TaskDto>> GetTasksAsync(string currentUserId, string currentUserRole)
+        public async Task<IEnumerable<TaskDto>> GetTasksAsync(string currentUserId, string currentUserRole, TaskQueryDto query)
         {
             ValidateIdentity(currentUserId, currentUserRole);
 
@@ -46,11 +46,13 @@ namespace Backend.Services
             IEnumerable<TaskItem> tasks;
             if (currentUserRole == UserRoles.Administrator)
             {
-                tasks = await _taskRepository.GetAllAsync();
+                tasks = await _taskRepository.GetAllAsync(query);
             }
             else
             {
-                tasks = await _taskRepository.GetByAssignedUserIdAsync(currentUserId);
+                // For a regular user, do not allow AssignedUserId in the query to override their authorization scope.
+                // The GetByAssignedUserIdAsync method already enforces the top-level boundary.
+                tasks = await _taskRepository.GetByAssignedUserIdAsync(currentUserId, query);
             }
 
             return tasks.Select(MapToTaskDto);

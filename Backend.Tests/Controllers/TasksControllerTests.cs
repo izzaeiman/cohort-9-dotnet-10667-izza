@@ -49,10 +49,11 @@ namespace Backend.Tests.Controllers
                 new TaskDto { Id = 1, Title = "Task A", AssignedUserId = "usr-1" }
             };
 
-            _taskServiceMock.Setup(s => s.GetTasksAsync("usr-1", UserRoles.RegularUser)).ReturnsAsync(mockTasks);
+            _taskServiceMock.Setup(s => s.GetTasksAsync("usr-1", UserRoles.RegularUser, It.IsAny<TaskQueryDto>())).ReturnsAsync(mockTasks);
 
             // Act
-            var result = await _controller.GetTasks();
+            var query = new TaskQueryDto();
+            var result = await _controller.GetTasks(query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);

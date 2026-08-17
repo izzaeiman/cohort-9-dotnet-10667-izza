@@ -112,14 +112,60 @@ const mapFrontendToBackendUpdate = (data: any) => {
   return result;
 };
 
+export interface TaskFilters {
+  search?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
+  assignedUserId?: string;
+  dueDateFrom?: string;
+  dueDateTo?: string;
+}
+
 export const adminTaskService = {
   subscribe(listener: TaskChangeListener): () => void {
     listeners.add(listener);
     return () => listeners.delete(listener);
   },
 
-  async getAllTasks(): Promise<DetailedTaskItem[]> {
-    const response = await apiClient.get('/tasks');
+  async getAllTasks(filters?: TaskFilters): Promise<DetailedTaskItem[]> {
+    const params = new URLSearchParams();
+
+    if (filters) {
+      if (filters.search) params.append('search', filters.search);
+      if (filters.category && filters.category !== 'all') params.append('category', filters.category);
+      if (filters.assignedUserId && filters.assignedUserId !== 'all') params.append('assignedUserId', filters.assignedUserId);
+      if (filters.dueDateFrom) params.append('dueDateFrom', filters.dueDateFrom);
+      if (filters.dueDateTo) params.append('dueDateTo', filters.dueDateTo);
+
+      if (filters.status && filters.status !== 'all') {
+        let backendStatus = '';
+        if (filters.status === 'in_progress') backendStatus = 'InProgress';
+        else if (filters.status === 'completed') backendStatus = 'Completed';
+        else if (filters.status === 'pending') backendStatus = 'Pending';
+        else if (filters.status === 'cancelled') backendStatus = 'Cancelled';
+
+        if (backendStatus) {
+          params.append('status', backendStatus);
+        }
+      }
+
+      if (filters.priority && filters.priority !== 'all') {
+        let backendPriority = '';
+        if (filters.priority === 'low') backendPriority = 'Low';
+        else if (filters.priority === 'medium') backendPriority = 'Medium';
+        else if (filters.priority === 'high') backendPriority = 'High';
+        else if (filters.priority === 'critical') backendPriority = 'Critical';
+        
+        if (backendPriority) {
+          params.append('priority', backendPriority);
+        }
+      }
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `/tasks?${queryString}` : '/tasks';
+    const response = await apiClient.get(url);
     return response.data.map(mapBackendTaskToFrontend);
   },
 

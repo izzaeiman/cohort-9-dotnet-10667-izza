@@ -82,10 +82,15 @@ export const TasksPage = () => {
     },
   });
 
-  const loadTasks = async () => {
+  const loadTasks = async (filters: {
+    search?: string;
+    status?: string;
+    priority?: string;
+    category?: string;
+  }) => {
     try {
       setIsLoading(true);
-      const data = await adminTaskService.getAllTasks();
+      const data = await adminTaskService.getAllTasks(filters);
       setTasks(data);
     } finally {
       setIsLoading(false);
@@ -93,51 +98,48 @@ export const TasksPage = () => {
   };
 
   useEffect(() => {
-    loadTasks();
+    const timer = setTimeout(() => {
+      loadTasks({
+        search: searchTerm,
+        status: statusFilter,
+        priority: priorityFilter,
+        category: categoryFilter,
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, statusFilter, priorityFilter, categoryFilter]);
+
+  useEffect(() => {
     const unsub = adminTaskService.subscribe(() => {
-      loadTasks();
+      loadTasks({
+        search: searchTerm,
+        status: statusFilter,
+        priority: priorityFilter,
+        category: categoryFilter,
+      });
     });
     return () => unsub();
-  }, []);
+  }, [searchTerm, statusFilter, priorityFilter, categoryFilter]);
 
-  // Filter tasks based on logged-in user role (Member sees only assigned tasks; Admin sees all)
-  const roleFilteredTasks = useMemo(() => {
-    if (isAdmin) return tasks;
-    return tasks.filter(
-      (t) =>
-        t.assignedUserId === currentUser?.id ||
-        (t.assignedUser &&
-          currentUser?.name &&
-          t.assignedUser.toLowerCase() === currentUser.name.toLowerCase()),
-    );
-  }, [tasks, isAdmin, currentUser]);
-
-  // Filter & Sort tasks
-  const filteredAndSortedTasks = useMemo(() => {
-    const result = roleFilteredTasks.filter((t) => {
-      const matchesSearch =
-        t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
-      const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter;
-      const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
-      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
-    });
+  // Sort tasks
+  const sortedTasks = useMemo(() => {
+    const result = [...tasks];
 
     result.sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'priority') {
-        const pOrder: Record<string, number> = { high: 1, medium: 2, low: 3 };
-        return (pOrder[a.priority] || 0) - (pOrder[b.priority] || 0);
+        const pOrder: Record<string, number> = { high: 1, medium: 2, low: 3, critical: 0 };
+        return (pOrder[a.priority] ?? 4) - (pOrder[b.priority] ?? 4);
       }
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
 
     return result;
-  }, [roleFilteredTasks, searchTerm, statusFilter, priorityFilter, categoryFilter, sortBy]);
+  }, [tasks, sortBy]);
 
   // Paginated dataset
-  const totalPages = Math.ceil(filteredAndSortedTasks.length / PAGE_SIZE) || 1;
+  const totalPages = Math.ceil(sortedTasks.length / PAGE_SIZE) || 1;
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
@@ -147,8 +149,8 @@ export const TasksPage = () => {
 
   const paginatedTasks = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredAndSortedTasks.slice(start, start + PAGE_SIZE);
-  }, [filteredAndSortedTasks, currentPage]);
+    return sortedTasks.slice(start, start + PAGE_SIZE);
+  }, [sortedTasks, currentPage]);
 
   const handleCreateTask = async (data: CreateTaskFormData) => {
     const created = await adminTaskService.createTask({
@@ -169,7 +171,7 @@ export const TasksPage = () => {
     setIsCreateModalOpen(false);
     reset();
     setToastMessage(`Task "${created.title}" created successfully!`);
-    await loadTasks();
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const handleEditTask = async (data: CreateTaskFormData) => {
@@ -185,7 +187,7 @@ export const TasksPage = () => {
 
     setEditingTask(null);
     setToastMessage('Task updated successfully!');
-    await loadTasks();
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const handleDeleteSingle = async () => {
@@ -193,7 +195,7 @@ export const TasksPage = () => {
     await adminTaskService.deleteTask(deletingTask.id);
     setDeletingTask(null);
     setToastMessage('Task deleted successfully!');
-    await loadTasks();
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const handleBulkDelete = async () => {
@@ -203,7 +205,7 @@ export const TasksPage = () => {
     setSelectedTaskIds([]);
     setIsBulkDeleteOpen(false);
     setToastMessage(`${selectedTaskIds.length} tasks deleted successfully!`);
-    await loadTasks();
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const toggleSelectAll = () => {
@@ -496,7 +498,7 @@ export const TasksPage = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalItems={filteredAndSortedTasks.length}
+            totalItems={sortedTasks.length}
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />

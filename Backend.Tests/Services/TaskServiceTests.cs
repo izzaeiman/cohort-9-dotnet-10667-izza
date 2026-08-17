@@ -85,15 +85,16 @@ namespace Backend.Tests.Services
                 new TaskItem { Id = 2, Title = "Task B", AssignedUserId = "usr-2" }
             };
 
-            _taskRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(allTasks);
+            _taskRepositoryMock.Setup(r => r.GetAllAsync(It.IsAny<TaskQueryDto>())).ReturnsAsync(allTasks);
 
             // Act
-            var results = await _taskService.GetTasksAsync("usr-admin", UserRoles.Administrator);
+            var query = new TaskQueryDto();
+            var results = await _taskService.GetTasksAsync("usr-admin", UserRoles.Administrator, query);
 
             // Assert
             Assert.NotNull(results);
             Assert.Equal(2, results.Count());
-            _taskRepositoryMock.Verify(r => r.GetAllAsync(), Times.Once);
+            _taskRepositoryMock.Verify(r => r.GetAllAsync(It.IsAny<TaskQueryDto>()), Times.Once);
         }
 
         [Fact]
@@ -438,7 +439,7 @@ namespace Backend.Tests.Services
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _taskService.GetTasksAsync(currentUserId!, currentUserRole!));
+                _taskService.GetTasksAsync(currentUserId!, currentUserRole!, new TaskQueryDto()));
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _taskService.GetTaskByIdAsync(1, currentUserId!, currentUserRole!));

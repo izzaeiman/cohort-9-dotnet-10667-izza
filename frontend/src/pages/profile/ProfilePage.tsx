@@ -6,9 +6,6 @@ import {
   MdPerson,
   MdEmail,
   MdWork,
-  MdPhone,
-  MdLocationOn,
-  MdCalendarToday,
   MdInfoOutline,
   MdDevices,
 } from 'react-icons/md';
@@ -19,24 +16,21 @@ import Toast from '../../components/common/Toast';
 import PageLoader from '../../components/common/PageLoader';
 import ActivityTimeline from '../../components/dashboard/ActivityTimeline';
 
-import { profileService } from '../../services/profileService';
+import { profileService, type ProfileDto } from '../../services/profileService';
 import { INITIAL_ACTIVITIES } from '../../data/activity';
-import type { UserItem } from '../../data/users';
 import styles from './Profile.module.css';
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Full name is required'),
   email: z.string().email('Please enter a valid email address'),
-  department: z.string().min(1, 'Department is required'),
-  phone: z.string().optional(),
-  bio: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export const ProfilePage = () => {
-  const [profile, setProfile] = useState<UserItem | null>(null);
+  const [profile, setProfile] = useState<ProfileDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'security'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -49,39 +43,54 @@ export const ProfilePage = () => {
     resolver: zodResolver(profileSchema),
   });
 
-  useEffect(() => {
-    let isMounted = true;
-    profileService.getProfile().then((data) => {
-      if (isMounted) {
+  const loadProfile = () => {
+    setIsLoading(true);
+    setError(null);
+    profileService.getProfile()
+      .then((data) => {
         setProfile(data);
         reset({
           name: data.name,
           email: data.email,
-          department: data.department,
-          phone: data.phone || '',
-          bio: data.bio || '',
         });
         setIsLoading(false);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
+      })
+      .catch((err) => {
+        console.error(err);
+        setError('Unable to load your profile. Please try again.');
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadProfile();
   }, [reset]);
 
   const handleSaveProfile = async (data: ProfileFormData) => {
-    const updated = await profileService.updateProfile({
-      name: data.name,
-      email: data.email,
-      department: data.department,
-      phone: data.phone,
-      bio: data.bio,
-    });
-    setProfile(updated);
-    setToastMessage('Profile information updated successfully!');
+    try {
+      const updated = await profileService.updateProfile({
+        name: data.name,
+        email: data.email,
+      });
+      setProfile(updated);
+      setToastMessage('Profile information updated successfully!');
+    } catch (err) {
+      setToastMessage('Failed to update profile.');
+    }
   };
 
-  if (isLoading || !profile) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
+
+  if (error) {
+    return (
+      <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '20px' }}>
+        <div style={{ color: '#ef4444', fontSize: '1.2rem', textAlign: 'center' }}>{error}</div>
+        <AppButton onClick={loadProfile} variant="primary">Retry</AppButton>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
 
   return (
     <div className={styles.page}>
@@ -92,7 +101,7 @@ export const ProfilePage = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '20px' }}>
             <div className={styles.avatarWrap}>
               <img
-                src={profile.avatar}
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random`}
                 alt={`${profile.name} avatar`}
                 className={styles.avatar}
               />
@@ -101,13 +110,7 @@ export const ProfilePage = () => {
               <h1 className={styles.userName}>{profile.name}</h1>
               <div className={styles.userSub}>
                 <span>
-                  <MdWork size={14} style={{ verticalAlign: 'middle' }} /> {profile.role} ({profile.department})
-                </span>
-                <span>
-                  <MdLocationOn size={14} style={{ verticalAlign: 'middle' }} /> Islamabad, Pakistan
-                </span>
-                <span>
-                  <MdCalendarToday size={14} style={{ verticalAlign: 'middle' }} /> Joined July 2026
+                  <MdWork size={14} style={{ verticalAlign: 'middle' }} /> {profile.role}
                 </span>
               </div>
             </div>
@@ -175,33 +178,6 @@ export const ProfilePage = () => {
                 error={errors.email?.message}
                 {...register('email')}
               />
-
-              <AppInput
-                id="prof-dept"
-                label="Department / Program"
-                leftIcon={<MdWork />}
-                error={errors.department?.message}
-                {...register('department')}
-              />
-
-              <AppInput
-                id="prof-phone"
-                label="Phone Number"
-                leftIcon={<MdPhone />}
-                error={errors.phone?.message}
-                {...register('phone')}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="prof-bio" className={styles.bioLabel}>
-                Professional Biography
-              </label>
-              <textarea
-                id="prof-bio"
-                className={styles.bioTextarea}
-                {...register('bio')}
-              />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
@@ -238,7 +214,7 @@ export const ProfilePage = () => {
             <MdDevices size={24} color="#FF7A1A" />
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Current Browser Session</div>
-              <div style={{ fontSize: '0.78rem', color: '#666' }}>Windows • Chrome • Islamabad, Pakistan (Active Now)</div>
+              <div style={{ fontSize: '0.78rem', color: '#666' }}>Windows • Chrome • (Active Now)</div>
             </div>
           </div>
         </div>

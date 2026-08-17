@@ -16,7 +16,6 @@ import ChartCard from '../../components/dashboard/ChartCard';
 import WeeklyProductivityChart from '../../components/dashboard/WeeklyProductivityChart';
 import TaskStatusChart from '../../components/dashboard/TaskStatusChart';
 import UpcomingDeadlines from '../../components/dashboard/UpcomingDeadlines';
-import ActivityTimeline from '../../components/dashboard/ActivityTimeline';
 import StatusBadge from '../../components/ui/StatusBadge';
 import TaskDeadlineBadge from '../../components/ui/TaskDeadlineBadge';
 import { SkeletonCard, SkeletonTable } from '../../components/ui/SkeletonLoaders';
@@ -32,13 +31,7 @@ import { adminTaskService } from '../../services/adminTaskService';
 import { INITIAL_USERS } from '../../data/users';
 import { INITIAL_PROJECTS } from '../../data/projects';
 import type { DetailedTaskItem } from '../../data/tasks';
-import type { StatCardData } from '../../types/dashboard.types';
-import {
-  MOCK_PRODUCTIVITY_DATA,
-  MOCK_PRODUCTIVITY_LAST_WEEK,
-  MOCK_PRODUCTIVITY_THIS_MONTH,
-  MOCK_ACTIVITIES,
-} from '../../utils/mockDashboardData';
+import type { StatCardData, DeadlineItem } from '../../types/dashboard.types';
 import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
 
 import styles from './AdminDashboardPage.module.css';
@@ -49,7 +42,6 @@ export const AdminDashboardPage: React.FC = () => {
 
   const [tasks, setTasks] = useState<DetailedTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [productivityTimeframe, setProductivityTimeframe] = useState('this_week');
 
   // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -213,10 +205,12 @@ export const AdminDashboardPage: React.FC = () => {
   // Upcoming Deadlines List
   const upcomingDeadlinesList = useMemo(() => {
     return tasks
-      .filter((t) => t.status !== 'completed' && t.status !== 'cancelled')
+      .filter((t) => t.status !== 'completed' && t.status !== 'cancelled' && t.dueDate)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 5)
       .map((t) => {
         const info = calculateTaskDeadlineStatus(t);
-        let dueTag: 'Today' | 'Tomorrow' | 'This Week' = 'This Week';
+        let dueTag = 'This Week';
         if (info.state === 'DUE_TODAY') dueTag = 'Today';
         if (info.state === 'DUE_TOMORROW') dueTag = 'Tomorrow';
 
@@ -224,12 +218,11 @@ export const AdminDashboardPage: React.FC = () => {
           id: t.id,
           title: t.title,
           priority: t.priority,
-          dueDate: t.dueDate,
+          dueDate: formatDateDisplay(t.dueDate),
           dueTag,
           category: t.category,
-        };
-      })
-      .slice(0, 5);
+        } as DeadlineItem;
+      });
   }, [tasks]);
 
   const handleDeleteConfirm = async () => {
@@ -240,16 +233,38 @@ export const AdminDashboardPage: React.FC = () => {
     await loadTasks();
   };
 
-  const getProductivityData = () => {
-    switch (productivityTimeframe) {
-      case 'last_week':
-        return MOCK_PRODUCTIVITY_LAST_WEEK;
-      case 'this_month':
-        return MOCK_PRODUCTIVITY_THIS_MONTH;
-      default:
-        return MOCK_PRODUCTIVITY_DATA;
+  // Compute productivity data dynamically
+  const productivityData = useMemo(() => {
+    const data = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 6; i >= 0; i--) {
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() - i);
+      const dayStr = targetDate.toLocaleDateString('en-US', { weekday: 'short' });
+      const targetIsoDate = targetDate.toISOString().split('T')[0];
+
+      let createdCount = 0;
+      let completedCount = 0;
+
+      tasks.forEach(t => {
+        if (t.createdDate === targetIsoDate) {
+          createdCount++;
+        }
+        if (t.status === 'completed' && t.lastModified === targetIsoDate) {
+          completedCount++;
+        }
+      });
+
+      data.push({
+        day: dayStr,
+        created: createdCount,
+        completed: completedCount,
+      });
     }
-  };
+    return data;
+  }, [tasks]);
 
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -295,7 +310,7 @@ export const AdminDashboardPage: React.FC = () => {
               <div key={t.id} className={styles.overdueCard}>
                 <span className={styles.overdueTitle}>{t.title}</span>
                 <span className={styles.overdueMeta}>
-                  Assigned to: <strong>{t.assignedUser}</strong> | Due: {t.dueDate}
+                  Assigned to: <strong>{t.assignedUser}</strong> | Due: {formatDateDisplay(t.dueDate)}
                 </span>
                 <button
                   type="button"
@@ -381,11 +396,10 @@ export const AdminDashboardPage: React.FC = () => {
       <section className={styles.chartsGrid} aria-label="Organization charts">
         <ChartCard
           title="Organization Productivity Overview"
-          subtitle="Completed vs Created tasks across team"
-          timeframe={productivityTimeframe}
-          onTimeframeChange={setProductivityTimeframe}
+          subtitle="Completed vs Created tasks across team (Last 7 Days)"
+          showTimeFilter={false}
         >
-          <WeeklyProductivityChart data={getProductivityData()} />
+          <WeeklyProductivityChart data={productivityData} />
         </ChartCard>
 
         <ChartCard
@@ -495,7 +509,6 @@ export const AdminDashboardPage: React.FC = () => {
         {/* Right Column: Deadlines & Team Activity */}
         <div className={styles.rightColumn}>
           <UpcomingDeadlines items={upcomingDeadlinesList} />
-          <ActivityTimeline activities={MOCK_ACTIVITIES} />
         </div>
       </section>
 

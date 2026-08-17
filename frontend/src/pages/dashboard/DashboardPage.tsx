@@ -7,21 +7,14 @@ import WeeklyProductivityChart from '../../components/dashboard/WeeklyProductivi
 import TaskStatusChart from '../../components/dashboard/TaskStatusChart';
 import TaskTable from '../../components/dashboard/TaskTable';
 import UpcomingDeadlines from '../../components/dashboard/UpcomingDeadlines';
-import ActivityTimeline from '../../components/dashboard/ActivityTimeline';
 import QuickActions from '../../components/dashboard/QuickActions';
 import { SkeletonCard, SkeletonTable } from '../../components/ui/SkeletonLoaders';
 import useAuth from '../../hooks/useAuth';
 import { isAdminUser } from '../../components/layout/AdminRoute';
 import { adminTaskService } from '../../services/adminTaskService';
 import type { DetailedTaskItem } from '../../data/tasks';
-import type { StatCardData } from '../../types/dashboard.types';
-import {
-  MOCK_PRODUCTIVITY_DATA,
-  MOCK_PRODUCTIVITY_LAST_WEEK,
-  MOCK_PRODUCTIVITY_THIS_MONTH,
-  MOCK_DEADLINES,
-  MOCK_ACTIVITIES,
-} from '../../utils/mockDashboardData';
+import type { StatCardData, DeadlineItem } from '../../types/dashboard.types';
+import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
 import { MdAdd } from 'react-icons/md';
 import styles from './Dashboard.module.css';
 
@@ -32,7 +25,6 @@ export const DashboardPage = () => {
 
   const [tasks, setTasks] = useState<DetailedTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [productivityTimeframe, setProductivityTimeframe] = useState('this_week');
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'User';
 
@@ -78,36 +70,36 @@ export const DashboardPage = () => {
         id: '1',
         title: 'Total Tasks',
         value: total,
-        change: '+12%',
+        change: 'Active',
         isPositive: true,
-        period: 'vs last week',
+        period: 'All tasks',
         iconType: 'completed',
       },
       {
         id: '2',
         title: 'Completed',
         value: completed,
-        change: '+8%',
+        change: 'Done',
         isPositive: true,
-        period: 'vs last week',
+        period: 'Finished',
         iconType: 'completed',
       },
       {
         id: '3',
         title: 'In Progress',
         value: inProgress,
-        change: '+5%',
+        change: 'Active',
         isPositive: true,
-        period: 'vs last week',
+        period: 'Working on',
         iconType: 'in_progress',
       },
       {
         id: '4',
         title: 'Pending',
         value: pending,
-        change: '-2%',
+        change: 'Queued',
         isPositive: false,
-        period: 'vs last week',
+        period: 'Needs action',
         iconType: 'pending',
       },
     ];
@@ -128,23 +120,69 @@ export const DashboardPage = () => {
     ];
   }, [roleFilteredTasks]);
 
+  // Compute productivity data dynamically
+  const productivityData = useMemo(() => {
+    const data = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 6; i >= 0; i--) {
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() - i);
+      const dayStr = targetDate.toLocaleDateString('en-US', { weekday: 'short' });
+      const targetIsoDate = targetDate.toISOString().split('T')[0];
+
+      let createdCount = 0;
+      let completedCount = 0;
+
+      roleFilteredTasks.forEach(t => {
+        if (t.createdDate === targetIsoDate) {
+          createdCount++;
+        }
+        if (t.status === 'completed' && t.lastModified === targetIsoDate) {
+          completedCount++;
+        }
+      });
+
+      data.push({
+        day: dayStr,
+        created: createdCount,
+        completed: completedCount,
+      });
+    }
+    return data;
+  }, [roleFilteredTasks]);
+
+  // Compute upcoming deadlines dynamically
+  const upcomingDeadlinesList = useMemo(() => {
+    return roleFilteredTasks
+      .filter((t) => t.status !== 'completed' && t.status !== 'cancelled' && t.dueDate)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 4)
+      .map((t) => {
+        const info = calculateTaskDeadlineStatus(t);
+        let dueTag = 'Upcoming';
+        if (info.state === 'DUE_TODAY') dueTag = 'Today';
+        else if (info.state === 'DUE_TOMORROW') dueTag = 'Tomorrow';
+        else if (info.state === 'APPROACHING_DEADLINE') dueTag = 'This Week';
+
+        return {
+          id: t.id,
+          title: t.title,
+          priority: t.priority,
+          dueDate: formatDateDisplay(t.dueDate),
+          dueTag,
+          category: t.category,
+        } as DeadlineItem;
+      });
+  }, [roleFilteredTasks]);
+
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
-
-  const getProductivityData = () => {
-    switch (productivityTimeframe) {
-      case 'last_week':
-        return MOCK_PRODUCTIVITY_LAST_WEEK;
-      case 'this_month':
-        return MOCK_PRODUCTIVITY_THIS_MONTH;
-      default:
-        return MOCK_PRODUCTIVITY_DATA;
-    }
-  };
 
   return (
     <div className={styles.page}>
@@ -181,15 +219,14 @@ export const DashboardPage = () => {
           : statCards.map((stat) => <DashboardCard key={stat.id} data={stat} />)}
       </section>
 
-      {/* ── Charts Grid (Weekly Productivity + Task Status Distribution) ─── */}
+      {/* ── Charts Grid ────────────────────────────────────────────────────── */}
       <section className={styles.chartsGrid} aria-label="Performance charts">
         <ChartCard
           title="Productivity Overview"
-          subtitle="Comparison of completed vs created tasks"
-          timeframe={productivityTimeframe}
-          onTimeframeChange={setProductivityTimeframe}
+          subtitle="Comparison of completed vs created tasks (Last 7 Days)"
+          showTimeFilter={false}
         >
-          <WeeklyProductivityChart data={getProductivityData()} />
+          <WeeklyProductivityChart data={productivityData} />
         </ChartCard>
 
         <ChartCard
@@ -201,7 +238,7 @@ export const DashboardPage = () => {
         </ChartCard>
       </section>
 
-      {/* ── Main Content Grid (Recent Tasks + Side Column) ────────────────── */}
+      {/* ── Main Content Grid ──────────────────────────────────────────────── */}
       <section className={styles.contentGrid}>
         {/* Left Column: Recent Tasks Table */}
         <div>
@@ -215,11 +252,10 @@ export const DashboardPage = () => {
           )}
         </div>
 
-        {/* Right Column: Deadlines, Activity, Quick Actions */}
+        {/* Right Column: Deadlines, Quick Actions */}
         <div className={styles.rightColumn}>
           <QuickActions />
-          <UpcomingDeadlines items={MOCK_DEADLINES} />
-          <ActivityTimeline activities={MOCK_ACTIVITIES} />
+          <UpcomingDeadlines items={upcomingDeadlinesList} />
         </div>
       </section>
     </div>

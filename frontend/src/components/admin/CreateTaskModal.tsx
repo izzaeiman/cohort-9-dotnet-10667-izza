@@ -27,22 +27,31 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [users, setUsers] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [usersError, setUsersError] = useState<string | null>(null);
+  const fetchIdRef = React.useRef(0);
 
   const loadUsers = React.useCallback(() => {
     setIsLoadingUsers(true);
     setUsersError(null);
     setUsers([]);
+    
+    const currentFetchId = ++fetchIdRef.current;
+
     userService.getUsers()
       .then(data => {
+        if (currentFetchId !== fetchIdRef.current) return;
         setUsers(data || []);
         setUsersError(null);
       })
       .catch(err => {
+        if (currentFetchId !== fetchIdRef.current) return;
         console.error('Failed to load users for assignment', err);
         setUsers([]);
         setUsersError('Unable to load users. Please try again.');
       })
-      .finally(() => setIsLoadingUsers(false));
+      .finally(() => {
+        if (currentFetchId !== fetchIdRef.current) return;
+        setIsLoadingUsers(false);
+      });
   }, []);
 
   React.useEffect(() => {
@@ -156,8 +165,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   <span className={styles.errorText}>{usersError}</span>
                   <button 
                     type="button" 
-                    onClick={loadUsers} 
-                    style={{ background: 'none', border: 'none', color: '#0070f3', cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: '0.875rem' }}
+                    onClick={loadUsers}
+                    disabled={isLoadingUsers} 
+                    style={{ background: 'none', border: 'none', color: isLoadingUsers ? '#9ca3af' : '#0070f3', cursor: isLoadingUsers ? 'default' : 'pointer', padding: 0, textDecoration: 'underline', fontSize: '0.875rem' }}
                   >
                     Retry
                   </button>

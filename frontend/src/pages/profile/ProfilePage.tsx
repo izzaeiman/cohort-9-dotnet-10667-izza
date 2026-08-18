@@ -144,7 +144,7 @@ export const ProfilePage = () => {
           className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('activity')}
         >
-          My Activity Timeline
+          Activity (Sample Data)
         </button>
         <button
           type="button"

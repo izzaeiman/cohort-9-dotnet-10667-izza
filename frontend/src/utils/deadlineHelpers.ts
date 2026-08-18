@@ -41,7 +41,24 @@ export const calculateTaskDeadlineStatus = (task: DetailedTaskItem): DeadlineInf
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  if (!task.dueDate) {
+    return {
+      state: 'FAR_FROM_DEADLINE',
+      label: 'Invalid date',
+      daysDiff: NaN,
+      badgeVariant: 'secondary',
+    };
+  }
+
   const due = new Date(task.dueDate);
+  if (isNaN(due.getTime())) {
+    return {
+      state: 'FAR_FROM_DEADLINE',
+      label: 'Invalid date',
+      daysDiff: NaN,
+      badgeVariant: 'secondary',
+    };
+  }
   due.setHours(0, 0, 0, 0);
 
   const diffTime = due.getTime() - today.getTime();
@@ -99,6 +116,9 @@ export const formatDateDisplay = (dateStr?: string, timeStr?: string): string =>
   if (!dateStr) return 'N/A';
   try {
     const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) {
+      return dateStr;
+    }
     const formatted = dateObj.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',

@@ -9,6 +9,7 @@ import { userService } from '../../services/userService';
 import { adminTaskService } from '../../services/adminTaskService';
 import { taskFormSchema, type TaskFormData } from '../../utils/taskSchema';
 import Toast from '../common/Toast';
+import { getLocalDate } from '../../utils/dateHelpers';
 import styles from './TaskModalForm.module.css';
 
 interface CreateTaskModalProps {
@@ -60,10 +61,11 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     }
   }, [isOpen, loadUsers]);
 
-  const defaultStartDate = new Date().toISOString().split('T')[0];
-  const defaultDueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
+  const startDate = new Date();
+  const defaultStartDate = getLocalDate(startDate);
+  const dueDate = new Date(startDate);
+  dueDate.setDate(dueDate.getDate() + 7);
+  const defaultDueDate = getLocalDate(dueDate);
 
   const {
     register,

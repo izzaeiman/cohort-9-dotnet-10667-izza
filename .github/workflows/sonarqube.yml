@@ -1,0 +1,69 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarqube:
+    name: Build and Analyze
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies (Frontend)
+        working-directory: ./frontend
+        run: npm ci || npm install
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npx tsc --noEmit
+          npm run build
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Begin SonarQube Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"task-management-tool" \
+            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.sources="frontend/src" \
+            /d:sonar.typescript.tsconfigPaths="frontend/tsconfig.json" \
+            /d:sonar.cs.opencover.reportsPaths="Backend.Tests/TestResults/**/coverage.opencover.xml" \
+            /d:sonar.cs.vscoveragexml.reportsPaths="Backend.Tests/TestResults/**/coverage.cobertura.xml"
+
+      - name: Build Backend
+        run: dotnet build Backend/Backend.csproj
+
+      - name: Run Backend Tests and Collect Coverage
+        run: dotnet test Backend.Tests/Backend.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage;Format=opencover"
+
+      - name: End SonarQube Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"

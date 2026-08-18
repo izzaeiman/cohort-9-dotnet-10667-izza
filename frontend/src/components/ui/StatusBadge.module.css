@@ -69,3 +69,15 @@
   color: #1565C0;
   border: 1px solid rgba(21, 101, 192, 0.25);
 }
+
+.badge--cancelled {
+  background: #F5F5F5;
+  color: #616161;
+}
+.badge--cancelled .dot { background: #9E9E9E; }
+
+.badge--priority-critical {
+  background: #3E2723;
+  color: #FFCDD2;
+  border: 1px solid rgba(255, 205, 210, 0.25);
+}

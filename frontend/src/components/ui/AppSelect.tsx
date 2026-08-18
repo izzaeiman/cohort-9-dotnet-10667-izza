@@ -40,8 +40,14 @@ const AppSelect = forwardRef<HTMLSelectElement, AppSelectProps>(
             ref={ref}
             id={selectId}
             className={styles.select}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onFocus={(e) => {
+              setIsFocused(true);
+              rest.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              rest.onBlur?.(e);
+            }}
             aria-describedby={error ? `${selectId}-error` : helperText ? `${selectId}-helper` : undefined}
             aria-invalid={!!error}
             {...rest}

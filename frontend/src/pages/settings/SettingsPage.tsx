@@ -112,11 +112,9 @@ export const SettingsPage = () => {
       {/* ── Settings Grid ─────────────────────────────────────────────────── */}
       <div className={styles.grid}>
         {/* Left Side Navigation */}
-        <div className={styles.navCard} role="tablist" aria-label="Settings categories">
+        <div className={styles.navCard} aria-label="Settings categories">
           <button
             type="button"
-            role="tab"
-            aria-selected={activeTab === 'appearance'}
             className={`${styles.navItem} ${activeTab === 'appearance' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('appearance')}
           >
@@ -125,8 +123,6 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={activeTab === 'notifications'}
             className={`${styles.navItem} ${activeTab === 'notifications' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('notifications')}
           >
@@ -135,8 +131,6 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={activeTab === 'security'}
             className={`${styles.navItem} ${activeTab === 'security' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('security')}
           >
@@ -145,8 +139,6 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={activeTab === 'regional'}
             className={`${styles.navItem} ${activeTab === 'regional' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('regional')}
           >

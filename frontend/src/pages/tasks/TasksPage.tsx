@@ -369,8 +369,9 @@ export const TasksPage = () => {
       {/* ── Main Task Table / Empty State ─────────────────────────────────── */}
       {paginatedTasks.length > 0 ? (
         <div className={styles.card}>
-          <table className={styles.table}>
-            <thead>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
               <tr>
                 <th className={styles.th} style={{ width: 40 }}>
                   <input
@@ -494,6 +495,7 @@ export const TasksPage = () => {
               ))}
             </tbody>
           </table>
+          </div>
 
           <Pagination
             currentPage={currentPage}

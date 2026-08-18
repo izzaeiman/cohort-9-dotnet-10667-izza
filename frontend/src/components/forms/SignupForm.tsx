@@ -62,7 +62,7 @@ const SignupForm = ({
   const watchPassword = useWatch({ control, name: 'password', defaultValue: '' });
   const strength = getPasswordStrength(watchPassword || '');
 
-  const roleOptions = USER_ROLES.map((r) => ({ value: r, label: r }));
+  const roleOptions = USER_ROLES.filter((r) => r !== 'Administrator').map((r) => ({ value: r, label: r }));
 
   return (
     <form
@@ -196,8 +196,8 @@ const SignupForm = ({
           <span className={styles.checkmark} aria-hidden="true" />
           <span>
             I agree to the{' '}
-            <span className={styles.termsLink}>Terms of Service</span> and{' '}
-            <span className={styles.termsLink}>Privacy Policy</span>
+            <Link to="/terms" className={styles.termsLink}>Terms of Service</Link> and{' '}
+            <Link to="/privacy" className={styles.termsLink}>Privacy Policy</Link>
           </span>
         </label>
         {errors.agreeToTerms?.message && (

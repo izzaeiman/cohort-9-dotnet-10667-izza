@@ -64,6 +64,35 @@ export const UsersPage = () => {
   });
 
   useEffect(() => {
+    if (!activeMenuId) return;
+
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`.${styles.menuDropdown}`) && !target.closest(`[aria-label^="User actions for"]`)) {
+        setActiveMenuId(null);
+      }
+    };
+
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveMenuId(null);
+    };
+
+    const handleScroll = () => {
+      setActiveMenuId(null);
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeydown);
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeydown);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [activeMenuId]);
+
+  useEffect(() => {
     let isMounted = true;
     userService.getUsers().then((data) => {
       if (isMounted) {
@@ -326,33 +355,10 @@ export const UsersPage = () => {
                     </button>
 
                     {activeMenuId === u.id && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          right: '16px',
-                          top: '100%',
-                          background: '#fff',
-                          border: '1px solid #ECECEC',
-                          borderRadius: '10px',
-                          boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-                          padding: '4px',
-                          zIndex: 10,
-                          width: '120px',
-                          textAlign: 'left',
-                        }}
-                      >
+                      <div className={styles.menuDropdown}>
                         <button
                           type="button"
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            textAlign: 'left',
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
+                          className={styles.menuItem}
                           onClick={() => {
                             setActiveMenuId(null);
                             setEditingUser(u);
@@ -369,17 +375,7 @@ export const UsersPage = () => {
                         </button>
                         <button
                           type="button"
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            textAlign: 'left',
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            color: '#D32F2F',
-                            cursor: 'pointer',
-                          }}
+                          className={`${styles.menuItem} ${styles.menuItemDanger}`}
                           onClick={() => {
                             setActiveMenuId(null);
                             setDeletingUser(u);

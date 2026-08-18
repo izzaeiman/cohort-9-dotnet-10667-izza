@@ -19,9 +19,8 @@ const ForgotPasswordPage = () => {
     setServerError('');
     setIsLoading(true);
     try {
-      // TODO: Replace with real auth call → await authService.forgotPassword(data.email);
-      await new Promise((res) => setTimeout(res, 900));
-      setSubmittedEmail(data.email);
+      // Endpoint does not exist yet
+      setServerError('Password reset is not yet implemented on the server.');
     } catch {
       setServerError('An error occurred. Please try again later.');
     } finally {

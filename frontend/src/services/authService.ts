@@ -165,8 +165,7 @@ export const authService = {
         );
       }
 
-      const assignedRole: UserRole =
-        data.role?.toLowerCase().includes('admin') ? 'Administrator' : 'Regular User';
+      const assignedRole: UserRole = 'Regular User';
 
       const newUser: AuthUser = {
         id: `usr-${Date.now()}`,

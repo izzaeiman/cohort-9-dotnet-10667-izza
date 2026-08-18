@@ -38,6 +38,17 @@
 
 /* ── Variants ────────────────────────────────────────────────────────────── */
 
+/* Secondary */
+.btn--secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: var(--color-surface-secondary);
+}
+
+
 /* Primary — orange gradient */
 .btn--primary {
   background: linear-gradient(135deg, #FF7A1A 0%, #F96A00 100%);

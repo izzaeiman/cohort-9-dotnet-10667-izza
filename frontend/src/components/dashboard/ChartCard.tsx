@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import styles from './ChartCard.module.css';
 
 interface ChartCardProps {
@@ -15,9 +15,12 @@ export const ChartCard = ({
   subtitle,
   children,
   showTimeFilter = true,
-  timeframe = 'this_week',
+  timeframe,
   onTimeframeChange,
 }: ChartCardProps) => {
+  const [internalTimeframe, setInternalTimeframe] = useState('this_week');
+  const activeTimeframe = timeframe !== undefined ? timeframe : internalTimeframe;
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -29,8 +32,12 @@ export const ChartCard = ({
         {showTimeFilter && (
           <select
             className={styles.filterSelect}
-            value={timeframe}
-            onChange={(e) => onTimeframeChange?.(e.target.value)}
+            value={activeTimeframe}
+            onChange={(e) => {
+              const val = e.target.value;
+              setInternalTimeframe(val);
+              onTimeframeChange?.(val);
+            }}
             aria-label={`Timeframe filter for ${title}`}
           >
             <option value="this_week">This Week</option>

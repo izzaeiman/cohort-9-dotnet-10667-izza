@@ -8,8 +8,12 @@ import {
 } from 'react-icons/md';
 import styles from './QuickActions.module.css';
 
+import { useAuth } from '../../hooks/useAuth';
+
 export const QuickActions = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Administrator';
 
   const ACTIONS = [
     {
@@ -18,12 +22,12 @@ export const QuickActions = () => {
       icon: MdAddCircleOutline,
       onClick: () => navigate('/tasks'),
     },
-    {
+    ...(isAdmin ? [{
       id: 'qa-invite-user',
       label: 'Invite User',
       icon: MdPersonAddAlt,
-      onClick: () => navigate('/users'),
-    },
+      onClick: () => navigate('/admin/users'),
+    }] : []),
     {
       id: 'qa-calendar',
       label: 'View Calendar',

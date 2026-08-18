@@ -28,8 +28,7 @@ import Toast from '../../components/common/Toast';
 
 import useAuth from '../../hooks/useAuth';
 import { adminTaskService } from '../../services/adminTaskService';
-import { INITIAL_USERS } from '../../data/users';
-import { INITIAL_PROJECTS } from '../../data/projects';
+import { userService } from '../../services/userService';
 import type { DetailedTaskItem } from '../../data/tasks';
 import type { StatCardData, DeadlineItem } from '../../types/dashboard.types';
 import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
@@ -49,6 +48,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<DetailedTaskItem | null>(null);
   const [deletingTask, setDeletingTask] = useState<DetailedTaskItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
 
   const loadTasks = async () => {
     try {
@@ -60,8 +60,18 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const loadUsers = async () => {
+    try {
+      const usersData = await userService.getUsers();
+      setTotalUsers(usersData.length);
+    } catch (err) {
+      console.error('Failed to load users for dashboard stats', err);
+    }
+  };
+
   useEffect(() => {
     loadTasks();
+    loadUsers();
     const unsub = adminTaskService.subscribe(() => {
       loadTasks();
     });
@@ -70,7 +80,6 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Compute organization-wide statistics
   const statsSummary = useMemo(() => {
-    const totalUsers = INITIAL_USERS.length;
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter((t) => t.status === 'completed').length;
     const inProgressTasks = tasks.filter((t) => t.status === 'in_progress').length;
@@ -88,17 +97,13 @@ export const AdminDashboardPage: React.FC = () => {
       return statusInfo.state === 'DUE_TODAY';
     }).length;
 
-    const activeProjects = INITIAL_PROJECTS.length;
-
     return {
-      totalUsers,
       totalTasks,
       completedTasks,
       inProgressTasks,
       pendingTasks,
       overdueTasks,
       dueTodayTasks,
-      activeProjects,
     };
   }, [tasks]);
 
@@ -106,7 +111,7 @@ export const AdminDashboardPage: React.FC = () => {
     {
       id: 'stat-users',
       title: 'Total Users',
-      value: statsSummary.totalUsers,
+      value: totalUsers,
       change: 'Active Team',
       isPositive: true,
       period: 'Organization Wide',
@@ -165,15 +170,6 @@ export const AdminDashboardPage: React.FC = () => {
       isPositive: false,
       period: 'Deadline today',
       iconType: 'pending',
-    },
-    {
-      id: 'stat-projects',
-      title: 'Active Projects',
-      value: statsSummary.activeProjects,
-      change: 'On Track',
-      isPositive: true,
-      period: 'SaaS Architecture',
-      iconType: 'completed',
     },
   ];
 

@@ -44,12 +44,18 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const notifRef = useRef<HTMLDivElement>(null);
+  const userWrapRef = useRef<HTMLDivElement>(null);
+
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsUserDropdownOpen(false);
+      const target = e.target as Node;
+      if (notifRef.current && !notifRef.current.contains(target)) {
         setIsNotificationOpen(false);
+      }
+      if (userWrapRef.current && !userWrapRef.current.contains(target)) {
+        setIsUserDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -120,7 +126,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
         </button>
 
         {/* Notification Bell */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }} ref={notifRef}>
           <button
             type="button"
             className={styles.iconBtn}
@@ -157,7 +163,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
         </div>
 
         {/* User Dropdown */}
-        <div className={styles.userWrap}>
+        <div className={styles.userWrap} ref={userWrapRef}>
           <button
             type="button"
             className={styles.userBtn}

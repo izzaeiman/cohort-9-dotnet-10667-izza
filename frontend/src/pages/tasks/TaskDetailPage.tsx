@@ -279,7 +279,7 @@ export const TaskDetailPage = () => {
             </span>
           </div>
 
-          {task.timeLimit && (
+          {task.timeLimit != null && (
             <div className={styles.metaRow}>
               <span className={styles.metaLabel}>Time Limit</span>
               <span className={styles.metaVal}>{task.timeLimit} Days</span>

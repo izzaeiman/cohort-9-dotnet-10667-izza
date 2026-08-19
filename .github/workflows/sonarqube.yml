@@ -47,14 +47,21 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          dotnet sonarscanner begin \
-            /k:"task-management-tool" \
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.sources="frontend/src" \
-            /d:sonar.typescript.tsconfigPaths="frontend/tsconfig.json" \
-            /d:sonar.cs.opencover.reportsPaths="Backend.Tests/TestResults/**/coverage.opencover.xml" \
+          SONAR_ARGS=(
+            begin
+            /k:"task-management-tool"
+            /d:sonar.sources="frontend/src"
+            /d:sonar.typescript.tsconfigPaths="frontend/tsconfig.json"
+            /d:sonar.cs.opencover.reportsPaths="Backend.Tests/TestResults/**/coverage.opencover.xml"
             /d:sonar.cs.vscoveragexml.reportsPaths="Backend.Tests/TestResults/**/coverage.cobertura.xml"
+          )
+          if [ -n "$SONAR_HOST_URL" ]; then
+            SONAR_ARGS+=("/d:sonar.host.url=$SONAR_HOST_URL")
+          fi
+          if [ -n "$SONAR_TOKEN" ]; then
+            SONAR_ARGS+=("/d:sonar.token=$SONAR_TOKEN")
+          fi
+          dotnet sonarscanner "${SONAR_ARGS[@]}"
 
       - name: Build Backend
         run: dotnet build Backend/Backend.csproj
@@ -66,4 +73,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: |
+          SONAR_ARGS=("end")
+          if [ -n "$SONAR_TOKEN" ]; then
+            SONAR_ARGS+=("/d:sonar.token=$SONAR_TOKEN")
+          fi
+          dotnet sonarscanner "${SONAR_ARGS[@]}"

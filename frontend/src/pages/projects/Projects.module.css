@@ -84,6 +84,7 @@
   color: var(--color-text);
   outline: none;
   width: 240px;
+  max-width: 100%;
   transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
 }
 
@@ -99,12 +100,13 @@
   left: 10px;
   color: var(--color-text-muted);
   display: flex;
+  pointer-events: none;
 }
 
 /* Project Cards Grid */
 .projectsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 

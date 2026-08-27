@@ -98,6 +98,7 @@
   left: 10px;
   color: var(--color-text-muted);
   display: flex;
+  pointer-events: none;
 }
 
 .selectFilter {

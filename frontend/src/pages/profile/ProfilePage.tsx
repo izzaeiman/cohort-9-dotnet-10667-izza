@@ -124,11 +124,14 @@ export const ProfilePage = () => {
       </div>
 
       {/* ── Navigation Tabs ───────────────────────────────────────────────── */}
-      <div className={styles.tabsBar} role="tablist">
+      <div className={styles.tabsBar} role="tablist" aria-label="Profile section tabs">
         <button
           type="button"
           role="tab"
+          id="tab-profile"
+          aria-controls="panel-profile"
           aria-selected={activeTab === 'profile'}
+          tabIndex={activeTab === 'profile' ? 0 : -1}
           className={`${styles.tabBtn} ${activeTab === 'profile' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('profile')}
         >
@@ -137,7 +140,10 @@ export const ProfilePage = () => {
         <button
           type="button"
           role="tab"
+          id="tab-activity"
+          aria-controls="panel-activity"
           aria-selected={activeTab === 'activity'}
+          tabIndex={activeTab === 'activity' ? 0 : -1}
           className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('activity')}
         >
@@ -146,7 +152,10 @@ export const ProfilePage = () => {
         <button
           type="button"
           role="tab"
+          id="tab-security"
+          aria-controls="panel-security"
           aria-selected={activeTab === 'security'}
+          tabIndex={activeTab === 'security' ? 0 : -1}
           className={`${styles.tabBtn} ${activeTab === 'security' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('security')}
         >
@@ -156,7 +165,7 @@ export const ProfilePage = () => {
 
       {/* ── Tab Content ───────────────────────────────────────────────────── */}
       {activeTab === 'profile' ? (
-        <div className={styles.card}>
+        <div id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" className={styles.card}>
           <form onSubmit={handleSubmit(handleSaveProfile)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className={styles.formGrid}>
               <AppInput
@@ -212,9 +221,11 @@ export const ProfilePage = () => {
           </form>
         </div>
       ) : activeTab === 'activity' ? (
-        <ActivityTimeline activities={INITIAL_ACTIVITIES} />
+        <div id="panel-activity" role="tabpanel" aria-labelledby="tab-activity">
+          <ActivityTimeline activities={INITIAL_ACTIVITIES} />
+        </div>
       ) : (
-        <div className={styles.card} style={{ gap: '16px' }}>
+        <div id="panel-security" role="tabpanel" aria-labelledby="tab-security" className={styles.card} style={{ gap: '16px' }}>
           <h3 className={styles.sectionHeading} style={{ margin: 0 }}>
             Active Sessions & Security
           </h3>

@@ -72,6 +72,7 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
           <NavLink
             key={path}
             to={path}
+            aria-label={label}
             className={({ isActive }) =>
               clsx(styles.navItem, isActive && styles.navItemActive)
             }
@@ -89,6 +90,7 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
       <div className={styles.footer}>
         <button
           type="button"
+          aria-label="Logout"
           className={styles.logoutBtn}
           onClick={handleLogout}
           title={isCollapsed ? 'Logout' : undefined}

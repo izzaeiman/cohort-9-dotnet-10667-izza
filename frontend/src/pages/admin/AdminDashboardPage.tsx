@@ -57,12 +57,17 @@ export const AdminDashboardPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<DetailedTaskItem | null>(null);
   const [deletingTask, setDeletingTask] = useState<DetailedTaskItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadTasks = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const data = await adminTaskService.getAllTasks();
       setTasks(data);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load dashboard tasks.';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

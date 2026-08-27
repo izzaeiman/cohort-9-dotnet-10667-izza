@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const USER_ROLES = ['Regular User', 'Administrator'] as const;
+export const USER_ROLES = ['Regular User'] as const;
 
 export const signupSchema = z
   .object({

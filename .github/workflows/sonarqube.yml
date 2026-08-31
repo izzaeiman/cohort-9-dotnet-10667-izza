@@ -37,6 +37,7 @@ jobs:
         run: |
           npx tsc --noEmit
           npm run build
+          npm run test:coverage
 
       - name: Install SonarScanner for .NET
         run: dotnet tool install --global dotnet-sonarscanner
@@ -49,20 +50,21 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         run: |
+          ORG_NAME="${SONAR_ORGANIZATION:-izzaeiman}"
+          PROJECT_KEY="${SONAR_PROJECT_KEY:-izzaeiman_cohort-9-dotnet-10667-izza}"
+          HOST_URL="${SONAR_HOST_URL:-https://sonarcloud.io}"
+          
           SONAR_ARGS=(
             begin
-            /k:"${SONAR_PROJECT_KEY:-task-management-tool}"
+            /k:"$PROJECT_KEY"
+            /o:"$ORG_NAME"
+            /d:sonar.host.url="$HOST_URL"
             /d:sonar.sources="frontend/src"
             /d:sonar.typescript.tsconfigPaths="frontend/tsconfig.json"
+            /d:sonar.javascript.lcov.reportPaths="frontend/coverage/lcov.info"
             /d:sonar.cs.opencover.reportsPaths="Backend.Tests/TestResults/**/coverage.opencover.xml"
-            /d:sonar.cs.vscoveragexml.reportsPaths="Backend.Tests/TestResults/**/coverage.cobertura.xml"
+            /d:sonar.qualitygate.wait=true
           )
-          if [ -n "$SONAR_ORGANIZATION" ]; then
-            SONAR_ARGS+=("/o:$SONAR_ORGANIZATION")
-          fi
-          if [ -n "$SONAR_HOST_URL" ]; then
-            SONAR_ARGS+=("/d:sonar.host.url=$SONAR_HOST_URL")
-          fi
           if [ -n "$SONAR_TOKEN" ]; then
             SONAR_ARGS+=("/d:sonar.token=$SONAR_TOKEN")
           fi
@@ -72,7 +74,7 @@ jobs:
         run: dotnet build Backend/Backend.csproj
 
       - name: Run Backend Tests and Collect Coverage
-        run: dotnet test Backend.Tests/Backend.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage;Format=opencover"
+        run: dotnet test Backend.Tests/Backend.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: End SonarQube Analysis
         env:

@@ -5,6 +5,7 @@ export interface ProfileDto {
   name: string;
   email: string;
   role: string;
+  avatar?: string;
 }
 
 export const profileService = {
@@ -24,9 +25,9 @@ export const profileService = {
   },
 
   /**
-   * Change password (stub)
+   * Change password
    */
-  async changePassword(): Promise<never> {
-    throw new Error('Backend integration pending — Password change endpoints require ASP.NET Core Identity integration.');
+  async changePassword(data: any): Promise<void> {
+    await apiClient.put('/auth/change-password', data);
   },
 };

@@ -21,7 +21,9 @@ import PageLoader from '../../components/common/PageLoader';
 import EditTaskModal from '../../components/admin/EditTaskModal';
 import AssignTaskModal from '../../components/admin/AssignTaskModal';
 
-import { adminTaskService } from '../../services/adminTaskService';
+import TaskProgressSection from '../../components/tasks/TaskProgressSection';
+
+import { taskService } from '../../services/taskService';
 import type { DetailedTaskItem, TaskComment } from '../../data/tasks';
 import { formatDateDisplay } from '../../utils/deadlineHelpers';
 import styles from './TaskDetail.module.css';
@@ -46,7 +48,7 @@ export const TaskDetailPage = () => {
     }
     setIsLoading(true);
     try {
-      const data = await adminTaskService.getTaskById(id);
+      const data = await taskService.getTaskById(id);
       setTask(data);
     } catch {
       setTask(null);
@@ -57,6 +59,10 @@ export const TaskDetailPage = () => {
 
   useEffect(() => {
     loadTask();
+    const unsub = taskService.subscribe(() => {
+      loadTask();
+    });
+    return () => unsub();
   }, [id]);
 
   if (isLoading) return <PageLoader />;
@@ -76,7 +82,7 @@ export const TaskDetailPage = () => {
   }
 
   const handleDeleteTask = async () => {
-    await adminTaskService.deleteTask(task.id);
+    await taskService.deleteTask(task.id);
     setIsDeleteOpen(false);
     navigate('/admin/tasks');
   };
@@ -96,7 +102,7 @@ export const TaskDetailPage = () => {
     const updatedComments = [...task.comments, newComment];
 
     try {
-      const updatedTask = await adminTaskService.updateTask(task.id, { comments: updatedComments });
+      const updatedTask = await taskService.updateTask(task.id, { comments: updatedComments });
       setTask(updatedTask);
       setNewCommentText('');
       setToastMessage('Comment posted successfully!');
@@ -166,12 +172,35 @@ export const TaskDetailPage = () => {
               </span>
               <TaskDeadlineBadge task={task} />
             </div>
+
+            {/* Visual Task Status Progress Bar */}
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600, marginBottom: '6px' }}>
+                <span>Task Completion Progress</span>
+                <span>
+                  {task.status === 'completed' ? '100%' : task.status === 'in_progress' ? '50%' : task.status === 'overdue' ? '25%' : '0%'}
+                </span>
+              </div>
+              <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--border, #e5e7eb)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    width: task.status === 'completed' ? '100%' : task.status === 'in_progress' ? '50%' : task.status === 'overdue' ? '25%' : '0%',
+                    backgroundColor: task.status === 'completed' ? '#10b981' : task.status === 'in_progress' ? '#3b82f6' : task.status === 'overdue' ? '#ef4444' : '#9ca3af',
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           <div>
             <h3 className={styles.sectionHeading}>Description</h3>
             <p className={styles.descriptionText}>{task.description}</p>
           </div>
+
+          {/* Activity & Progress Log History */}
+          <TaskProgressSection taskId={task.id} />
 
           {/* Attachments Section */}
           <div>

@@ -1,7 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -22,51 +23,120 @@ namespace Backend.Tests.Controllers
         {
             _userRepositoryMock = new Mock<IUserRepository>();
             _controller = new UsersController(_userRepositoryMock.Object);
+        }
 
-            // Mock HttpContext and User
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+        private void SetupUser(string role)
+        {
+            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, "admin-1"),
-                new Claim(ClaimTypes.Role, "Administrator")
-            }, "mock"));
-
+                new Claim(ClaimTypes.NameIdentifier, "usr-1"),
+                new Claim(ClaimTypes.Role, role)
+            };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+            
             _controller.ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext { User = user }
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
             };
         }
 
         [Fact]
-        public async Task GetUsers_ReturnsOkResult_WithSafeUserDtos()
+        public async Task GetUsers_Administrator_ReturnsUsersWithEmails()
         {
             // Arrange
-            var mockUsers = new List<User>
+            SetupUser("Administrator");
+            
+            var users = new List<User>
             {
-                new User { Id = "usr-1", Name = "User One", Email = "one@test.com", PasswordHash = "secret_hash", Role = UserRoles.RegularUser },
-                new User { Id = "usr-2", Name = "User Two", Email = "two@test.com", PasswordHash = "another_secret", Role = UserRoles.Administrator }
+                new User { Id = "usr-1", Name = "Admin", Email = "admin@test.com", Role = "Administrator" },
+                new User { Id = "usr-2", Name = "User", Email = "user@test.com", Role = "Regular User" }
             };
-
-            _userRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(mockUsers);
+            _userRepositoryMock.Setup(repo => repo.GetAllAsync()).ReturnsAsync(users);
 
             // Act
-            var result = await _controller.GetUsers();
+            var result = await _controller.GetUsers(null);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnedDtos = Assert.IsAssignableFrom<IEnumerable<UserDto>>(okResult.Value).ToList();
+            var returnedUsers = Assert.IsAssignableFrom<IEnumerable<UserDto>>(okResult.Value);
+            
+            Assert.Equal(2, returnedUsers.Count());
+            Assert.Equal("admin@test.com", returnedUsers.First().Email);
+            Assert.Equal("user@test.com", returnedUsers.Last().Email);
+        }
 
-            Assert.Equal(2, returnedDtos.Count);
+        [Fact]
+        public async Task GetUsers_NonAdministrator_MasksEmails()
+        {
+            // Arrange
+            SetupUser("Regular User"); // Should not technically reach here due to Authorize attribute, but testing logic
+            
+            var users = new List<User>
+            {
+                new User { Id = "usr-1", Name = "Admin", Email = "admin@test.com", Role = "Administrator" }
+            };
+            _userRepositoryMock.Setup(repo => repo.GetAllAsync()).ReturnsAsync(users);
 
-            // Verify safe public DTO properties mapping
-            Assert.Equal("usr-1", returnedDtos[0].Id);
-            Assert.Equal("User One", returnedDtos[0].Name);
-            Assert.Equal("one@test.com", returnedDtos[0].Email);
-            Assert.Equal(UserRoles.RegularUser, returnedDtos[0].Role);
+            // Act
+            var result = await _controller.GetUsers(null);
 
-            Assert.Equal("usr-2", returnedDtos[1].Id);
-            Assert.Equal("User Two", returnedDtos[1].Name);
-            Assert.Equal("two@test.com", returnedDtos[1].Email);
-            Assert.Equal(UserRoles.Administrator, returnedDtos[1].Role);
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUsers = Assert.IsAssignableFrom<IEnumerable<UserDto>>(okResult.Value);
+            
+            Assert.Single(returnedUsers);
+            Assert.Equal(string.Empty, returnedUsers.First().Email);
+        }
+
+        [Fact]
+        public async Task UpdateRole_AdminUser_ValidRole_Succeeds()
+        {
+            // Arrange
+            SetupUser("Administrator");
+            var user = new User { Id = "usr-2", Name = "User", Role = UserRoles.RegularUser, Email = "user@test.com" };
+            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-2")).ReturnsAsync(user);
+
+            var dto = new UpdateRoleDto { Role = UserRoles.Administrator };
+
+            // Act
+            var result = await _controller.UpdateRole("usr-2", dto);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUser = Assert.IsType<UserDto>(okResult.Value);
+            Assert.Equal(UserRoles.Administrator, returnedUser.Role);
+            Assert.Equal(UserRoles.Administrator, user.Role);
+            _userRepositoryMock.Verify(r => r.UpdateAsync(user), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateRole_InvalidRole_ReturnsBadRequest()
+        {
+            // Arrange
+            SetupUser("Administrator");
+            var dto = new UpdateRoleDto { Role = "SuperAdmin" };
+
+            // Act
+            var result = await _controller.UpdateRole("usr-2", dto);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdateRole_UserNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            SetupUser("Administrator");
+            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-999")).ReturnsAsync((User?)null);
+            var dto = new UpdateRoleDto { Role = UserRoles.Administrator };
+
+            // Act
+            var result = await _controller.UpdateRole("usr-999", dto);
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         }
     }
 }

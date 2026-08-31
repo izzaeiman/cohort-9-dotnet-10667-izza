@@ -21,6 +21,7 @@ export interface DetailedTaskItem extends TaskItem {
   assignedUser: string;
   assignedUserId: string;
   project: string;
+  projectId?: string;
   startDate: string;
   startTime: string;
   dueTime: string;

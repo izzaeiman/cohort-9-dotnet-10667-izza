@@ -37,9 +37,9 @@ namespace Backend.Tests.Repositories
             _context.SaveChanges();
 
             _context.Tasks.AddRange(
-                new TaskItem { Id = 1, Title = "Task A Alpha", Description = "Alpha Desc", Status = TaskStatusEnum.Pending, Priority = TaskPriorityEnum.High, Category = "Frontend", AssignedUserId = "usr-1", DueDate = new DateTime(2025, 1, 1), CreatedAt = new DateTime(2025, 1, 1) },
-                new TaskItem { Id = 2, Title = "Task B Beta", Description = "Beta Desc", Status = TaskStatusEnum.InProgress, Priority = TaskPriorityEnum.Medium, Category = "Backend", AssignedUserId = "usr-1", DueDate = new DateTime(2025, 2, 1), CreatedAt = new DateTime(2025, 1, 2) },
-                new TaskItem { Id = 3, Title = "Task C Alpha", Description = "Gamma Desc", Status = TaskStatusEnum.Completed, Priority = TaskPriorityEnum.Low, Category = "DevOps", AssignedUserId = "usr-2", DueDate = new DateTime(2025, 3, 1), CreatedAt = new DateTime(2025, 1, 3) }
+                new TaskItem { Id = 1, Title = "Task A Alpha", Description = "Alpha Desc", Status = TaskStatusEnum.Pending, Priority = TaskPriorityEnum.High, Category = TaskCategoryEnum.Frontend, AssignedUserId = "usr-1", DueDate = new DateTime(2025, 1, 1), CreatedAt = new DateTime(2025, 1, 1) },
+                new TaskItem { Id = 2, Title = "Task B Beta", Description = "Beta Desc", Status = TaskStatusEnum.InProgress, Priority = TaskPriorityEnum.Medium, Category = TaskCategoryEnum.Backend, AssignedUserId = "usr-1", DueDate = new DateTime(2025, 2, 1), CreatedAt = new DateTime(2025, 1, 2) },
+                new TaskItem { Id = 3, Title = "Task C Alpha", Description = "Gamma Desc", Status = TaskStatusEnum.Completed, Priority = TaskPriorityEnum.Low, Category = TaskCategoryEnum.DevOps, AssignedUserId = "usr-2", DueDate = new DateTime(2025, 3, 1), CreatedAt = new DateTime(2025, 1, 3) }
             );
 
             _context.SaveChanges();
@@ -88,7 +88,7 @@ namespace Backend.Tests.Repositories
         [Fact]
         public async Task GetAllAsync_CategoryFilter_ReturnsMatchingTasks()
         {
-            var query = new TaskQueryDto { Category = "Backend" };
+            var query = new TaskQueryDto { Category = TaskCategoryEnum.Backend };
             var results = await _repository.GetAllAsync(query);
             Assert.Single(results);
             Assert.Equal(2, results.First().Id);
@@ -140,6 +140,55 @@ namespace Backend.Tests.Repositories
             var query = new TaskQueryDto { AssignedUserId = "usr-2" };
             var results = await _repository.GetByAssignedUserIdAsync("usr-1", query);
             Assert.Empty(results); // The query asks for usr-2, but the boundary is usr-1, so intersection is empty
+        }
+
+        [Fact]
+        public async Task GetByAssignedUserIdAsync_EmptyUserId_ReturnsEmptyList()
+        {
+            var results = await _repository.GetByAssignedUserIdAsync("", new TaskQueryDto());
+            Assert.Empty(results);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_ReturnsTask_IfFound()
+        {
+            var result = await _repository.GetByIdAsync(1);
+            Assert.NotNull(result);
+            Assert.Equal("Task A Alpha", result.Title);
+        }
+
+        [Fact]
+        public async Task CreateAsync_Succeeds()
+        {
+            var task = new TaskItem { Title = "Task Created", AssignedUserId = "usr-1", Category = TaskCategoryEnum.General, Priority = TaskPriorityEnum.Low, Status = TaskStatusEnum.Pending };
+            var result = await _repository.CreateAsync(task);
+            Assert.NotNull(result);
+            Assert.True(result.Id > 0);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_Succeeds()
+        {
+            var task = await _context.Tasks.FindAsync(1);
+            task!.Title = "Updated Task A";
+            var result = await _repository.UpdateAsync(task);
+            Assert.Equal("Updated Task A", result.Title);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ReturnsTrue_IfDeleted()
+        {
+            var result = await _repository.DeleteAsync(1);
+            Assert.True(result);
+            var task = await _context.Tasks.FindAsync(1);
+            Assert.Null(task);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ReturnsFalse_IfNotFound()
+        {
+            var result = await _repository.DeleteAsync(999);
+            Assert.False(result);
         }
     }
 }

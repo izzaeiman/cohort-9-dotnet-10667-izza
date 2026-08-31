@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,6 +33,7 @@ const PAGE_SIZE = 5;
 export const UsersPage = () => {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -62,6 +63,29 @@ export const UsersPage = () => {
       phone: '',
     },
   });
+
+  const loadUsers = useCallback(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    setError(null);
+    userService.getUsers()
+      .then((data) => {
+        if (isMounted) {
+          setUsers(data);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load users', err);
+        if (isMounted) {
+          setError('Failed to load users. Please check your connection and try again.');
+          setIsLoading(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!activeMenuId) return;
@@ -93,17 +117,9 @@ export const UsersPage = () => {
   }, [activeMenuId]);
 
   useEffect(() => {
-    let isMounted = true;
-    userService.getUsers().then((data) => {
-      if (isMounted) {
-        setUsers(data);
-        setIsLoading(false);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    const cancelLoad = loadUsers();
+    return () => cancelLoad();
+  }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -169,6 +185,15 @@ export const UsersPage = () => {
   };
 
   if (isLoading) return <PageLoader />;
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px', padding: '20px' }}>
+        <p style={{ color: '#EF4444', fontWeight: 600, fontSize: '1.1rem' }}>{error}</p>
+        <AppButton variant="primary" onClick={loadUsers}>Retry Loading</AppButton>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

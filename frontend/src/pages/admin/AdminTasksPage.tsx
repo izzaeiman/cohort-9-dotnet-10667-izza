@@ -24,9 +24,9 @@ import EditTaskModal from '../../components/admin/EditTaskModal';
 import AssignTaskModal from '../../components/admin/AssignTaskModal';
 
 import type { DetailedTaskItem } from '../../data/tasks';
-import { adminTaskService } from '../../services/adminTaskService';
+import { taskService } from '../../services/taskService';
 import { userService } from '../../services/userService';
-import { INITIAL_PROJECTS } from '../../data/projects';
+import { projectService } from '../../services/projectService';
 import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
 
 import styles from './AdminTasksPage.module.css';
@@ -65,6 +65,7 @@ export const AdminTasksPage: React.FC = () => {
 
   // Users State
   const [users, setUsers] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
 
   // Fetch Tasks
   const loadTasks = async (filters: {
@@ -76,7 +77,7 @@ export const AdminTasksPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await adminTaskService.getAllTasks(filters);
+      const data = await taskService.getAllTasks(filters);
       setTasks(data);
     } catch (err: any) {
       setError(err.message || 'Unable to load tasks.');
@@ -111,7 +112,12 @@ export const AdminTasksPage: React.FC = () => {
     userService.getUsers()
       .then(data => setUsers(data || []))
       .catch(err => console.error('Failed to load users for filter', err));
-    const unsubscribe = adminTaskService.subscribe(reloadTasks);
+    
+    projectService.getProjects()
+      .then(data => setProjects(data || []))
+      .catch(err => console.error('Failed to load projects for filter', err));
+
+    const unsubscribe = taskService.subscribe(reloadTasks);
     return () => unsubscribe();
   }, [searchQuery, statusFilter, priorityFilter, userFilter]);
 
@@ -206,7 +212,7 @@ export const AdminTasksPage: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!deletingTask) return;
     try {
-      await adminTaskService.deleteTask(deletingTask.id);
+      await taskService.deleteTask(deletingTask.id);
       setToastMessage(`Task ${deletingTask.id} deleted successfully.`);
       setDeletingTask(null);
       reloadTasks();
@@ -346,7 +352,7 @@ export const AdminTasksPage: React.FC = () => {
               onChange={(e) => setProjectFilter(e.target.value)}
             >
               <option value="all">All Projects</option>
-              {INITIAL_PROJECTS.map((p) => (
+              {projects.map((p) => (
                 <option key={p.id} value={p.name}>
                   {p.name}
                 </option>

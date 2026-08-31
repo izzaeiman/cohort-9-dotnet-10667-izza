@@ -28,7 +28,7 @@ export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
 
   const handleAction = (actionName: string, taskId: string) => {
     setActiveMenuTaskId(null);
-    // TODO: Connect task action to ASP.NET Core Web API
+    
     alert(`${actionName} action triggered for task ${taskId}`);
   };
 

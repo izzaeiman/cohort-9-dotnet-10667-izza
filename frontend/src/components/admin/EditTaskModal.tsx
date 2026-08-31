@@ -6,11 +6,12 @@ import AppInput from '../ui/AppInput';
 import AppSelect from '../ui/AppSelect';
 import AppButton from '../ui/AppButton';
 import { userService } from '../../services/userService';
-import { INITIAL_PROJECTS } from '../../data/projects';
+import { projectService } from '../../services/projectService';
 import type { DetailedTaskItem } from '../../data/tasks';
-import { adminTaskService } from '../../services/adminTaskService';
+import { taskService } from '../../services/taskService';
 import { taskFormSchema, type TaskFormData } from '../../utils/taskSchema';
 import Toast from '../common/Toast';
+import TaskProgressSection from '../tasks/TaskProgressSection';
 import styles from './TaskModalForm.module.css';
 
 interface EditTaskModalProps {
@@ -30,6 +31,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,6 +41,12 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         .then(data => setUsers(data || []))
         .catch(err => console.error('Failed to load users for assignment', err))
         .finally(() => setIsLoadingUsers(false));
+
+      setIsLoadingProjects(true);
+      projectService.getProjects()
+        .then(data => setProjects(data || []))
+        .catch(err => console.error('Failed to load projects', err))
+        .finally(() => setIsLoadingProjects(false));
     }
   }, [isOpen]);
 
@@ -56,7 +65,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setValue('title', task.title);
       setValue('description', task.description || '');
       setValue('assignedUserId', task.assignedUserId || '');
-      setValue('project', task.project || INITIAL_PROJECTS[0]?.name);
+      setValue('project', task.projectId || 'none');
       setValue('category', task.category || 'Frontend');
       setValue('priority', task.priority || 'medium');
       setValue('status', task.status || 'pending');
@@ -74,13 +83,15 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
     try {
       setIsSubmitting(true);
       const selectedUser = users.find((u) => u.id === data.assignedUserId);
+      const selectedProject = data.project === 'none' ? null : projects.find((p) => p.id === data.project);
 
-      await adminTaskService.updateTask(task.id, {
+      await taskService.updateTask(task.id, {
         title: data.title.trim(),
         description: data.description.trim(),
         assignedUser: selectedUser?.name || task.assignedUser,
         assignedUserId: data.assignedUserId,
-        project: data.project,
+        project: selectedProject?.name || 'Unassigned',
+        projectId: data.project === 'none' ? undefined : data.project,
         category: data.category as any,
         priority: data.priority,
         status: data.status,
@@ -144,10 +155,11 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               label="Project *"
               {...register('project')}
               error={errors.project?.message}
-              options={INITIAL_PROJECTS.map((p) => ({
-                value: p.name,
-                label: p.name,
-              }))}
+              options={[
+                { value: '', label: 'Select Project...' },
+                { value: 'none', label: 'No Project' },
+                ...projects.map((p) => ({ value: p.id, label: p.name }))
+              ]}
             />
           </div>
 
@@ -157,11 +169,13 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               {...register('category')}
               error={errors.category?.message}
               options={[
+                { value: 'General', label: 'General' },
                 { value: 'Frontend', label: 'Frontend' },
                 { value: 'Backend', label: 'Backend' },
-                { value: 'UI/UX Design', label: 'UI/UX Design' },
+                { value: 'UiUxDesign', label: 'UI/UX Design' },
                 { value: 'DevOps', label: 'DevOps' },
                 { value: 'Database', label: 'Database' },
+                { value: 'FullStack', label: 'Full Stack' },
               ]}
             />
 
@@ -226,10 +240,11 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
           <AppInput
             label="Time Limit (Days - Optional)"
             type="number"
-            placeholder="e.g. 5"
             {...register('timeLimit')}
             error={errors.timeLimit?.message}
           />
+
+          {task?.id && <TaskProgressSection taskId={task.id} />}
 
           <div className={styles.actions}>
             <AppButton variant="secondary" type="button" onClick={onClose} disabled={isSubmitting}>

@@ -11,7 +11,7 @@ import QuickActions from '../../components/dashboard/QuickActions';
 import { SkeletonCard, SkeletonTable } from '../../components/ui/SkeletonLoaders';
 import useAuth from '../../hooks/useAuth';
 import { isAdminUser } from '../../components/layout/AdminRoute';
-import { adminTaskService } from '../../services/adminTaskService';
+import { taskService } from '../../services/taskService';
 import type { DetailedTaskItem } from '../../data/tasks';
 import type { StatCardData, DeadlineItem } from '../../types/dashboard.types';
 import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
@@ -31,7 +31,7 @@ export const DashboardPage = () => {
   const loadDashboardTasks = async () => {
     try {
       setIsLoading(true);
-      const allTasks = await adminTaskService.getAllTasks();
+      const allTasks = await taskService.getAllTasks();
       setTasks(allTasks);
     } finally {
       setIsLoading(false);
@@ -40,7 +40,7 @@ export const DashboardPage = () => {
 
   useEffect(() => {
     loadDashboardTasks();
-    const unsub = adminTaskService.subscribe(() => {
+    const unsub = taskService.subscribe(() => {
       loadDashboardTasks();
     });
     return () => unsub();

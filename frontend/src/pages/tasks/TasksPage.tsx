@@ -17,7 +17,7 @@ import Pagination from '../../components/shared/Pagination';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PageLoader from '../../components/common/PageLoader';
 
-import { adminTaskService } from '../../services/adminTaskService';
+import { taskService } from '../../services/taskService';
 import { authService } from '../../services/authService';
 import { isAdminUser } from '../../components/layout/AdminRoute';
 import { getLocalDate } from '../../utils/dateHelpers';
@@ -28,7 +28,7 @@ import styles from './Tasks.module.css';
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required').min(3, 'Title must be at least 3 characters'),
   description: z.string().optional(),
-  category: z.enum(['Frontend', 'Backend', 'UI/UX Design', 'DevOps', 'Database']),
+  category: z.enum(['General', 'Frontend', 'Backend', 'UiUxDesign', 'DevOps', 'Database', 'FullStack']),
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   status: z.enum(['pending', 'in_progress', 'completed', 'cancelled', 'overdue']),
   dueDate: z.string().min(1, 'Due date is required'),
@@ -62,6 +62,34 @@ export const TasksPage = () => {
   const [editingTask, setEditingTask] = useState<DetailedTaskItem | null>(null);
   const [deletingTask, setDeletingTask] = useState<DetailedTaskItem | null>(null);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportErrors([]);
+    setImportSuccess(null);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const api = (await import('../../services/api')).default;
+      const csrfRes = await api.get('/auth/antiforgery-token');
+      if (csrfRes.data?.token) api.defaults.headers.common['X-XSRF-TOKEN'] = csrfRes.data.token;
+      const res = await api.post('/tasks/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImportSuccess(res.data?.message || 'Import successful!');
+      loadTasks({});
+    } catch (err: any) {
+      if (err.response?.data?.errors) {
+        setImportErrors(err.response.data.errors);
+      } else {
+        setImportErrors([err.response?.data?.message || 'Import failed. Check CSV format.']);
+      }
+    }
+  };
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -90,7 +118,7 @@ export const TasksPage = () => {
   }) => {
     try {
       setIsLoading(true);
-      const data = await adminTaskService.getAllTasks(filters);
+      const data = await taskService.getAllTasks(filters);
       setTasks(data);
     } finally {
       setIsLoading(false);
@@ -111,7 +139,7 @@ export const TasksPage = () => {
   }, [searchTerm, statusFilter, priorityFilter, categoryFilter]);
 
   useEffect(() => {
-    const unsub = adminTaskService.subscribe(() => {
+    const unsub = taskService.subscribe(() => {
       loadTasks({
         search: searchTerm,
         status: statusFilter,
@@ -153,7 +181,7 @@ export const TasksPage = () => {
   }, [sortedTasks, currentPage]);
 
   const handleCreateTask = async (data: CreateTaskFormData) => {
-    const created = await adminTaskService.createTask({
+    const created = await taskService.createTask({
       title: data.title,
       description: data.description || '',
       category: data.category as TaskCategory,
@@ -176,7 +204,7 @@ export const TasksPage = () => {
 
   const handleEditTask = async (data: CreateTaskFormData) => {
     if (!editingTask) return;
-    await adminTaskService.updateTask(editingTask.id, {
+    await taskService.updateTask(editingTask.id, {
       title: data.title,
       description: data.description || '',
       category: data.category as TaskCategory,
@@ -192,7 +220,7 @@ export const TasksPage = () => {
 
   const handleDeleteSingle = async () => {
     if (!deletingTask) return;
-    await adminTaskService.deleteTask(deletingTask.id);
+    await taskService.deleteTask(deletingTask.id);
     setDeletingTask(null);
     setToastMessage('Task deleted successfully!');
     loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
@@ -200,7 +228,7 @@ export const TasksPage = () => {
 
   const handleBulkDelete = async () => {
     for (const id of selectedTaskIds) {
-      await adminTaskService.deleteTask(id);
+      await taskService.deleteTask(id);
     }
     setSelectedTaskIds([]);
     setIsBulkDeleteOpen(false);
@@ -237,24 +265,40 @@ export const TasksPage = () => {
           </p>
         </div>
 
-        <AppButton
-          variant="primary"
-          size="md"
-          leftIcon={<MdAdd size={20} />}
-          onClick={() => {
-            reset({
-              title: '',
-              description: '',
-              category: 'Frontend',
-              priority: 'medium',
-              status: 'in_progress',
-              dueDate: getLocalDate(),
-            });
-            setIsCreateModalOpen(true);
-          }}
-        >
-          Create Task
-        </AppButton>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <AppButton
+            variant="outlined"
+            size="md"
+            onClick={() => window.open('http://localhost:5000/api/tasks/export?format=csv', '_blank')}
+          >
+            Export Tasks
+          </AppButton>
+          <AppButton
+            variant="outlined"
+            size="md"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            Import Tasks
+          </AppButton>
+          <AppButton
+            variant="primary"
+            size="md"
+            leftIcon={<MdAdd size={20} />}
+            onClick={() => {
+              reset({
+                title: '',
+                description: '',
+                category: 'Frontend',
+                priority: 'medium',
+                status: 'in_progress',
+                dueDate: getLocalDate(),
+              });
+              setIsCreateModalOpen(true);
+            }}
+          >
+            Create Task
+          </AppButton>
+        </div>
       </header>
 
       {/* ── Controls & Filter Bar ─────────────────────────────────────────── */}
@@ -318,11 +362,13 @@ export const TasksPage = () => {
             aria-label="Filter tasks by category"
           >
             <option value="all">All Categories</option>
+            <option value="General">General</option>
             <option value="Frontend">Frontend</option>
             <option value="Backend">Backend</option>
-            <option value="UI/UX Design">UI/UX Design</option>
+            <option value="UiUxDesign">UI/UX Design</option>
             <option value="DevOps">DevOps</option>
             <option value="Database">Database</option>
+            <option value="FullStack">Full Stack</option>
           </select>
 
           <select
@@ -542,11 +588,13 @@ export const TasksPage = () => {
             id="create-task-category"
             label="Category"
             options={[
+              { value: 'General', label: 'General' },
               { value: 'Frontend', label: 'Frontend' },
               { value: 'Backend', label: 'Backend' },
-              { value: 'UI/UX Design', label: 'UI/UX Design' },
+              { value: 'UiUxDesign', label: 'UI/UX Design' },
               { value: 'DevOps', label: 'DevOps' },
               { value: 'Database', label: 'Database' },
+              { value: 'FullStack', label: 'Full Stack' },
             ]}
             error={errors.category?.message}
             {...register('category')}
@@ -618,11 +666,13 @@ export const TasksPage = () => {
             id="edit-task-category"
             label="Category"
             options={[
+              { value: 'General', label: 'General' },
               { value: 'Frontend', label: 'Frontend' },
               { value: 'Backend', label: 'Backend' },
-              { value: 'UI/UX Design', label: 'UI/UX Design' },
+              { value: 'UiUxDesign', label: 'UI/UX Design' },
               { value: 'DevOps', label: 'DevOps' },
               { value: 'Database', label: 'Database' },
+              { value: 'FullStack', label: 'Full Stack' },
             ]}
             error={errors.category?.message}
             {...register('category')}
@@ -695,6 +745,45 @@ export const TasksPage = () => {
         confirmLabel={`Delete ${selectedTaskIds.length} Tasks`}
         isDanger
       />
+
+      {/* Import Tasks Modal */}
+      <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="Import Tasks from CSV">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #555)' }}>
+            Select a CSV file containing tasks. Required columns: <strong>Title</strong> (Description, Category, Priority, Status are optional).
+          </p>
+
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleImportFile}
+            style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '0.875rem' }}
+          />
+
+          {importSuccess && (
+            <div style={{ padding: '10px', backgroundColor: '#d1fae5', color: '#065f46', borderRadius: '6px', fontSize: '0.875rem' }}>
+              🎉 {importSuccess}
+            </div>
+          )}
+
+          {importErrors.length > 0 && (
+            <div style={{ padding: '10px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '6px', fontSize: '0.875rem', maxHeight: '180px', overflowY: 'auto' }}>
+              <strong>Import Completed with Errors:</strong>
+              <ul style={{ marginTop: '6px', paddingLeft: '18px' }}>
+                {importErrors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+            <AppButton variant="outlined" size="md" onClick={() => setIsImportModalOpen(false)}>
+              Close
+            </AppButton>
+          </div>
+        </div>
+      </Modal>
 
       {/* Toast */}
       {toastMessage && (

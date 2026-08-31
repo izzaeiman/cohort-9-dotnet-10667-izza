@@ -27,7 +27,7 @@ import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import Toast from '../../components/common/Toast';
 
 import useAuth from '../../hooks/useAuth';
-import { adminTaskService } from '../../services/adminTaskService';
+import { taskService } from '../../services/taskService';
 import { userService } from '../../services/userService';
 import type { DetailedTaskItem } from '../../data/tasks';
 import type { StatCardData, DeadlineItem } from '../../types/dashboard.types';
@@ -53,7 +53,7 @@ export const AdminDashboardPage: React.FC = () => {
   const loadTasks = async () => {
     try {
       setIsLoading(true);
-      const data = await adminTaskService.getAllTasks();
+      const data = await taskService.getAllTasks();
       setTasks(data);
     } finally {
       setIsLoading(false);
@@ -72,7 +72,7 @@ export const AdminDashboardPage: React.FC = () => {
   useEffect(() => {
     loadTasks();
     loadUsers();
-    const unsub = adminTaskService.subscribe(() => {
+    const unsub = taskService.subscribe(() => {
       loadTasks();
     });
     return () => unsub();
@@ -223,7 +223,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!deletingTask) return;
-    await adminTaskService.deleteTask(deletingTask.id);
+    await taskService.deleteTask(deletingTask.id);
     setToastMessage(`Task ${deletingTask.id} deleted.`);
     setDeletingTask(null);
     await loadTasks();

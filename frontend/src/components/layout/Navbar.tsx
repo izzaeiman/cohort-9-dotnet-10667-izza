@@ -3,7 +3,6 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
   MdMenu,
   MdSearch,
-  MdNotificationsNone,
   MdDarkMode,
   MdLightMode,
   MdPersonOutline,
@@ -11,10 +10,23 @@ import {
   MdLogout,
   MdChevronRight,
   MdExpandMore,
+  MdNotificationsNone,
 } from 'react-icons/md';
 import useAuth from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
+import apiClient from '../../services/api';
 import styles from './Navbar.module.css';
+
+const getAvatarUrl = (avatarPath?: string, name?: string) => {
+  if (!avatarPath) {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=random`;
+  }
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+    return avatarPath;
+  }
+  const backendBase = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:5000';
+  return `${backendBase}${avatarPath}`;
+};
 
 interface NavbarProps {
   onOpenMobileMenu: () => void;
@@ -28,21 +40,12 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
 
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Global Ctrl+K / Cmd+K keyboard shortcut listener
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userWrapRef = useRef<HTMLDivElement>(null);
@@ -97,22 +100,36 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
 
       {/* ── Right section: Search + Actions + User Avatar ────────────────── */}
       <div className={styles.rightSection}>
-        {/* Search bar */}
-        <div className={styles.searchWrap}>
-          <span className={styles.searchIcon} aria-hidden="true">
-            <MdSearch size={18} />
-          </span>
-          <input
-            ref={searchInputRef}
-            type="text"
-            className={styles.searchInput}
-            placeholder="Search tasks, projects... (Ctrl + K)"
-            aria-label="Search tasks and projects globally"
-          />
-          <kbd className={styles.kbdHint} aria-hidden="true">
-            ⌘K
-          </kbd>
-        </div>
+        <form
+          style={{ display: 'flex', alignItems: 'center' }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            const val = searchInputRef.current?.value.trim();
+            if (val) {
+              navigate(`/tasks?search=${encodeURIComponent(val)}`);
+            }
+          }}
+        >
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <MdSearch size={18} style={{ position: 'absolute', left: '10px', color: '#888' }} />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search tasks..."
+              aria-label="Search tasks"
+              style={{
+                padding: '6px 12px 6px 32px',
+                borderRadius: '8px',
+                border: '1px solid var(--border, #ccc)',
+                backgroundColor: 'var(--bg-secondary, #f9fafb)',
+                color: 'var(--text, #111)',
+                fontSize: '0.875rem',
+                outline: 'none',
+                width: '180px',
+              }}
+            />
+          </div>
+        </form>
 
         {/* Theme Toggle Button */}
         <button
@@ -125,7 +142,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
           {theme === 'dark' ? <MdLightMode size={20} /> : <MdDarkMode size={20} />}
         </button>
 
-        {/* Notification Bell */}
+        {/* Notifications Bell */}
         <div style={{ position: 'relative' }} ref={notifRef}>
           <button
             type="button"
@@ -133,31 +150,46 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
             onClick={() => {
               setIsNotificationOpen((prev) => !prev);
               setIsUserDropdownOpen(false);
+              if (!isNotificationOpen) {
+                apiClient.get('/notifications').then(res => setNotifications(res.data || [])).catch(() => {});
+              }
             }}
             title="Notifications"
-            aria-label="Toggle notifications menu"
-            aria-expanded={isNotificationOpen}
+            aria-label="Notifications"
           >
             <MdNotificationsNone size={22} />
-            <span className={styles.badge} aria-hidden="true" />
+            {notifications.length > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FF7A1A',
+                }}
+              />
+            )}
           </button>
 
-          {/* Notifications Dropdown */}
           {isNotificationOpen && (
-            <div className={styles.dropdown} role="menu" aria-label="Notifications list">
-              <div style={{ padding: '8px 12px', fontWeight: 700, fontSize: '0.85rem' }}>
-                Notifications (3 unread)
+            <div className={styles.dropdown} style={{ width: '320px', right: 0, padding: '12px' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '8px', borderBottom: '1px solid var(--border, #eee)', paddingBottom: '6px' }}>
+                Notifications ({notifications.length})
               </div>
-              <div className={styles.dropdownDivider} aria-hidden="true" />
-              <div className={styles.dropdownItem} role="menuitem" style={{ fontSize: '0.8rem' }}>
-                <span>✅ Alice completed <strong>Task System Spec</strong></span>
-              </div>
-              <div className={styles.dropdownItem} role="menuitem" style={{ fontSize: '0.8rem' }}>
-                <span>💬 John commented on your PR</span>
-              </div>
-              <div className={styles.dropdownItem} role="menuitem" style={{ fontSize: '0.8rem' }}>
-                <span>⚠️ Deadline approaching for SQL Migration</span>
-              </div>
+              {notifications.length === 0 ? (
+                <div style={{ fontSize: '0.8rem', color: '#888', padding: '8px 0' }}>No new notifications</div>
+              ) : (
+                <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {notifications.map((n) => (
+                    <div key={n.id} style={{ fontSize: '0.8rem', padding: '6px 8px', borderRadius: '6px', backgroundColor: 'var(--bg-secondary, #f3f4f6)' }}>
+                      <strong style={{ display: 'block', color: 'var(--text, #111)' }}>{n.title}</strong>
+                      <span style={{ color: 'var(--text-secondary, #555)' }}>{n.message}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -175,7 +207,7 @@ export const Navbar = ({ onOpenMobileMenu }: NavbarProps) => {
             aria-label={`User account menu for ${user?.name || 'User'}`}
           >
             <img
-              src={user?.avatar || 'https://i.pravatar.cc/150?img=68'}
+              src={getAvatarUrl(user?.avatar, user?.name)}
               alt={`${user?.name || 'User'} profile avatar`}
               className={styles.avatar}
             />

@@ -12,6 +12,7 @@ export interface AuthContextType {
   hasRole: (role: UserRole) => boolean;
   isAdmin: () => boolean;
   isMember: () => boolean;
+  updateUserAvatar: (avatarUrl: string) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

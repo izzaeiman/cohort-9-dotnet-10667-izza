@@ -1,32 +1,11 @@
-import { useState } from 'react';
-import { type SubmitHandler } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { type ForgotPasswordFormData } from '../../utils/forgotPasswordSchema';
-import ForgotPasswordForm from '../../components/forms/ForgotPasswordForm';
 import WorkFlowLogo from '../../components/ui/WorkFlowLogo';
 import LoginIllustration from '../../components/ui/LoginIllustration';
-import SuccessCheckmark from '../../components/ui/SuccessCheckmark';
 import AppButton from '../../components/ui/AppButton';
 import styles from './ForgotPassword.module.css';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [serverError, setServerError] = useState('');
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
-
-  const handleSendResetLink: SubmitHandler<ForgotPasswordFormData> = async (data) => {
-    setServerError('');
-    setIsLoading(true);
-    try {
-      // Endpoint does not exist yet
-      setServerError('Password reset is not yet implemented on the server.');
-    } catch {
-      setServerError('An error occurred. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <main className={styles.page} aria-label="WorkFlow Reset Password">
@@ -64,57 +43,30 @@ const ForgotPasswordPage = () => {
         </div>
 
         <div className={styles.formCard}>
-          {!submittedEmail ? (
-            <>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Forgot Password? 🔑</h2>
-              </div>
-
-              <ForgotPasswordForm
-                onSubmit={handleSendResetLink}
-                isLoading={isLoading}
-                serverError={serverError}
-              />
-            </>
-          ) : (
-            /* ── Success State Card ─────────────────────────────────────── */
-            <div className={styles.successCard}>
-              <div className={styles.successIconWrap}>
-                <SuccessCheckmark size={64} />
-              </div>
-
-              <h2 className={styles.successTitle}>Check Your Inbox 📩</h2>
-
-              <p className={styles.successMessage}>
-                If an account exists for <span className={styles.successEmailBadge}>{submittedEmail}</span>, a password reset link has been sent.
-              </p>
-
-              <p className={styles.successSubtext}>
-                Please check your spam or junk folder if you don't see the email within a few minutes.
-              </p>
-
-              <AppButton
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={() => navigate('/login')}
-                style={{ marginTop: '12px' }}
-              >
-                Back to Sign In
-              </AppButton>
-
-              <p className={styles.resendRow}>
-                Didn't receive the email?{' '}
-                <button
-                  type="button"
-                  className={styles.resendBtn}
-                  onClick={() => setSubmittedEmail(null)}
-                >
-                  Try another email
-                </button>
-              </p>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Contact Administrator 📞</h2>
+          </div>
+          
+          <div style={{ marginTop: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              Password recovery is currently handled by the administrator. Please contact the administrator for seamless authorization and account recovery.
+            </p>
+            
+            <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <span style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-tertiary)', marginBottom: '8px' }}>Administrator Phone Number</span>
+              <strong style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>+92 300 1234567</strong>
             </div>
-          )}
+
+            <AppButton
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={() => navigate('/login')}
+              style={{ marginTop: '12px' }}
+            >
+              Back to Sign In
+            </AppButton>
+          </div>
         </div>
 
         <footer className={styles.pageFooter}>

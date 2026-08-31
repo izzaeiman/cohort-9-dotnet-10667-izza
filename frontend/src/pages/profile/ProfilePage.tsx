@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,7 +7,6 @@ import {
   MdEmail,
   MdWork,
   MdInfoOutline,
-  MdDevices,
 } from 'react-icons/md';
 
 import AppButton from '../../components/ui/AppButton';
@@ -16,6 +15,7 @@ import Toast from '../../components/common/Toast';
 import PageLoader from '../../components/common/PageLoader';
 import ActivityTimeline from '../../components/dashboard/ActivityTimeline';
 
+import useAuth from '../../hooks/useAuth';
 import { profileService, type ProfileDto } from '../../services/profileService';
 import { INITIAL_ACTIVITIES } from '../../data/activity';
 import styles from './Profile.module.css';
@@ -27,12 +27,58 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+const getAvatarUrl = (avatarPath?: string, name?: string) => {
+  if (!avatarPath) {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=random`;
+  }
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+    return avatarPath;
+  }
+  const backendBase = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:5000';
+  return `${backendBase}${avatarPath}`;
+};
+
 export const ProfilePage = () => {
   const [profile, setProfile] = useState<ProfileDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'activity'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { updateUserAvatar } = useAuth();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setToastMessage(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const api = (await import('../../services/api')).default;
+      const res = await api.post('/uploads/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data?.avatarUrl) {
+        const newAvatarUrl = res.data.avatarUrl;
+        setProfile((prev) => prev ? { ...prev, avatar: newAvatarUrl } : null);
+        updateUserAvatar(newAvatarUrl);
+        setToastMessage('Avatar updated successfully!');
+      }
+    } catch (err: any) {
+      setToastMessage(err.response?.data?.message || 'Failed to upload avatar.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const {
     register,
@@ -99,11 +145,43 @@ export const ProfilePage = () => {
         <div className={styles.coverBanner} />
         <div className={styles.profileInfoRow}>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '20px' }}>
-            <div className={styles.avatarWrap}>
+            <div
+              className={styles.avatarWrap}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              style={{ cursor: isUploading ? 'not-allowed' : 'pointer', position: 'relative' }}
+              title="Click to change photo"
+            >
               <img
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random`}
+                src={getAvatarUrl(profile.avatar, profile.name)}
                 alt={`${profile.name} avatar`}
                 className={styles.avatar}
+                style={{ opacity: isUploading ? 0.5 : 1 }}
+              />
+              {isUploading && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(0,0,0,0.3)',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold'
+                }}>
+                  Uploading...
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+                accept="image/*"
               />
             </div>
             <div className={styles.userMeta}>
@@ -116,13 +194,7 @@ export const ProfilePage = () => {
             </div>
           </div>
 
-          <AppButton
-            variant="outlined"
-            size="sm"
-            onClick={() => setToastMessage('Avatar upload placeholder — Image picker integration pending.')}
-          >
-            Upload Avatar
-          </AppButton>
+          
         </div>
       </div>
 
@@ -145,15 +217,6 @@ export const ProfilePage = () => {
           onClick={() => setActiveTab('activity')}
         >
           Activity (Sample Data)
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'security'}
-          className={`${styles.tabBtn} ${activeTab === 'security' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('security')}
-        >
-          Sessions & Security
         </button>
       </div>
 
@@ -189,36 +252,7 @@ export const ProfilePage = () => {
         </div>
       ) : activeTab === 'activity' ? (
         <ActivityTimeline activities={INITIAL_ACTIVITIES} />
-      ) : (
-        <div className={styles.card} style={{ gap: '16px' }}>
-          <h3 className={styles.sectionHeading} style={{ margin: 0 }}>
-            Active Sessions & Security
-          </h3>
-
-          <div
-            style={{
-              background: '#FFF8E1',
-              border: '1px solid rgba(255, 193, 7, 0.4)',
-              borderRadius: '12px',
-              padding: '14px 16px',
-              fontSize: '0.875rem',
-              color: '#7F5000',
-              fontWeight: 600,
-            }}
-          >
-            <MdInfoOutline size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-            Backend integration pending — Password modifications and active session revocation require ASP.NET Core Identity API integration.
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#F8F8F8', borderRadius: '12px' }}>
-            <MdDevices size={24} color="#FF7A1A" />
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Current Browser Session</div>
-              <div style={{ fontSize: '0.78rem', color: '#666' }}>Windows • Chrome • (Active Now)</div>
-            </div>
-          </div>
-        </div>
-      )}
+      ) : null }
 
       {/* Toast */}
       {toastMessage && (

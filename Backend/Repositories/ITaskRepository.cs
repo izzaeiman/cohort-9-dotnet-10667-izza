@@ -7,8 +7,8 @@ namespace Backend.Repositories
 {
     public interface ITaskRepository
     {
-        Task<IEnumerable<TaskItem>> GetAllAsync(TaskQueryDto query);
-        Task<IEnumerable<TaskItem>> GetByAssignedUserIdAsync(string userId, TaskQueryDto query);
+        Task<IEnumerable<TaskItem>> GetAllAsync(TaskQueryDto dto);
+        Task<IEnumerable<TaskItem>> GetByAssignedUserIdAsync(string userId, TaskQueryDto dto);
         Task<TaskItem?> GetByIdAsync(int id);
         Task<TaskItem> CreateAsync(TaskItem task);
         Task<TaskItem> UpdateAsync(TaskItem task);

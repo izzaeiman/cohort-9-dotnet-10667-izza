@@ -8,25 +8,30 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 15000,
+  withCredentials: true,
 });
 
-// Automatically inject JWT token into all outgoing backend API requests
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('workflow_token');
-    if (token && !token.startsWith('demo_jwt_bearer_token_')) {
-      config.headers.Authorization = `Bearer ${token}`;
+apiClient.interceptors.request.use(async (config) => {
+  const method = config.method?.toLowerCase();
+  if (method === 'post' || method === 'put' || method === 'delete') {
+    if (!config.url?.includes('/auth/antiforgery-token') && !config.headers['X-XSRF-TOKEN']) {
+      try {
+        const tokenRes = await axios.get(`${API_BASE_URL}/auth/antiforgery-token`, { withCredentials: true });
+        if (tokenRes.data?.token) {
+          config.headers['X-XSRF-TOKEN'] = tokenRes.data.token;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch antiforgery token:', err);
+      }
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
   }
-);
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
 const handleUnauthorized = () => {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('workflow_token');
     localStorage.removeItem('workflow_user');
     
     // Avoid redirect loops if already on login/signup pages
@@ -37,13 +42,57 @@ const handleUnauthorized = () => {
   }
 };
 
-// Automatically handle 401 Unauthorized responses to clean up expired sessions
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: any) => void }> = [];
+
+const processQueue = (error: any = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
+// Automatically handle 401 Unauthorized: attempt silent refresh via /auth/refresh before logging out
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error?.response?.status === 401) {
-      handleUnauthorized();
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error?.response?.status === 401 && !originalRequest._retry) {
+      // Don't loop on refresh/login calls themselves
+      if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/login')) {
+        handleUnauthorized();
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => apiClient(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await apiClient.post('/auth/refresh');
+        processQueue(null);
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError);
+        handleUnauthorized();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
   }
 );

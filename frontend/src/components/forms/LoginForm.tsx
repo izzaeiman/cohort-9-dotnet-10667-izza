@@ -57,6 +57,8 @@ const LoginForm = ({ onSubmit, isLoading = false, serverError, successMessage }:
         </div>
       )}
 
+
+
       {/* Email field */}
       <AppInput
         id="login-email"
@@ -104,6 +106,7 @@ const LoginForm = ({ onSubmit, isLoading = false, serverError, successMessage }:
           <span className={styles.checkmark} aria-hidden="true" />
           Remember me
         </label>
+        {/*
         <Link
           to="/forgot-password"
           className={styles.forgotLink}
@@ -111,6 +114,7 @@ const LoginForm = ({ onSubmit, isLoading = false, serverError, successMessage }:
         >
           Forgot password?
         </Link>
+        */}
       </div>
 
       {/* Login button */}

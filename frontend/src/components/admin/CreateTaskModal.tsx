@@ -6,7 +6,8 @@ import AppInput from '../ui/AppInput';
 import AppSelect from '../ui/AppSelect';
 import AppButton from '../ui/AppButton';
 import { userService } from '../../services/userService';
-import { adminTaskService } from '../../services/adminTaskService';
+import { projectService } from '../../services/projectService';
+import { taskService } from '../../services/taskService';
 import { taskFormSchema, type TaskFormData } from '../../utils/taskSchema';
 import Toast from '../common/Toast';
 import { getLocalDate } from '../../utils/dateHelpers';
@@ -55,11 +56,27 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       });
   }, []);
 
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+
+  const loadProjects = React.useCallback(async () => {
+    setIsLoadingProjects(true);
+    try {
+      const data = await projectService.getProjects();
+      setProjects(data || []);
+    } catch (err) {
+      console.error('Failed to load projects', err);
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  }, []);
+
   React.useEffect(() => {
     if (isOpen) {
       loadUsers();
+      loadProjects();
     }
-  }, [isOpen, loadUsers]);
+  }, [isOpen, loadUsers, loadProjects]);
 
   const startDate = new Date();
   const defaultStartDate = getLocalDate(startDate);
@@ -78,7 +95,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       title: '',
       description: '',
       assignedUserId: '',
-      project: 'Task Management System SaaS',
+      project: '',
       category: 'Frontend',
       priority: 'medium',
       status: 'pending',
@@ -94,13 +111,15 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     try {
       setIsSubmitting(true);
       const selectedUser = users.find((u) => u.id === data.assignedUserId);
+      const selectedProject = data.project === 'none' ? null : projects.find((p) => p.id === data.project);
 
-      await adminTaskService.createTask({
+      await taskService.createTask({
         title: data.title.trim(),
         description: data.description.trim(),
         assignedUser: selectedUser?.name || 'Unassigned',
         assignedUserId: data.assignedUserId,
-        project: data.project,
+        project: selectedProject?.name || 'Unassigned',
+        projectId: data.project === 'none' ? undefined : data.project,
         category: data.category as any,
         priority: data.priority,
         status: data.status,
@@ -182,8 +201,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               {...register('project')}
               error={errors.project?.message}
               options={[
-                { value: 'Task Management System SaaS', label: 'Task Management System SaaS' },
-                { value: 'Internal Tools', label: 'Internal Tools' },
+                { value: '', label: 'Select Project...' },
+                { value: 'none', label: 'No Project' },
+                ...projects.map((p) => ({ value: p.id, label: p.name }))
               ]}
             />
           </div>
@@ -194,11 +214,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               {...register('category')}
               error={errors.category?.message}
               options={[
+                { value: 'General', label: 'General' },
                 { value: 'Frontend', label: 'Frontend' },
                 { value: 'Backend', label: 'Backend' },
-                { value: 'UI/UX Design', label: 'UI/UX Design' },
+                { value: 'UiUxDesign', label: 'UI/UX Design' },
                 { value: 'DevOps', label: 'DevOps' },
                 { value: 'Database', label: 'Database' },
+                { value: 'FullStack', label: 'Full Stack' },
               ]}
             />
 

@@ -41,7 +41,14 @@ export const calculateTaskDeadlineStatus = (task: DetailedTaskItem): DeadlineInf
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (!task.dueDate) {
+  let dueDateVal = task.dueDate;
+  if (!dueDateVal && task.timeLimit) {
+    const start = new Date(task.createdDate || task.startDate || new Date());
+    start.setDate(start.getDate() + task.timeLimit);
+    dueDateVal = start.toISOString();
+  }
+
+  if (!dueDateVal) {
     return {
       state: 'FAR_FROM_DEADLINE',
       label: 'Invalid date',
@@ -50,7 +57,7 @@ export const calculateTaskDeadlineStatus = (task: DetailedTaskItem): DeadlineInf
     };
   }
 
-  const due = new Date(task.dueDate);
+  const due = new Date(dueDateVal);
   if (isNaN(due.getTime())) {
     return {
       state: 'FAR_FROM_DEADLINE',

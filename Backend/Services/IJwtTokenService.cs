@@ -1,9 +1,10 @@
+using System;
 using Backend.Models;
 
 namespace Backend.Services
 {
     public interface IJwtTokenService
     {
-        string GenerateToken(User user);
+        (string Token, DateTimeOffset ExpiresAt) GenerateToken(User user);
     }
 }

@@ -52,7 +52,6 @@ const SignupForm = ({
     defaultValues: {
       fullName: '',
       email: '',
-      role: 'Regular User',
       password: '',
       confirmPassword: '',
       agreeToTerms: false,
@@ -62,7 +61,7 @@ const SignupForm = ({
   const watchPassword = useWatch({ control, name: 'password', defaultValue: '' });
   const strength = getPasswordStrength(watchPassword || '');
 
-  const roleOptions = USER_ROLES.filter((r) => r !== 'Administrator').map((r) => ({ value: r, label: r }));
+  
 
   return (
     <form
@@ -109,17 +108,6 @@ const SignupForm = ({
         leftIcon={<MdEmail />}
         error={errors.email?.message}
         {...register('email')}
-      />
-
-      {/* Role Dropdown */}
-      <AppSelect
-        id="signup-role"
-        label="Account Role"
-        options={roleOptions}
-        leftIcon={<MdBadge />}
-        error={errors.role?.message}
-        helperText="Select your default role (UI selection for backend authorization)"
-        {...register('role')}
       />
 
       {/* Password */}

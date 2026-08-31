@@ -9,6 +9,7 @@ namespace Backend.Models
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public string Role { get; set; } = UserRoles.RegularUser;
+        public string? Avatar { get; set; }
 
         public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
     }

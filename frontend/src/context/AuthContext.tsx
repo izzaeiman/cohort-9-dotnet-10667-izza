@@ -44,6 +44,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return hasRole('Regular User');
   }, [hasRole]);
 
+  const updateUserAvatar = useCallback((avatarUrl: string) => {
+    setUser((prevUser) => {
+      if (!prevUser) return null;
+      const updatedUser = { ...prevUser, avatar: avatarUrl };
+      localStorage.setItem('workflow_user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -55,6 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         hasRole,
         isAdmin,
         isMember,
+        updateUserAvatar,
       }}
     >
       {children}

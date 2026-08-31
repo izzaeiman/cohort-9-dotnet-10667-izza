@@ -36,6 +36,7 @@ const AppRoutes = () => (
       {/* ── Public Auth Routes ───────────────────────────────────────────── */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      {/* Note: Forgot password route is kept but UI entry points are hidden pending email infrastructure */}
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* ── Protected Application Shell Routes ─────────────────────────── */}

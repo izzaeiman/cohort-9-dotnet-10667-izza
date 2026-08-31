@@ -13,7 +13,8 @@ namespace Backend.DTOs
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Password is required")]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        [RegularExpression(@"^(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{10,}$",
+            ErrorMessage = "Password must be at least 10 characters and contain at least one number and one special character.")]
         public string Password { get; set; } = string.Empty;
     }
 }

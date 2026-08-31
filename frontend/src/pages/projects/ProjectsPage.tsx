@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,10 +22,11 @@ import Toast from '../../components/common/Toast';
 import Pagination from '../../components/shared/Pagination';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PageLoader from '../../components/common/PageLoader';
+import { ProjectProgressSection } from '../../components/projects/ProjectProgressSection';
 
 import { projectService } from '../../services/projectService';
 import { getLocalDate } from '../../utils/dateHelpers';
-import type { ProjectItem } from '../../data/projects';
+import type { ProjectItem } from '../../services/projectService';
 import styles from './Projects.module.css';
 
 const createProjectSchema = z.object({
@@ -42,6 +43,7 @@ const PAGE_SIZE = 6;
 export const ProjectsPage = () => {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -72,18 +74,33 @@ export const ProjectsPage = () => {
     },
   });
 
-  useEffect(() => {
+  const loadProjects = useCallback(() => {
     let isMounted = true;
-    projectService.getProjects().then((data) => {
-      if (isMounted) {
-        setProjects(data);
-        setIsLoading(false);
-      }
-    });
+    setIsLoading(true);
+    setError(null);
+    projectService.getProjects()
+      .then((data) => {
+        if (isMounted) {
+          setProjects(data);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load projects', err);
+        if (isMounted) {
+          setError('Failed to load projects. Please check your connection and try again.');
+          setIsLoading(false);
+        }
+      });
     return () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const cancelLoad = loadProjects();
+    return () => cancelLoad();
+  }, [loadProjects]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
@@ -134,6 +151,15 @@ export const ProjectsPage = () => {
   };
 
   if (isLoading) return <PageLoader />;
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px', padding: '20px' }}>
+        <p style={{ color: '#EF4444', fontWeight: 600, fontSize: '1.1rem' }}>{error}</p>
+        <AppButton variant="primary" onClick={loadProjects}>Retry Loading</AppButton>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -367,10 +393,10 @@ export const ProjectsPage = () => {
                   <div className={styles.progressWrap}>
                     <div className={styles.progressHeader}>
                       <span>Progress</span>
-                      <span>{project.progress}%</span>
+                      <span>{0}%</span>
                     </div>
                     <div className={styles.track}>
-                      <div className={styles.fill} style={{ width: `${project.progress}%` }} />
+                      <div className={styles.fill} style={{ width: `${0}%` }} />
                     </div>
                   </div>
 
@@ -556,6 +582,9 @@ export const ProjectsPage = () => {
             </AppButton>
           </div>
         </form>
+        {editingProject && (
+          <ProjectProgressSection projectId={editingProject.id} />
+        )}
       </Modal>
 
       {/* Delete Confirmation */}

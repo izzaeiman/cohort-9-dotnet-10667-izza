@@ -18,9 +18,9 @@ namespace Backend.Services
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        public string GenerateToken(User user)
+        public (string Token, DateTimeOffset ExpiresAt) GenerateToken(User user)
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            ArgumentNullException.ThrowIfNull(user);
             if (string.IsNullOrWhiteSpace(user.Id)) throw new ArgumentException("User Id is required.", nameof(user));
             if (string.IsNullOrWhiteSpace(user.Email)) throw new ArgumentException("User Email is required.", nameof(user));
             if (string.IsNullOrWhiteSpace(user.Name)) throw new ArgumentException("User Name is required.", nameof(user));
@@ -47,15 +47,16 @@ namespace Backend.Services
                 new Claim("role", user.Role)
             };
 
+            var expires = DateTime.UtcNow.AddMinutes(expirationMinutes);
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
+                expires: expires,
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return (new JwtSecurityTokenHandler().WriteToken(token), expires);
         }
     }
 }

@@ -37,3 +37,10 @@ Desktop.ini
 
 # Executables and Installers
 *.exe
+
+# Environment & Secrets
+.env
+.env.*
+.env.local
+appsettings.Development.json
+user-secrets

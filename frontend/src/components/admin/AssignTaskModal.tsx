@@ -7,7 +7,7 @@ import AppInput from '../ui/AppInput';
 import AppButton from '../ui/AppButton';
 import { userService } from '../../services/userService';
 import type { DetailedTaskItem } from '../../data/tasks';
-import { adminTaskService } from '../../services/adminTaskService';
+import { taskService } from '../../services/taskService';
 import { assignTaskSchema, type AssignTaskFormData } from '../../utils/taskSchema';
 import Toast from '../common/Toast';
 import styles from './TaskModalForm.module.css';
@@ -65,7 +65,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const handleFormSubmit = async (data: AssignTaskFormData) => {
     try {
       setIsSubmitting(true);
-      await adminTaskService.assignTask(
+      await taskService.assignTask(
         task.id,
         data.assignedUserId,
         data.startDate,

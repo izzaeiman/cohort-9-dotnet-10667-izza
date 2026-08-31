@@ -23,6 +23,7 @@ namespace Backend.Repositories
             var query = _context.Tasks
                 .AsNoTracking()
                 .Include(t => t.AssignedUser)
+                .Include(t => t.Project)
                 .AsQueryable();
 
             query = ApplyFilters(query, dto);
@@ -39,6 +40,7 @@ namespace Backend.Repositories
             var query = _context.Tasks
                 .AsNoTracking()
                 .Include(t => t.AssignedUser)
+                .Include(t => t.Project)
                 .Where(t => t.AssignedUserId == userId)
                 .AsQueryable();
 
@@ -49,14 +51,17 @@ namespace Backend.Repositories
                 .ToListAsync();
         }
 
-        private IQueryable<TaskItem> ApplyFilters(IQueryable<TaskItem> query, TaskQueryDto dto)
+        private static IQueryable<TaskItem> ApplyFilters(IQueryable<TaskItem> query, TaskQueryDto dto)
         {
             if (dto == null) return query;
 
             if (!string.IsNullOrWhiteSpace(dto.Search))
             {
-                var searchTerm = dto.Search.ToLower();
-                query = query.Where(t => t.Title.ToLower().Contains(searchTerm) || t.Description.ToLower().Contains(searchTerm));
+                var searchTerm = $"%{dto.Search}%";
+                query = query.Where(t => 
+                    EF.Functions.Like(t.Title, searchTerm) || 
+                    EF.Functions.Like(t.Description, searchTerm) ||
+                    (t.AssignedUser != null && EF.Functions.Like(t.AssignedUser.Name, searchTerm)));
             }
 
             if (dto.Status.HasValue)
@@ -69,9 +74,9 @@ namespace Backend.Repositories
                 query = query.Where(t => t.Priority == dto.Priority.Value);
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.Category))
+            if (dto.Category.HasValue)
             {
-                query = query.Where(t => t.Category == dto.Category);
+                query = query.Where(t => t.Category == dto.Category.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(dto.AssignedUserId))
@@ -96,12 +101,13 @@ namespace Backend.Repositories
         {
             return await _context.Tasks
                 .Include(t => t.AssignedUser)
+                .Include(t => t.Project)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
         public async Task<TaskItem> CreateAsync(TaskItem task)
         {
-            if (task == null) throw new ArgumentNullException(nameof(task));
+            ArgumentNullException.ThrowIfNull(task);
 
             await _context.Tasks.AddAsync(task);
             await _context.SaveChangesAsync();
@@ -116,7 +122,7 @@ namespace Backend.Repositories
 
         public async Task<TaskItem> UpdateAsync(TaskItem task)
         {
-            if (task == null) throw new ArgumentNullException(nameof(task));
+            ArgumentNullException.ThrowIfNull(task);
 
             _context.Tasks.Update(task);
             await _context.SaveChangesAsync();

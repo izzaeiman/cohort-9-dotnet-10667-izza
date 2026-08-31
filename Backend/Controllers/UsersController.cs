@@ -22,15 +22,13 @@ namespace Backend.Controllers
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
-        /// <summary>
-        /// Retrieves all registered users. Exposes only safe public profile data.
-        /// </summary>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserDto>))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetUsers()
+        public async Task<IActionResult> GetUsers([FromQuery] string? search)
         {
-            var users = await _userRepository.GetAllAsync();
+            var users = await _userRepository.GetAllAsync(search);
+            
             var userDtos = users.Select(u => new UserDto
             {
                 Id = u.Id,
@@ -41,5 +39,32 @@ namespace Backend.Controllers
 
             return Ok(userDtos);
         }
+
+        [HttpPut("{id}/role")]
+        [Authorize(Roles = Backend.Models.UserRoles.Administrator)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateRole(string id, [FromBody] UpdateRoleDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Role) || (dto.Role != Backend.Models.UserRoles.Administrator && dto.Role != Backend.Models.UserRoles.RegularUser))
+            {
+                return BadRequest(new { message = "Invalid role specified." });
+            }
+
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.Role = dto.Role;
+            await _userRepository.UpdateAsync(user);
+
+            return Ok(new UserDto { Id = user.Id, Name = user.Name, Email = user.Email, Role = user.Role });
+        }
+    }
+
+    public class UpdateRoleDto
+    {
+        public string Role { get; set; } = string.Empty;
     }
 }

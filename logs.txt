@@ -1,0 +1,381 @@
+﻿2026-08-18T17:05:10.0209644Z Current runner version: '2.336.0'
+2026-08-18T17:05:10.0230243Z ##[group]Runner Image Provisioner
+2026-08-18T17:05:10.0231021Z Hosted Compute Agent
+2026-08-18T17:05:10.0231499Z Version: 20260729.566
+2026-08-18T17:05:10.0232017Z Commit: cf7153fe6e25b664e8693c24944bf2b00355d109
+2026-08-18T17:05:10.0232627Z Build Date: 2026-07-29T19:17:02Z
+2026-08-18T17:05:10.0233159Z Worker ID: {73a83074-fd2c-482c-9070-43862059c61c}
+2026-08-18T17:05:10.0233715Z Azure Region: centralus
+2026-08-18T17:05:10.0234208Z ##[endgroup]
+2026-08-18T17:05:10.0235194Z ##[group]Operating System
+2026-08-18T17:05:10.0235703Z Ubuntu
+2026-08-18T17:05:10.0236214Z 24.04.4
+2026-08-18T17:05:10.0236624Z LTS
+2026-08-18T17:05:10.0237276Z ##[endgroup]
+2026-08-18T17:05:10.0237719Z ##[group]Runner Image
+2026-08-18T17:05:10.0238222Z Image: ubuntu-24.04
+2026-08-18T17:05:10.0238698Z Version: 20260810.271.1
+2026-08-18T17:05:10.0239710Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260810.271/images/ubuntu/Ubuntu2404-Readme.md
+2026-08-18T17:05:10.0241017Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260810.271
+2026-08-18T17:05:10.0241849Z ##[endgroup]
+2026-08-18T17:05:10.0242815Z ##[group]GITHUB_TOKEN Permissions
+2026-08-18T17:05:10.0244516Z Contents: read
+2026-08-18T17:05:10.0245005Z Metadata: read
+2026-08-18T17:05:10.0245469Z Packages: read
+2026-08-18T17:05:10.0245901Z ##[endgroup]
+2026-08-18T17:05:10.0247900Z Secret source: Actions
+2026-08-18T17:05:10.0248749Z Prepare workflow directory
+2026-08-18T17:05:10.0862471Z Prepare all required actions
+2026-08-18T17:05:10.0926890Z Getting action download info
+2026-08-18T17:05:10.3019848Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-08-18T17:05:10.8223866Z Download action repository 'actions/setup-dotnet@v4' (SHA:67a3573c9a986a3f9c594539f4ab511d57bb3ce9)
+2026-08-18T17:05:11.3300056Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-08-18T17:05:11.4932473Z Complete job name: Build and Analyze
+2026-08-18T17:05:11.5670151Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-18T17:05:11.5679659Z ##[group]Run actions/checkout@v4
+2026-08-18T17:05:11.5680727Z with:
+2026-08-18T17:05:11.5681513Z   fetch-depth: 0
+2026-08-18T17:05:11.5682435Z   repository: izzaeiman/cohort-9-dotnet-10667-izza
+2026-08-18T17:05:11.5689189Z   token: ***
+2026-08-18T17:05:11.5690007Z   ssh-strict: true
+2026-08-18T17:05:11.5690798Z   ssh-user: git
+2026-08-18T17:05:11.5691611Z   persist-credentials: true
+2026-08-18T17:05:11.5692482Z   clean: true
+2026-08-18T17:05:11.5693285Z   sparse-checkout-cone-mode: true
+2026-08-18T17:05:11.5694244Z   fetch-tags: false
+2026-08-18T17:05:11.5695042Z   show-progress: true
+2026-08-18T17:05:11.5695867Z   lfs: false
+2026-08-18T17:05:11.5696843Z   submodules: false
+2026-08-18T17:05:11.5697869Z   set-safe-directory: true
+2026-08-18T17:05:11.5698824Z   allow-unsafe-pr-checkout: false
+2026-08-18T17:05:11.5699949Z ##[endgroup]
+2026-08-18T17:05:11.6606298Z Syncing repository: izzaeiman/cohort-9-dotnet-10667-izza
+2026-08-18T17:05:11.6609112Z ##[group]Getting Git version info
+2026-08-18T17:05:11.6611250Z Working directory is '/home/runner/work/cohort-9-dotnet-10667-izza/cohort-9-dotnet-10667-izza'
+2026-08-18T17:05:11.6614381Z [command]/usr/bin/git version
+2026-08-18T17:05:11.6626034Z git version 2.54.0
+2026-08-18T17:05:11.6651388Z ##[endgroup]
+2026-08-18T17:05:11.6659321Z Temporarily overriding HOME='/home/runner/work/_temp/31fa8bcc-01f7-4979-b2a1-2313376ceae1' before making global git config changes
+2026-08-18T17:05:11.6663015Z Adding repository directory to the temporary git global config as a safe directory
+2026-08-18T17:05:11.6666372Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/cohort-9-dotnet-10667-izza/cohort-9-dotnet-10667-izza
+2026-08-18T17:05:11.6685898Z Deleting the contents of '/home/runner/work/cohort-9-dotnet-10667-izza/cohort-9-dotnet-10667-izza'
+2026-08-18T17:05:11.6689443Z ##[group]Initializing the repository
+2026-08-18T17:05:11.6693715Z [command]/usr/bin/git init /home/runner/work/cohort-9-dotnet-10667-izza/cohort-9-dotnet-10667-izza
+2026-08-18T17:05:11.6788073Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-08-18T17:05:11.6790412Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-08-18T17:05:11.6792467Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-08-18T17:05:11.6793740Z hint: call:
+2026-08-18T17:05:11.6794466Z hint:
+2026-08-18T17:05:11.6795310Z hint: 	git config --global init.defaultBranch <name>
+2026-08-18T17:05:11.6796487Z hint:
+2026-08-18T17:05:11.6797727Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-08-18T17:05:11.6799292Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-08-18T17:05:11.6800570Z hint:
+2026-08-18T17:05:11.6801276Z hint: 	git branch -m <name>
+2026-08-18T17:05:11.6802107Z hint:
+2026-08-18T17:05:11.6803814Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-08-18T17:05:11.6806727Z Initialized empty Git repository in /home/runner/work/cohort-9-dotnet-10667-izza/cohort-9-dotnet-10667-izza/.git/
+2026-08-18T17:05:11.6811734Z [command]/usr/bin/git remote add origin https://github.com/izzaeiman/cohort-9-dotnet-10667-izza
+2026-08-18T17:05:11.6889641Z ##[endgroup]
+2026-08-18T17:05:11.6891827Z ##[group]Disabling automatic garbage collection
+2026-08-18T17:05:11.6893500Z [command]/usr/bin/git config --local gc.auto 0
+2026-08-18T17:05:11.6921710Z ##[endgroup]
+2026-08-18T17:05:11.6923598Z ##[group]Setting up auth
+2026-08-18T17:05:11.6925372Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-08-18T17:05:11.6951784Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-08-18T17:05:11.7199184Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-08-18T17:05:11.7220939Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-08-18T17:05:11.7387883Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-18T17:05:11.7413431Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-08-18T17:05:11.7570213Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-08-18T17:05:11.7595627Z ##[endgroup]
+2026-08-18T17:05:11.7597865Z ##[group]Fetching the repository
+2026-08-18T17:05:11.7605360Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +2d76be895fb07c6eece953d9ace82a6ff5b09c33:refs/remotes/pull/14/merge
+2026-08-18T17:05:13.2393446Z From https://github.com/izzaeiman/cohort-9-dotnet-10667-izza
+2026-08-18T17:05:13.2394710Z  * [new branch]      develop                                  -> origin/develop
+2026-08-18T17:05:13.2395437Z  * [new branch]      feature/Login-Page                       -> origin/feature/Login-Page
+2026-08-18T17:05:13.2396242Z  * [new branch]      feature/admin-dashboard                  -> origin/feature/admin-dashboard
+2026-08-18T17:05:13.2397335Z  * [new branch]      feature/auth-and-role-routing            -> origin/feature/auth-and-role-routing
+2026-08-18T17:05:13.2398226Z  * [new branch]      feature/auth-improvements                -> origin/feature/auth-improvements
+2026-08-18T17:05:13.2399287Z  * [new branch]      feature/authentication                   -> origin/feature/authentication
+2026-08-18T17:05:13.2400106Z  * [new branch]      feature/backend-core-api-auth            -> origin/feature/backend-core-api-auth
+2026-08-18T17:05:13.2401036Z  * [new branch]      feature/backend-task-management-testing  -> origin/feature/backend-task-management-testing
+2026-08-18T17:05:13.2401953Z  * [new branch]      feature/core-management-pages            -> origin/feature/core-management-pages
+2026-08-18T17:05:13.2402744Z  * [new branch]      feature/dashboard                        -> origin/feature/dashboard
+2026-08-18T17:05:13.2403508Z  * [new branch]      feature/dashboard-layout                 -> origin/feature/dashboard-layout
+2026-08-18T17:05:13.2404298Z  * [new branch]      feature/dashboard-module                 -> origin/feature/dashboard-module
+2026-08-18T17:05:13.2405051Z  * [new branch]      feature/database                         -> origin/feature/database
+2026-08-18T17:05:13.2405988Z  * [new branch]      feature/day-7-task-api-integration       -> origin/feature/day-7-task-api-integration
+2026-08-18T17:05:13.2407131Z  * [new branch]      feature/exception-handling               -> origin/feature/exception-handling
+2026-08-18T17:05:13.2407919Z  * [new branch]      feature/export-import                    -> origin/feature/export-import
+2026-08-18T17:05:13.2408570Z  * [new branch]      feature/final-frontend-integration       -> origin/feature/final-frontend-integration
+2026-08-18T17:05:13.2409135Z  * [new branch]      feature/global-theme-system              -> origin/feature/global-theme-system
+2026-08-18T17:05:13.2409626Z  * [new branch]      feature/logging                          -> origin/feature/logging
+2026-08-18T17:05:13.2410068Z  * [new branch]      feature/login-ui                         -> origin/feature/login-ui
+2026-08-18T17:05:13.2410677Z  * [new branch]      feature/new-task                         -> origin/feature/new-task
+2026-08-18T17:05:13.2411421Z  * [new branch]      feature/phase-1-2-security-search-filtering -> origin/feature/phase-1-2-security-search-filtering
+2026-08-18T17:05:13.2412023Z  * [new branch]      feature/project-setup                    -> origin/feature/project-setup
+2026-08-18T17:05:13.2412502Z  * [new branch]      feature/search-filter                    -> origin/feature/search-filter
+2026-08-18T17:05:13.2412955Z  * [new branch]      feature/signalr                          -> origin/feature/signalr
+2026-08-18T17:05:13.2413394Z  * [new branch]      feature/sonarqube                        -> origin/feature/sonarqube
+2026-08-18T17:05:13.2413853Z  * [new branch]      feature/task-detail                      -> origin/feature/task-detail
+2026-08-18T17:05:13.2414319Z  * [new branch]      feature/task-list                        -> origin/feature/task-list
+2026-08-18T17:05:13.2414883Z  * [new branch]      feature/task-management                  -> origin/feature/task-management
+2026-08-18T17:05:13.2415591Z  * [new branch]      feature/unit-testing                     -> origin/feature/unit-testing
+2026-08-18T17:05:13.2416070Z  * [new branch]      feature/user-profile                     -> origin/feature/user-profile
+2026-08-18T17:05:13.2416500Z  * [new branch]      main                                     -> origin/main
+2026-08-18T17:05:13.2417131Z  * [new ref]         2d76be895fb07c6eece953d9ace82a6ff5b09c33 -> pull/14/merge
+2026-08-18T17:05:13.2449373Z ##[endgroup]
+2026-08-18T17:05:13.2450046Z ##[group]Determining the checkout info
+2026-08-18T17:05:13.2450719Z ##[endgroup]
+2026-08-18T17:05:13.2454236Z [command]/usr/bin/git sparse-checkout disable
+2026-08-18T17:05:13.2492273Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-08-18T17:05:13.2514172Z ##[group]Checking out the ref
+2026-08-18T17:05:13.2517199Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/14/merge
+2026-08-18T17:05:13.2624930Z Note: switching to 'refs/remotes/pull/14/merge'.
+2026-08-18T17:05:13.2625399Z 
+2026-08-18T17:05:13.2625671Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-08-18T17:05:13.2626440Z changes and commit them, and you can discard any commits you make in this
+2026-08-18T17:05:13.2627058Z state without impacting any branches by switching back to a branch.
+2026-08-18T17:05:13.2627310Z 
+2026-08-18T17:05:13.2627504Z If you want to create a new branch to retain commits you create, you may
+2026-08-18T17:05:13.2627916Z do so (now or later) by using -c with the switch command. Example:
+2026-08-18T17:05:13.2628144Z 
+2026-08-18T17:05:13.2628270Z   git switch -c <new-branch-name>
+2026-08-18T17:05:13.2628438Z 
+2026-08-18T17:05:13.2628556Z Or undo this operation with:
+2026-08-18T17:05:13.2628708Z 
+2026-08-18T17:05:13.2628805Z   git switch -
+2026-08-18T17:05:13.2629020Z 
+2026-08-18T17:05:13.2629310Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-08-18T17:05:13.2629670Z 
+2026-08-18T17:05:13.2629983Z HEAD is now at 2d76be8 Merge 8a93187d03ae634405ab69e75a8e14c2dd96274b into d6bef5147d62a1dc0327304e515bf210aed3fdfe
+2026-08-18T17:05:13.2630999Z ##[endgroup]
+2026-08-18T17:05:13.2658198Z [command]/usr/bin/git log -1 --format=%H
+2026-08-18T17:05:13.2675890Z 2d76be895fb07c6eece953d9ace82a6ff5b09c33
+2026-08-18T17:05:13.2849359Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-18T17:05:13.2850997Z ##[group]Run actions/setup-dotnet@v4
+2026-08-18T17:05:13.2851257Z with:
+2026-08-18T17:05:13.2851473Z   dotnet-version: 10.0.x
+2026-08-18T17:05:13.2851706Z   cache: false
+2026-08-18T17:05:13.2851907Z ##[endgroup]
+2026-08-18T17:05:13.4007556Z (node:2103) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-08-18T17:05:13.4008222Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-08-18T17:05:13.4027532Z [command]/home/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --runtime dotnet --channel LTS
+2026-08-18T17:05:13.9752946Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.11/dotnet-runtime-10.0.11-linux-x64.tar.gz
+2026-08-18T17:05:14.4893163Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.11/dotnet-runtime-10.0.11-linux-x64.tar.gz size is 36639275 bytes.
+2026-08-18T17:05:14.4895349Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.11/dotnet-runtime-10.0.11-linux-x64.tar.gz
+2026-08-18T17:05:15.0929807Z dotnet-install: Downloaded file size is 36639275 bytes.
+2026-08-18T17:05:15.0930595Z dotnet-install: The remote and local file sizes are equal.
+2026-08-18T17:05:15.1114492Z dotnet-install: Installed version is 10.0.11
+2026-08-18T17:05:15.1156437Z dotnet-install: Adding to current process PATH: `/usr/share/dotnet`. Note: This change will be visible only when sourcing script.
+2026-08-18T17:05:15.1157583Z dotnet-install: Note that the script does not resolve dependencies during installation.
+2026-08-18T17:05:15.1158335Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+2026-08-18T17:05:15.1158939Z dotnet-install: Installation finished successfully.
+2026-08-18T17:05:15.1194257Z [command]/home/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --channel 10.0
+2026-08-18T17:05:15.5122985Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.400/dotnet-sdk-10.0.400-linux-x64.tar.gz
+2026-08-18T17:05:18.9594200Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.400/dotnet-sdk-10.0.400-linux-x64.tar.gz size is 240133692 bytes.
+2026-08-18T17:05:18.9596071Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.400/dotnet-sdk-10.0.400-linux-x64.tar.gz
+2026-08-18T17:05:23.1495781Z dotnet-install: Downloaded file size is 240133692 bytes.
+2026-08-18T17:05:23.1496663Z dotnet-install: The remote and local file sizes are equal.
+2026-08-18T17:05:23.7638388Z dotnet-install: Installed version is 10.0.400
+2026-08-18T17:05:23.7685896Z dotnet-install: Adding to current process PATH: `/usr/share/dotnet`. Note: This change will be visible only when sourcing script.
+2026-08-18T17:05:23.7686969Z dotnet-install: Note that the script does not resolve dependencies during installation.
+2026-08-18T17:05:23.7688114Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+2026-08-18T17:05:23.7689061Z dotnet-install: Installation finished successfully.
+2026-08-18T17:05:23.7855143Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-18T17:05:23.7856111Z ##[group]Run actions/setup-node@v4
+2026-08-18T17:05:23.7856322Z with:
+2026-08-18T17:05:23.7856482Z   node-version: 20
+2026-08-18T17:05:23.7856653Z   always-auth: false
+2026-08-18T17:05:23.7857037Z   check-latest: false
+2026-08-18T17:05:23.7858901Z   token: ***
+2026-08-18T17:05:23.7859070Z env:
+2026-08-18T17:05:23.7859237Z   DOTNET_ROOT: /usr/share/dotnet
+2026-08-18T17:05:23.7859437Z ##[endgroup]
+2026-08-18T17:05:23.9346463Z Attempting to download 20...
+2026-08-18T17:05:23.9432606Z (node:2579) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-08-18T17:05:23.9433525Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-08-18T17:05:24.7279737Z Acquiring 20.20.2 - x64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-linux-x64.tar.gz
+2026-08-18T17:05:25.2905984Z Extracting ...
+2026-08-18T17:05:25.2993803Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/5921d9ed-0493-446d-a5f7-8e576ce044f6 -f /home/runner/work/_temp/45b5cd3b-c6b5-46ad-81d9-83079706f7c9
+2026-08-18T17:05:26.2195067Z Adding to the cache ...
+2026-08-18T17:05:31.6202141Z ##[group]Environment details
+2026-08-18T17:05:31.7958513Z node: v20.20.2
+2026-08-18T17:05:31.7958822Z npm: 10.8.2
+2026-08-18T17:05:31.7959037Z yarn: 1.22.22
+2026-08-18T17:05:31.7959529Z ##[endgroup]
+2026-08-18T17:05:31.8076525Z ##[group]Run npm ci || npm install
+2026-08-18T17:05:31.8077072Z [36;1mnpm ci || npm install[0m
+2026-08-18T17:05:31.8101491Z shell: /usr/bin/bash -e {0}
+2026-08-18T17:05:31.8101724Z env:
+2026-08-18T17:05:31.8101903Z   DOTNET_ROOT: /usr/share/dotnet
+2026-08-18T17:05:31.8102128Z ##[endgroup]
+2026-08-18T17:05:32.0279126Z npm error code EUSAGE
+2026-08-18T17:05:32.0279534Z npm error
+2026-08-18T17:05:32.0280174Z npm error The `npm ci` command can only install with an existing package-lock.json or
+2026-08-18T17:05:32.0281068Z npm error npm-shrinkwrap.json with lockfileVersion >= 1. Run an install with npm@5 or
+2026-08-18T17:05:32.0281899Z npm error later to generate a package-lock.json file, then try again.
+2026-08-18T17:05:32.0282365Z npm error
+2026-08-18T17:05:32.0282718Z npm error Clean install a project
+2026-08-18T17:05:32.0283011Z npm error
+2026-08-18T17:05:32.0283230Z npm error Usage:
+2026-08-18T17:05:32.0283487Z npm error npm ci
+2026-08-18T17:05:32.0283729Z npm error
+2026-08-18T17:05:32.0284067Z npm error Options:
+2026-08-18T17:05:32.0284721Z npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+2026-08-18T17:05:32.0285609Z npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+2026-08-18T17:05:32.0286969Z npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+2026-08-18T17:05:32.0287921Z npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+2026-08-18T17:05:32.0288614Z npm error [--no-bin-links] [--no-fund] [--dry-run]
+2026-08-18T17:05:32.0289340Z npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+2026-08-18T17:05:32.0290101Z npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+2026-08-18T17:05:32.0290583Z npm error
+2026-08-18T17:05:32.0291094Z npm error aliases: clean-install, ic, install-clean, isntall-clean
+2026-08-18T17:05:32.0291532Z npm error
+2026-08-18T17:05:32.0291907Z npm error Run "npm help ci" for more info
+2026-08-18T17:05:32.0292739Z npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2026-08-18T17_05_31_863Z-debug-0.log
+2026-08-18T17:05:43.5532437Z npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+2026-08-18T17:05:44.1732656Z 
+2026-08-18T17:05:44.1733483Z added 141 packages, and audited 142 packages in 12s
+2026-08-18T17:05:44.1738742Z 
+2026-08-18T17:05:44.1756984Z 17 packages are looking for funding
+2026-08-18T17:05:44.1757542Z   run `npm fund` for details
+2026-08-18T17:05:44.1969993Z 
+2026-08-18T17:05:44.1970799Z 4 vulnerabilities (3 moderate, 1 high)
+2026-08-18T17:05:44.1971075Z 
+2026-08-18T17:05:44.1971396Z To address all issues (including breaking changes), run:
+2026-08-18T17:05:44.1971828Z   npm audit fix --force
+2026-08-18T17:05:44.1972002Z 
+2026-08-18T17:05:44.1972166Z Run `npm audit` for details.
+2026-08-18T17:05:44.2099297Z ##[group]Run npx tsc --noEmit
+2026-08-18T17:05:44.2099559Z [36;1mnpx tsc --noEmit[0m
+2026-08-18T17:05:44.2099751Z [36;1mnpm run build[0m
+2026-08-18T17:05:44.2120869Z shell: /usr/bin/bash -e {0}
+2026-08-18T17:05:44.2121092Z env:
+2026-08-18T17:05:44.2121284Z   DOTNET_ROOT: /usr/share/dotnet
+2026-08-18T17:05:44.2121486Z ##[endgroup]
+2026-08-18T17:05:48.6180623Z 
+2026-08-18T17:05:48.6181385Z > workflow-frontend@1.0.0 build
+2026-08-18T17:05:48.6181992Z > tsc -b && vite build
+2026-08-18T17:05:48.6182284Z 
+2026-08-18T17:05:52.9089112Z [36mvite v5.4.21 [32mbuilding for production...[36m[39m
+2026-08-18T17:05:52.9521318Z transforming...
+2026-08-18T17:05:55.9284640Z [32m✓[39m 1023 modules transformed.
+2026-08-18T17:05:56.1880807Z rendering chunks...
+2026-08-18T17:05:56.3542129Z computing gzip size...
+2026-08-18T17:05:56.3690955Z [2mdist/[22m[32mindex.html                              [39m[1m[2m  0.75 kB[22m[1m[22m[2m │ gzip:   0.43 kB[22m
+2026-08-18T17:05:56.3692244Z [2mdist/[22m[2massets/[22m[32mlogin-illustration-BK1tLIP8.png  [39m[1m[2m409.97 kB[22m[1m[22m
+2026-08-18T17:05:56.3693545Z [2mdist/[22m[2massets/[22m[35mSectionTitle-D9Odlngh.css        [39m[1m[2m  0.33 kB[22m[1m[22m[2m │ gzip:   0.22 kB[22m
+2026-08-18T17:05:56.3694860Z [2mdist/[22m[2massets/[22m[35mAvatarGroup-D6-RQ8ny.css         [39m[1m[2m  0.58 kB[22m[1m[22m[2m │ gzip:   0.31 kB[22m
+2026-08-18T17:05:56.3696123Z [2mdist/[22m[2massets/[22m[35mToast-CrVfsRMg.css               [39m[1m[2m  0.79 kB[22m[1m[22m[2m │ gzip:   0.42 kB[22m
+2026-08-18T17:05:56.3697593Z [2mdist/[22m[2massets/[22m[35mNotFoundPage-BujyD3zb.css        [39m[1m[2m  1.04 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+2026-08-18T17:05:56.3698958Z [2mdist/[22m[2massets/[22m[35mSkeletonLoaders-PeFA0sE2.css     [39m[1m[2m  1.10 kB[22m[1m[22m[2m │ gzip:   0.50 kB[22m
+2026-08-18T17:05:56.3700311Z [2mdist/[22m[2massets/[22m[35mStatusBadge-IZwzTiTM.css         [39m[1m[2m  1.39 kB[22m[1m[22m[2m │ gzip:   0.51 kB[22m
+2026-08-18T17:05:56.3701584Z [2mdist/[22m[2massets/[22m[35mModal-BVgpigTU.css               [39m[1m[2m  1.61 kB[22m[1m[22m[2m │ gzip:   0.69 kB[22m
+2026-08-18T17:05:56.3702764Z [2mdist/[22m[2massets/[22m[35mAppInput-D42Hdk4S.css            [39m[1m[2m  1.89 kB[22m[1m[22m[2m │ gzip:   0.70 kB[22m
+2026-08-18T17:05:56.3704295Z [2mdist/[22m[2massets/[22m[35mPagination-BXzAnjt8.css          [39m[1m[2m  1.92 kB[22m[1m[22m[2m │ gzip:   0.65 kB[22m
+2026-08-18T17:05:56.3705525Z [2mdist/[22m[2massets/[22m[35mLoginIllustration-Cy_y-6YO.css   [39m[1m[2m  1.98 kB[22m[1m[22m[2m │ gzip:   0.81 kB[22m
+2026-08-18T17:05:56.3706927Z [2mdist/[22m[2massets/[22m[35mAppSelect-BwiX3uEN.css           [39m[1m[2m  2.07 kB[22m[1m[22m[2m │ gzip:   0.74 kB[22m
+2026-08-18T17:05:56.3708073Z [2mdist/[22m[2massets/[22m[35mEditTaskModal-D-NP2CQK.css       [39m[1m[2m  2.48 kB[22m[1m[22m[2m │ gzip:   0.88 kB[22m
+2026-08-18T17:05:56.3709477Z [2mdist/[22m[2massets/[22m[35mAppButton-BViirBcV.css           [39m[1m[2m  2.93 kB[22m[1m[22m[2m │ gzip:   0.93 kB[22m
+2026-08-18T17:05:56.3710572Z [2mdist/[22m[2massets/[22m[35mSettingsPage-6Ub5XZE6.css        [39m[1m[2m  2.93 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+2026-08-18T17:05:56.3711669Z [2mdist/[22m[2massets/[22m[35mCalendarPage-DO23gtTa.css        [39m[1m[2m  3.42 kB[22m[1m[22m[2m │ gzip:   1.01 kB[22m
+2026-08-18T17:05:56.3712670Z [2mdist/[22m[2massets/[22m[35mProjectsPage-C4T7T_SX.css        [39m[1m[2m  3.70 kB[22m[1m[22m[2m │ gzip:   1.04 kB[22m
+2026-08-18T17:05:56.3713904Z [2mdist/[22m[2massets/[22m[35mTaskDetailPage-D2l030hG.css      [39m[1m[2m  3.84 kB[22m[1m[22m[2m │ gzip:   1.11 kB[22m
+2026-08-18T17:05:56.3715174Z [2mdist/[22m[2massets/[22m[35mUpcomingDeadlines-DpoNUmpR.css   [39m[1m[2m  3.91 kB[22m[1m[22m[2m │ gzip:   1.09 kB[22m
+2026-08-18T17:05:56.3716703Z [2mdist/[22m[2massets/[22m[35mProfilePage-DxBoTnAy.css         [39m[1m[2m  4.00 kB[22m[1m[22m[2m │ gzip:   1.24 kB[22m
+2026-08-18T17:05:56.3718057Z [2mdist/[22m[2massets/[22m[35mDashboardPage-D7l0BRqj.css       [39m[1m[2m  4.66 kB[22m[1m[22m[2m │ gzip:   1.28 kB[22m
+2026-08-18T17:05:56.3719073Z [2mdist/[22m[2massets/[22m[35mTasksPage-p6fmHow3.css           [39m[1m[2m  4.69 kB[22m[1m[22m[2m │ gzip:   1.24 kB[22m
+2026-08-18T17:05:56.3720321Z [2mdist/[22m[2massets/[22m[35mUsersPage-DFvr40Yw.css           [39m[1m[2m  4.75 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m
+2026-08-18T17:05:56.3721611Z [2mdist/[22m[2massets/[22m[35mAdminDashboardPage-B2v68GV3.css  [39m[1m[2m  5.29 kB[22m[1m[22m[2m │ gzip:   1.40 kB[22m
+2026-08-18T17:05:56.3722930Z [2mdist/[22m[2massets/[22m[35mAdminTasksPage-CxX7T9Yi.css      [39m[1m[2m  5.90 kB[22m[1m[22m[2m │ gzip:   1.53 kB[22m
+2026-08-18T17:05:56.3724252Z [2mdist/[22m[2massets/[22m[35mForgotPasswordPage-PKTOHDLH.css  [39m[1m[2m  6.39 kB[22m[1m[22m[2m │ gzip:   1.99 kB[22m
+2026-08-18T17:05:56.3725598Z [2mdist/[22m[2massets/[22m[35mLoginPage-Bazcganq.css           [39m[1m[2m  7.04 kB[22m[1m[22m[2m │ gzip:   2.02 kB[22m
+2026-08-18T17:05:56.3726975Z [2mdist/[22m[2massets/[22m[35mSignupPage-Nw5h2lt8.css          [39m[1m[2m  7.45 kB[22m[1m[22m[2m │ gzip:   2.17 kB[22m
+2026-08-18T17:05:56.3728379Z [2mdist/[22m[2massets/[22m[35mindex-DPnhXA_u.css               [39m[1m[2m 16.58 kB[22m[1m[22m[2m │ gzip:   4.07 kB[22m
+2026-08-18T17:05:56.3729692Z [2mdist/[22m[2massets/[22m[36mAdminRoute-T1wKoG65.js           [39m[1m[2m  0.16 kB[22m[1m[22m[2m │ gzip:   0.15 kB[22m
+2026-08-18T17:05:56.3730995Z [2mdist/[22m[2massets/[22m[36mdateHelpers-BZ3Xo8rU.js          [39m[1m[2m  0.17 kB[22m[1m[22m[2m │ gzip:   0.15 kB[22m
+2026-08-18T17:05:56.3732244Z [2mdist/[22m[2massets/[22m[36mSectionTitle-CJECVL7E.js         [39m[1m[2m  0.43 kB[22m[1m[22m[2m │ gzip:   0.25 kB[22m
+2026-08-18T17:05:56.3733563Z [2mdist/[22m[2massets/[22m[36mAvatarGroup-8Z6Fjzf_.js          [39m[1m[2m  0.50 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+2026-08-18T17:05:56.3734843Z [2mdist/[22m[2massets/[22m[36mToast-CSM5O4Nu.js                [39m[1m[2m  0.79 kB[22m[1m[22m[2m │ gzip:   0.46 kB[22m
+2026-08-18T17:05:56.3736326Z [2mdist/[22m[2massets/[22m[36mNotFoundPage-1kK5Trqi.js         [39m[1m[2m  0.82 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+2026-08-18T17:05:56.3737718Z [2mdist/[22m[2massets/[22m[36muserService-DUQ_EALv.js          [39m[1m[2m  0.90 kB[22m[1m[22m[2m │ gzip:   0.43 kB[22m
+2026-08-18T17:05:56.3739064Z [2mdist/[22m[2massets/[22m[36mStatusBadge-CsYQXNIx.js          [39m[1m[2m  1.10 kB[22m[1m[22m[2m │ gzip:   0.49 kB[22m
+2026-08-18T17:05:56.3740467Z [2mdist/[22m[2massets/[22m[36mAppButton-DkIyQ1Uf.js            [39m[1m[2m  1.15 kB[22m[1m[22m[2m │ gzip:   0.56 kB[22m
+2026-08-18T17:05:56.3742049Z [2mdist/[22m[2massets/[22m[36mdeadlineHelpers-BrFyQZAl.js      [39m[1m[2m  1.33 kB[22m[1m[22m[2m │ gzip:   0.59 kB[22m
+2026-08-18T17:05:56.3743458Z [2mdist/[22m[2massets/[22m[36mConfirmationDialog-uAFxZknm.js   [39m[1m[2m  1.34 kB[22m[1m[22m[2m │ gzip:   0.70 kB[22m
+2026-08-18T17:05:56.3745077Z [2mdist/[22m[2massets/[22m[36mAppSelect-C5YCJqwd.js            [39m[1m[2m  1.37 kB[22m[1m[22m[2m │ gzip:   0.68 kB[22m
+2026-08-18T17:05:56.3746483Z [2mdist/[22m[2massets/[22m[36mSkeletonLoaders-DzZ33sUh.js      [39m[1m[2m  1.41 kB[22m[1m[22m[2m │ gzip:   0.44 kB[22m
+2026-08-18T17:05:56.3747952Z [2mdist/[22m[2massets/[22m[36mPagination-BlV4Q29T.js           [39m[1m[2m  1.79 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m
+2026-08-18T17:05:56.3749335Z [2mdist/[22m[2massets/[22m[36mLoginIllustration-DJmjXXct.js    [39m[1m[2m  1.79 kB[22m[1m[22m[2m │ gzip:   0.65 kB[22m
+2026-08-18T17:05:56.3750899Z [2mdist/[22m[2massets/[22m[36mModal-BZ4l7VZW.js                [39m[1m[2m  1.81 kB[22m[1m[22m[2m │ gzip:   0.85 kB[22m
+2026-08-18T17:05:56.3752215Z [2mdist/[22m[2massets/[22m[36mprojects-BusxWyWz.js             [39m[1m[2m  2.05 kB[22m[1m[22m[2m │ gzip:   0.69 kB[22m
+2026-08-18T17:05:56.3753711Z [2mdist/[22m[2massets/[22m[36madminTaskService-Bd6StrYL.js     [39m[1m[2m  3.86 kB[22m[1m[22m[2m │ gzip:   1.40 kB[22m
+2026-08-18T17:05:56.3755149Z [2mdist/[22m[2massets/[22m[36mCreateTaskModal-BhhI3Gg_.js      [39m[1m[2m  5.36 kB[22m[1m[22m[2m │ gzip:   2.16 kB[22m
+2026-08-18T17:05:56.3756543Z [2mdist/[22m[2massets/[22m[36mForgotPasswordPage-Qn4sFmvt.js   [39m[1m[2m  5.53 kB[22m[1m[22m[2m │ gzip:   2.28 kB[22m
+2026-08-18T17:05:56.3758022Z [2mdist/[22m[2massets/[22m[36mLoginPage-hkXm4Rng.js            [39m[1m[2m  5.74 kB[22m[1m[22m[2m │ gzip:   2.36 kB[22m
+2026-08-18T17:05:56.3759343Z [2mdist/[22m[2massets/[22m[36mCalendarPage-DN61H3cm.js         [39m[1m[2m  5.98 kB[22m[1m[22m[2m │ gzip:   2.43 kB[22m
+2026-08-18T17:05:56.3760660Z [2mdist/[22m[2massets/[22m[36mProfilePage-AxFDSK_u.js          [39m[1m[2m  7.27 kB[22m[1m[22m[2m │ gzip:   2.86 kB[22m
+2026-08-18T17:05:56.3761998Z [2mdist/[22m[2massets/[22m[36mTaskDetailPage-BJDk0Bnd.js       [39m[1m[2m  8.27 kB[22m[1m[22m[2m │ gzip:   2.79 kB[22m
+2026-08-18T17:05:56.3763399Z [2mdist/[22m[2massets/[22m[36mDashboardPage-C70qyh8a.js        [39m[1m[2m  8.57 kB[22m[1m[22m[2m │ gzip:   3.24 kB[22m
+2026-08-18T17:05:56.3764777Z [2mdist/[22m[2massets/[22m[36mSettingsPage-BwJZCLpG.js         [39m[1m[2m  8.58 kB[22m[1m[22m[2m │ gzip:   2.71 kB[22m
+2026-08-18T17:05:56.3766128Z [2mdist/[22m[2massets/[22m[36mSignupPage-Xx7xqxek.js           [39m[1m[2m  8.62 kB[22m[1m[22m[2m │ gzip:   3.23 kB[22m
+2026-08-18T17:05:56.3767517Z [2mdist/[22m[2massets/[22m[36mEditTaskModal-Cru5_jJu.js        [39m[1m[2m 10.00 kB[22m[1m[22m[2m │ gzip:   3.22 kB[22m
+2026-08-18T17:05:56.3768871Z [2mdist/[22m[2massets/[22m[36mUsersPage-CHmYhHwu.js            [39m[1m[2m 11.20 kB[22m[1m[22m[2m │ gzip:   3.63 kB[22m
+2026-08-18T17:05:56.3770314Z [2mdist/[22m[2massets/[22m[36mAdminDashboardPage-B2_yaRv3.js   [39m[1m[2m 11.51 kB[22m[1m[22m[2m │ gzip:   3.82 kB[22m
+2026-08-18T17:05:56.3771691Z [2mdist/[22m[2massets/[22m[36mAdminTasksPage--KBxmqws.js       [39m[1m[2m 13.01 kB[22m[1m[22m[2m │ gzip:   3.90 kB[22m
+2026-08-18T17:05:56.3773208Z [2mdist/[22m[2massets/[22m[36mTasksPage-Br6khtud.js            [39m[1m[2m 14.48 kB[22m[1m[22m[2m │ gzip:   4.48 kB[22m
+2026-08-18T17:05:56.3774547Z [2mdist/[22m[2massets/[22m[36mProjectsPage-CvMmEiTm.js         [39m[1m[2m 15.27 kB[22m[1m[22m[2m │ gzip:   4.81 kB[22m
+2026-08-18T17:05:56.3775858Z [2mdist/[22m[2massets/[22m[36mAppInput-Y-eY2bz3.js             [39m[1m[2m 86.83 kB[22m[1m[22m[2m │ gzip:  24.39 kB[22m
+2026-08-18T17:05:56.3777495Z [2mdist/[22m[2massets/[22m[36mindex-BwrzlhVo.js                [39m[1m[2m264.52 kB[22m[1m[22m[2m │ gzip:  86.92 kB[22m
+2026-08-18T17:05:56.3778849Z [2mdist/[22m[2massets/[22m[36mUpcomingDeadlines-BW4JdF67.js    [39m[1m[2m415.92 kB[22m[1m[22m[2m │ gzip: 112.78 kB[22m
+2026-08-18T17:05:56.3779750Z [32m✓ built in 3.44s[39m
+2026-08-18T17:05:56.4066194Z ##[group]Run dotnet tool install --global dotnet-sonarscanner
+2026-08-18T17:05:56.4066606Z [36;1mdotnet tool install --global dotnet-sonarscanner[0m
+2026-08-18T17:05:56.4087943Z shell: /usr/bin/bash -e {0}
+2026-08-18T17:05:56.4088182Z env:
+2026-08-18T17:05:56.4088365Z   DOTNET_ROOT: /usr/share/dotnet
+2026-08-18T17:05:56.4088576Z ##[endgroup]
+2026-08-18T17:05:57.7616690Z You can invoke the tool using the following command: dotnet-sonarscanner
+2026-08-18T17:05:57.7617972Z Tool 'dotnet-sonarscanner' (version '11.2.1') was successfully installed.
+2026-08-18T17:05:57.7720556Z ##[group]Run dotnet sonarscanner begin \
+2026-08-18T17:05:57.7720860Z [36;1mdotnet sonarscanner begin \[0m
+2026-08-18T17:05:57.7721094Z [36;1m  /k:"task-management-tool" \[0m
+2026-08-18T17:05:57.7721321Z [36;1m  /d:sonar.host.url="" \[0m
+2026-08-18T17:05:57.7721537Z [36;1m  /d:sonar.token="" \[0m
+2026-08-18T17:05:57.7721752Z [36;1m  /d:sonar.sources="frontend/src" \[0m
+2026-08-18T17:05:57.7722063Z [36;1m  /d:sonar.typescript.tsconfigPaths="frontend/tsconfig.json" \[0m
+2026-08-18T17:05:57.7722532Z [36;1m  /d:sonar.cs.opencover.reportsPaths="Backend.Tests/TestResults/**/coverage.opencover.xml" \[0m
+2026-08-18T17:05:57.7723038Z [36;1m  /d:sonar.cs.vscoveragexml.reportsPaths="Backend.Tests/TestResults/**/coverage.cobertura.xml"[0m
+2026-08-18T17:05:57.7743939Z shell: /usr/bin/bash -e {0}
+2026-08-18T17:05:57.7744166Z env:
+2026-08-18T17:05:57.7744347Z   DOTNET_ROOT: /usr/share/dotnet
+2026-08-18T17:05:57.7746565Z   GITHUB_TOKEN: ***
+2026-08-18T17:05:57.7746905Z   SONAR_TOKEN: 
+2026-08-18T17:05:57.7747085Z   SONAR_HOST_URL: 
+2026-08-18T17:05:57.7747322Z ##[endgroup]
+2026-08-18T17:05:57.9178552Z SonarScanner for .NET 11.2.1
+2026-08-18T17:05:57.9180113Z Using the .NET Core version of the Scanner for .NET
+2026-08-18T17:05:57.9618947Z The format of the analysis property sonar.host.url= is invalid
+2026-08-18T17:05:57.9619851Z Default properties file was found at /home/runner/.dotnet/tools/.store/dotnet-sonarscanner/11.2.1/dotnet-sonarscanner/11.2.1/tools/netcoreapp3.1/any/SonarQube.Analysis.xml
+2026-08-18T17:05:57.9620560Z The format of the analysis property sonar.token= is invalid
+2026-08-18T17:05:57.9621620Z Loading analysis properties from /home/runner/.dotnet/tools/.store/dotnet-sonarscanner/11.2.1/dotnet-sonarscanner/11.2.1/tools/netcoreapp3.1/any/SonarQube.Analysis.xml
+2026-08-18T17:05:57.9753062Z ##[error]Process completed with exit code 1.
+2026-08-18T17:05:57.9853382Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-18T17:05:57.9854277Z Post job cleanup.
+2026-08-18T17:05:58.0540191Z [command]/usr/bin/git version
+2026-08-18T17:05:58.0571029Z git version 2.54.0
+2026-08-18T17:05:58.0601589Z Temporarily overriding HOME='/home/runner/work/_temp/a2679ebf-ac69-4f35-9eca-c64187f66d2e' before making global git config changes
+2026-08-18T17:05:58.0603120Z Adding repository directory to the temporary git global config as a safe directory
+2026-08-18T17:05:58.0605992Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/cohort-9-dotnet-10667-izza/cohort-9-dotnet-10667-izza
+2026-08-18T17:05:58.0634253Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-08-18T17:05:58.0661427Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-08-18T17:05:58.0836353Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-08-18T17:05:58.0851855Z http.https://github.com/.extraheader
+2026-08-18T17:05:58.0860583Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-08-18T17:05:58.0886963Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-08-18T17:05:58.1053427Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-18T17:05:58.1081800Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-08-18T17:05:58.1386177Z Cleaning up orphan processes
+2026-08-18T17:05:58.1573339Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-dotnet@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

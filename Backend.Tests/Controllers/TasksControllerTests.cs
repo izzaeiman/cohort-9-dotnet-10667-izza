@@ -484,5 +484,73 @@ namespace Backend.Tests.Controllers
             Assert.Contains("Exported Task", content);
             Assert.Contains("2026-12-01", content);
         }
+
+        [Fact]
+        public void Constructor_NullTaskService_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => new TasksController(null!, _context));
+        }
+
+        [Fact]
+        public void Constructor_NullDbContext_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => new TasksController(_taskServiceMock.Object, null!));
+        }
+
+        [Fact]
+        public async Task ImportTasks_NullFileArgument_ReturnsBadRequest()
+        {
+            SetUserContext("usr-1", UserRoles.Administrator);
+            var result = await _controller.ImportTasks(null!);
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(badRequest.Value);
+        }
+
+        [Fact]
+        public async Task ImportTasks_EmptyFile_ReturnsBadRequest()
+        {
+            SetUserContext("usr-1", UserRoles.Administrator);
+            var mockFile = new Mock<IFormFile>();
+            mockFile.Setup(f => f.Length).Returns(0);
+
+            var result = await _controller.ImportTasks(mockFile.Object);
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(badRequest.Value);
+        }
+
+        [Fact]
+        public async Task ImportTasks_CsvWithValidationErrors_ReturnsBadRequestWithErrors()
+        {
+            SetUserContext("usr-1", UserRoles.Administrator);
+            var csvContent = "Title,Description,Category,Priority,Status\n,Bad Desc,InvalidCategory,InvalidPriority,InvalidStatus";
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
+            var stream = new System.IO.MemoryStream(bytes);
+
+            var mockFile = new Mock<IFormFile>();
+            mockFile.Setup(f => f.OpenReadStream()).Returns(stream);
+            mockFile.Setup(f => f.Length).Returns(bytes.Length);
+
+            var result = await _controller.ImportTasks(mockFile.Object);
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(badRequest.Value);
+        }
+
+        [Fact]
+        public async Task ImportTasks_ValidCsv_ImportsSuccessfully()
+        {
+            SetUserContext("usr-1", UserRoles.Administrator);
+            var csvContent = "Title,Description,Category,Priority,Status\nValid Task,Valid Description,Backend,High,Pending";
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
+            var stream = new System.IO.MemoryStream(bytes);
+
+            var mockFile = new Mock<IFormFile>();
+            mockFile.Setup(f => f.OpenReadStream()).Returns(stream);
+            mockFile.Setup(f => f.Length).Returns(bytes.Length);
+
+            var result = await _controller.ImportTasks(mockFile.Object);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+        }
     }
 }
+

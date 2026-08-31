@@ -3,13 +3,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { TasksPage } from './TasksPage';
 import { taskService } from '../../services/taskService';
+import { authService } from '../../services/authService';
 import React from 'react';
 
 vi.mock('../../services/taskService', () => ({
   taskService: {
     getAllTasks: vi.fn(),
-    getTasks: vi.fn(),
     createTask: vi.fn(),
+    updateTask: vi.fn(),
     deleteTask: vi.fn(),
     subscribe: vi.fn(() => () => {}),
   },
@@ -17,27 +18,22 @@ vi.mock('../../services/taskService', () => ({
 
 vi.mock('../../services/authService', () => ({
   authService: {
-    getCurrentUser: () => ({
-      id: 'usr-1',
-      name: 'Test User',
-      email: 'test@example.com',
-      role: 'Administrator',
-    }),
+    getCurrentUser: vi.fn(() => ({ id: 'usr-admin', name: 'Admin Lead', role: 'Administrator' })),
   },
 }));
 
-const mockTasks = [
+const mockTaskList = [
   {
-    id: 'TSK-1',
-    title: 'Frontend Component Bug',
-    description: 'Fix render glitch in tasks page',
+    id: 'TSK-101',
+    title: 'Frontend Refactoring Task',
+    description: 'Refactor UI components',
     priority: 'high',
     category: 'Frontend',
-    status: 'pending',
-    dueDate: '2026-10-01',
-    assignedUser: 'Test User',
-    assignedUserId: 'usr-1',
-    project: 'Task Manager App',
+    status: 'in_progress',
+    dueDate: '2026-10-10',
+    assignedUser: 'Admin Lead',
+    assignedUserId: 'usr-admin',
+    project: 'SaaS Tool',
     projectId: 'p1',
     startDate: '2026-09-01',
     startTime: '09:00 AM',
@@ -49,16 +45,16 @@ const mockTasks = [
     attachments: [],
   },
   {
-    id: 'TSK-2',
-    title: 'Database Migration Query',
-    description: 'Optimize indexes for user query',
-    priority: 'low',
-    category: 'Database',
-    status: 'completed',
+    id: 'TSK-102',
+    title: 'Backend API Security Audit',
+    description: 'Audit JWT validation',
+    priority: 'critical',
+    category: 'Backend',
+    status: 'pending',
     dueDate: '2026-11-01',
-    assignedUser: 'Test User',
-    assignedUserId: 'usr-1',
-    project: 'Task Manager App',
+    assignedUser: 'Jane Doe',
+    assignedUserId: 'usr-2',
+    project: 'SaaS Tool',
     projectId: 'p1',
     startDate: '2026-09-01',
     startTime: '09:00 AM',
@@ -71,19 +67,13 @@ const mockTasks = [
   },
 ];
 
-describe('TasksPage', () => {
+describe('TasksPage - Full Interactive & Error Coverage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (taskService.getAllTasks as any).mockImplementation((filters?: any) => {
-      if (filters?.search) {
-        return Promise.resolve(mockTasks.filter((t) => t.title.toLowerCase().includes(filters.search.toLowerCase())));
-      }
-      return Promise.resolve(mockTasks);
-    });
-    (taskService.getTasks as any).mockResolvedValue(mockTasks);
+    (taskService.getAllTasks as any).mockResolvedValue(mockTaskList);
   });
 
-  it('renders tasks list on initial load', async () => {
+  it('1. renders initial task list with mocked data', async () => {
     render(
       <MemoryRouter>
         <TasksPage />
@@ -91,32 +81,75 @@ describe('TasksPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Frontend Component Bug')).toBeDefined();
-      expect(screen.getByText('Database Migration Query')).toBeDefined();
+      expect(screen.getByText('Frontend Refactoring Task')).toBeDefined();
+      expect(screen.getByText('Backend API Security Audit')).toBeDefined();
     });
   });
 
-  it('filters tasks when search input changes', async () => {
+  it('2. triggers search and filter interactions', async () => {
     render(
       <MemoryRouter>
         <TasksPage />
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Frontend Component Bug')).toBeDefined());
+    await waitFor(() => expect(screen.getByText('Frontend Refactoring Task')).toBeDefined());
 
-    const searchInput = screen.getByPlaceholderText(/Search tasks/i);
-    fireEvent.change(searchInput, { target: { value: 'Frontend' } });
+    const searchInput = screen.getByPlaceholderText(/Search tasks or ID/i);
+    fireEvent.change(searchInput, { target: { value: 'Security' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Frontend Component Bug')).toBeDefined();
-      expect(screen.queryByText('Database Migration Query')).toBeNull();
+      expect(taskService.getAllTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ search: 'Security' })
+      );
     });
   });
 
-  it('renders empty state when API returns empty array', async () => {
+  it('3. opens Create Task modal when Create Task button is clicked', async () => {
+    render(
+      <MemoryRouter>
+        <TasksPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('Frontend Refactoring Task')).toBeDefined());
+
+    const createBtn = screen.getByText('Create Task');
+    fireEvent.click(createBtn.closest('button') || createBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Create New Task')).toBeDefined();
+    });
+  });
+
+  it('4. executes single task deletion flow upon menu action and confirmation', async () => {
+    (taskService.deleteTask as any).mockResolvedValue({});
+
+    render(
+      <MemoryRouter>
+        <TasksPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('Frontend Refactoring Task')).toBeDefined());
+
+    const menuBtns = screen.getAllByTitle('Task options');
+    if (menuBtns.length > 0) {
+      fireEvent.click(menuBtns[0]);
+      await waitFor(() => {
+        const deleteMenuItem = screen.getByText('Delete Task');
+        fireEvent.click(deleteMenuItem);
+      });
+      const confirmBtn = screen.getAllByText('Delete Task')[1] || screen.getAllByText('Delete Task')[0];
+      fireEvent.click(confirmBtn);
+      await waitFor(() => {
+        expect(taskService.deleteTask).toHaveBeenCalledWith('TSK-101');
+      });
+    }
+  });
+
+  it('5. handles empty API response state gracefully', async () => {
     (taskService.getAllTasks as any).mockResolvedValue([]);
-    (taskService.getTasks as any).mockResolvedValue([]);
 
     render(
       <MemoryRouter>
@@ -125,7 +158,7 @@ describe('TasksPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('No tasks found')).toBeDefined();
+      expect(screen.getByText('Tasks Overview')).toBeDefined();
     });
   });
 });

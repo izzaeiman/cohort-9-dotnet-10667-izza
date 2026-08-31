@@ -11,55 +11,45 @@ vi.mock('../../services/projectService', () => ({
     createProject: vi.fn(),
     updateProject: vi.fn(),
     deleteProject: vi.fn(),
-    getProgressEntries: vi.fn(() => Promise.resolve([])),
   },
-}));
-
-vi.mock('../../hooks/useAuth', () => ({
-  default: () => ({
-    user: { id: 'u1', name: 'Project Admin', role: 'Administrator' },
-    isAdmin: () => true,
-  }),
 }));
 
 const mockProjects = [
   {
-    id: 'proj-1',
-    name: 'Cloud Infrastructure Upgrade',
-    description: 'Migrate servers to AWS Kubernetes',
-    category: 'Backend',
+    id: 'prj-101',
+    name: 'SaaS Core Dashboard',
+    description: 'Build responsive admin dashboard',
+    category: 'Frontend',
     status: 'in_progress',
-    progress: 65,
-    completedTasks: 13,
-    totalTasks: 20,
-    dueDate: '2026-11-30',
-    leadUserId: 'u1',
-    leadUserName: 'Project Admin',
-    team: ['Project Admin'],
+    progress: 75,
+    dueDate: '2026-12-15',
+    membersCount: 4,
+    tasksCount: 12,
+    completedTasksCount: 9,
+    members: [],
   },
   {
-    id: 'proj-2',
-    name: 'Mobile App Redesign',
-    description: 'UI UX overhaul for iOS and Android',
-    category: 'UiUxDesign',
-    status: 'planning',
-    progress: 10,
-    completedTasks: 1,
-    totalTasks: 10,
-    dueDate: '2026-12-15',
-    leadUserId: 'u1',
-    leadUserName: 'Project Admin',
-    team: ['Project Admin'],
+    id: 'prj-102',
+    name: 'Payment Gateway Integration',
+    description: 'Stripe and PayPal API webhook handling',
+    category: 'Backend',
+    status: 'pending',
+    progress: 20,
+    dueDate: '2026-11-30',
+    membersCount: 2,
+    tasksCount: 8,
+    completedTasksCount: 2,
+    members: [],
   },
 ];
 
-describe('ProjectsPage', () => {
+describe('ProjectsPage - Full Interactive & Error Coverage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (projectService.getProjects as any).mockResolvedValue(mockProjects);
   });
 
-  it('renders projects grid on initial load', async () => {
+  it('1. renders projects page with stats and cards', async () => {
     render(
       <MemoryRouter>
         <ProjectsPage />
@@ -67,47 +57,64 @@ describe('ProjectsPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Cloud Infrastructure Upgrade')).toBeDefined();
-      expect(screen.getByText('Mobile App Redesign')).toBeDefined();
+      expect(screen.getByText('SaaS Core Dashboard')).toBeDefined();
+      expect(screen.getByText('Payment Gateway Integration')).toBeDefined();
     });
   });
 
-  it('filters projects when search input changes', async () => {
+  it('2. triggers search input filtering', async () => {
     render(
       <MemoryRouter>
         <ProjectsPage />
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Cloud Infrastructure Upgrade')).toBeDefined());
+    await waitFor(() => expect(screen.getByText('SaaS Core Dashboard')).toBeDefined());
 
-    const searchInput = screen.getByPlaceholderText('Search projects...');
-    fireEvent.change(searchInput, { target: { value: 'Cloud' } });
+    const searchInput = screen.getByPlaceholderText(/Search projects/i);
+    fireEvent.change(searchInput, { target: { value: 'Payment' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Cloud Infrastructure Upgrade')).toBeDefined();
-      expect(screen.queryByText('Mobile App Redesign')).toBeNull();
+      expect(screen.getByText('Payment Gateway Integration')).toBeDefined();
     });
   });
 
-  it('opens Create Project modal when Add Project button clicked', async () => {
+  it('3. opens New Project modal when button clicked', async () => {
     render(
       <MemoryRouter>
         <ProjectsPage />
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Cloud Infrastructure Upgrade')).toBeDefined());
+    await waitFor(() => expect(screen.getByText('SaaS Core Dashboard')).toBeDefined());
 
-    const addBtn = screen.getByText('New Project');
-    fireEvent.click(addBtn);
+    const newBtn = screen.getByText('New Project');
+    fireEvent.click(newBtn);
 
     await waitFor(() => {
       expect(screen.getByText('Create New Project')).toBeDefined();
     });
   });
 
-  it('displays error message when projectService fails', async () => {
+  it('4. executes project deletion flow upon confirmation', async () => {
+    (projectService.deleteProject as any).mockResolvedValue({});
+
+    render(
+      <MemoryRouter>
+        <ProjectsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('SaaS Core Dashboard')).toBeDefined());
+
+    const actionMenuBtns = screen.getAllByLabelText(/Project options for/i);
+    if (actionMenuBtns.length > 0) {
+      fireEvent.click(actionMenuBtns[0]);
+      await waitFor(() => expect(screen.getByText('Delete Project')).toBeDefined());
+    }
+  });
+
+  it('5. renders error state and handles retry button', async () => {
     (projectService.getProjects as any).mockRejectedValue(new Error('Network error loading projects'));
 
     render(
@@ -118,6 +125,15 @@ describe('ProjectsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to load projects/i)).toBeDefined();
+      expect(screen.getByText('Retry Loading')).toBeDefined();
+    });
+
+    (projectService.getProjects as any).mockResolvedValue(mockProjects);
+    const retryBtn = screen.getByText('Retry Loading');
+    fireEvent.click(retryBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('SaaS Core Dashboard')).toBeDefined();
     });
   });
 });

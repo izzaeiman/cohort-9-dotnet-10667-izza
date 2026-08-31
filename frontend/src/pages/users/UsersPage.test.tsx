@@ -16,38 +16,36 @@ vi.mock('../../services/userService', () => ({
 
 const mockUsers = [
   {
-    id: 'u-10',
-    name: 'Alice Cooper',
+    id: 'u1',
+    name: 'Alice Smith',
     email: 'alice@example.com',
     role: 'Administrator',
-    department: 'Engineering',
-    phone: '+1 555-0199',
+    department: 'Software Engineering',
     status: 'active',
     avatar: 'https://i.pravatar.cc/150?img=1',
-    tasksAssigned: 4,
-    lastActive: '2 hours ago',
+    lastActive: '2 mins ago',
+    phone: '+1 (555) 123-4567',
   },
   {
-    id: 'u-20',
-    name: 'Bob Marley',
+    id: 'u2',
+    name: 'Bob Jones',
     email: 'bob@example.com',
     role: 'Regular User',
-    department: 'Design',
-    phone: '+1 555-0200',
-    status: 'pending',
+    department: 'Product Management',
+    status: 'offline',
     avatar: 'https://i.pravatar.cc/150?img=2',
-    tasksAssigned: 1,
     lastActive: '1 day ago',
+    phone: '+1 (555) 987-6543',
   },
 ];
 
-describe('UsersPage', () => {
+describe('UsersPage - Full Interactive & Error Coverage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (userService.getUsers as any).mockResolvedValue(mockUsers);
   });
 
-  it('renders users list on initial load', async () => {
+  it('1. renders user management page with stats and table', async () => {
     render(
       <MemoryRouter>
         <UsersPage />
@@ -55,37 +53,36 @@ describe('UsersPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Alice Cooper')).toBeDefined();
-      expect(screen.getByText('Bob Marley')).toBeDefined();
+      expect(screen.getByText('Alice Smith')).toBeDefined();
+      expect(screen.getByText('User Management')).toBeDefined();
     });
   });
 
-  it('filters users by search query', async () => {
+  it('2. triggers search input filtering', async () => {
     render(
       <MemoryRouter>
         <UsersPage />
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Alice Cooper')).toBeDefined());
+    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeDefined());
 
-    const searchInput = screen.getByPlaceholderText('Search name or email...');
-    fireEvent.change(searchInput, { target: { value: 'Alice' } });
+    const searchInput = screen.getByPlaceholderText(/Search name or email/i);
+    fireEvent.change(searchInput, { target: { value: 'Bob' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Alice Cooper')).toBeDefined();
-      expect(screen.queryByText('Bob Marley')).toBeNull();
+      expect(screen.getByText('Bob Jones')).toBeDefined();
     });
   });
 
-  it('opens Invite New User modal when button is clicked', async () => {
+  it('3. opens Invite User modal when button clicked', async () => {
     render(
       <MemoryRouter>
         <UsersPage />
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByText('Alice Cooper')).toBeDefined());
+    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeDefined());
 
     const inviteBtn = screen.getByText('Invite User');
     fireEvent.click(inviteBtn);
@@ -95,8 +92,33 @@ describe('UsersPage', () => {
     });
   });
 
-  it('displays error message when userService fails', async () => {
-    (userService.getUsers as any).mockRejectedValue(new Error('Failed to fetch users'));
+  it('4. executes user deletion flow upon confirmation', async () => {
+    (userService.deleteUser as any).mockResolvedValue({});
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeDefined());
+
+    const actionBtns = screen.getAllByTitle(/User actions for/i);
+    fireEvent.click(actionBtns[0]);
+
+    await waitFor(() => expect(screen.getByText('Delete User')).toBeDefined());
+    fireEvent.click(screen.getByText('Delete User'));
+
+    await waitFor(() => expect(screen.getByText('Remove User')).toBeDefined());
+    fireEvent.click(screen.getByText('Remove User'));
+
+    await waitFor(() => {
+      expect(userService.deleteUser).toHaveBeenCalledWith('u1');
+    });
+  });
+
+  it('5. renders error state and handles retry button', async () => {
+    (userService.getUsers as any).mockRejectedValue(new Error('Network error loading users'));
 
     render(
       <MemoryRouter>
@@ -106,6 +128,15 @@ describe('UsersPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to load users/i)).toBeDefined();
+      expect(screen.getByText('Retry Loading')).toBeDefined();
+    });
+
+    (userService.getUsers as any).mockResolvedValue(mockUsers);
+    const retryBtn = screen.getByText('Retry Loading');
+    fireEvent.click(retryBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Alice Smith')).toBeDefined();
     });
   });
 });

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">81.81% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>9/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">63.63% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>14/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">81.81% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>9/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -206,17 +206,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -235,7 +235,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -266,11 +266,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -325,18 +325,18 @@ interface SidebarProps {
   onToggleCollapse: () =&gt; void;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >Sidebar = ({</span> isCollapsed, onToggleCollapse }: SidebarProps) =&gt; {</span>
-  const navigate = <span class="cstat-no" title="statement not covered" >useNavigate()</span>;
-  const { isAdmin, logout } = <span class="cstat-no" title="statement not covered" >useAuth()</span>;
-  const adminUser = <span class="cstat-no" title="statement not covered" >isAdmin();</span>
+export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) =&gt; {
+  const navigate = useNavigate();
+  const { isAdmin, logout } = useAuth();
+  const adminUser = isAdmin();
 &nbsp;
-  const handleLogout = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+  const handleLogout = <span class="fstat-no" title="function not covered" >async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    await logout();</span>
 <span class="cstat-no" title="statement not covered" >    navigate('/login');</span>
   };
 &nbsp;
-  const navItems = <span class="cstat-no" title="statement not covered" >adminUser</span>
-    ? [
+  const navItems = adminUser
+    ? <span class="branch-0 cbranch-no" title="branch not covered" >[</span>
         { path: '/admin/dashboard', label: 'Admin Dashboard', icon: MdDashboard },
         { path: '/admin/tasks', label: 'Admin Tasks', icon: MdAdminPanelSettings },
         { path: '/admin/projects', label: 'Projects', icon: MdFolderOpen },
@@ -354,11 +354,11 @@ export const <span class="cstat-no" title="statement not covered" ><span class="
         { path: '/settings', label: 'Settings', icon: MdOutlineSettings },
       ];
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;aside
       className={clsx(
         styles.sidebar,
-        isCollapsed ? styles['sidebar--collapsed'] : styles['sidebar--expanded'],
+        isCollapsed ? <span class="branch-0 cbranch-no" title="branch not covered" >styles['sidebar--collapsed'] : s</span>tyles['sidebar--expanded'],
       )}
       aria-label="Main sidebar navigation"
     &gt;
@@ -366,7 +366,7 @@ export const <span class="cstat-no" title="statement not covered" ><span class="
       &lt;div className={styles.header}&gt;
         &lt;div className={styles.logoWrap}&gt;
           {isCollapsed ? (
-            &lt;WorkFlowLogo size="sm" /&gt;
+<span class="branch-0 cbranch-no" title="branch not covered" >            &lt;WorkFlowLogo size="sm" /&gt;</span>
           ) : (
             &lt;WorkFlowLogo size="md" /&gt;
           )}
@@ -375,23 +375,23 @@ export const <span class="cstat-no" title="statement not covered" ><span class="
           type="button"
           className={styles.collapseBtn}
           onClick={onToggleCollapse}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={isCollapsed ? <span class="branch-0 cbranch-no" title="branch not covered" >'Expand sidebar' : '</span>Collapse sidebar'}
+          title={isCollapsed ? <span class="branch-0 cbranch-no" title="branch not covered" >'Expand sidebar' : '</span>Collapse sidebar'}
         &gt;
-          {isCollapsed ? &lt;MdChevronRight size={20} /&gt; : &lt;MdChevronLeft size={20} /&gt;}
+          {isCollapsed ? <span class="branch-0 cbranch-no" title="branch not covered" >&lt;MdChevronRight size={20} /&gt; : &lt;M</span>dChevronLeft size={20} /&gt;}
         &lt;/button&gt;
       &lt;/div&gt;
 &nbsp;
       {/* Nav List */}
       &lt;nav className={styles.nav}&gt;
-        {navItems.<span class="fstat-no" title="function not covered" >map(({</span> path, label, icon: Icon }) =&gt; (
-<span class="cstat-no" title="statement not covered" >          &lt;NavLink</span>
+        {navItems.map(({ path, label, icon: Icon }) =&gt; (
+          &lt;NavLink
             key={path}
             to={path}
-<span class="fstat-no" title="function not covered" >            className={({</span> isActive }) =&gt;
-<span class="cstat-no" title="statement not covered" >              clsx(styles.navItem, isActive &amp;&amp; styles.navItemActive)</span>
+            className={({ isActive }) =&gt;
+              clsx(styles.navItem, isActive &amp;&amp; styles.navItemActive)
             }
-            title={isCollapsed ? label : undefined}
+            title={isCollapsed ? <span class="branch-0 cbranch-no" title="branch not covered" >label : u</span>ndefined}
           &gt;
             &lt;span className={styles.navIcon}&gt;
               &lt;Icon /&gt;
@@ -407,7 +407,7 @@ export const <span class="cstat-no" title="statement not covered" ><span class="
           type="button"
           className={styles.logoutBtn}
           onClick={handleLogout}
-          title={isCollapsed ? 'Logout' : undefined}
+          title={isCollapsed ? <span class="branch-0 cbranch-no" title="branch not covered" >'Logout' : u</span>ndefined}
         &gt;
           &lt;span className={styles.navIcon}&gt;
             &lt;MdLogout /&gt;
@@ -427,7 +427,7 @@ export default Sidebar;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-31T22:37:52.362Z
+                at 2026-08-31T22:48:29.087Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/12</span>
+                <span class='fraction'>8/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">61.11% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>15/18</span>
+                <span class='fraction'>11/18</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">33.33% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>1/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">66.66% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>2/3</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/12</span>
+                <span class='fraction'>8/12</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -155,21 +155,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">222x</span>
-<span class="cline-any cline-yes">222x</span>
-<span class="cline-any cline-yes">222x</span>
+<span class="cline-any cline-yes">204x</span>
+<span class="cline-any cline-yes">204x</span>
+<span class="cline-any cline-yes">204x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">222x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">222x</span>
+<span class="cline-any cline-yes">204x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">222x</span>
+<span class="cline-any cline-yes">204x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">204x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -233,9 +233,9 @@ const AppInput = forwardRef&lt;HTMLInputElement, AppInputProps&gt;(
     const inputId = id || generatedId;
     const [isFocused, setIsFocused] = useState(false);
 &nbsp;
-    const handleFocus = (e: FocusEvent&lt;HTMLInputElement&gt;) =&gt; {
-      setIsFocused(true);
-      onFocus?.(e);
+    const <span class="fstat-no" title="function not covered" >handleFocus = (e</span>: FocusEvent&lt;HTMLInputElement&gt;) =&gt; {
+<span class="cstat-no" title="statement not covered" >      setIsFocused(true);</span>
+<span class="cstat-no" title="statement not covered" >      onFocus?.(e);</span>
     };
 &nbsp;
     const <span class="fstat-no" title="function not covered" >handleBlur = (e</span>: FocusEvent&lt;HTMLInputElement&gt;) =&gt; {
@@ -251,8 +251,8 @@ const AppInput = forwardRef&lt;HTMLInputElement, AppInputProps&gt;(
         &lt;div
           className={clsx(
             styles.inputWrap,
-            isFocused &amp;&amp; styles.focused,
-            error &amp;&amp; styles.hasError,
+            isFocused &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >styles.focused,</span>
+            error &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >styles.hasError,</span>
           )}
         &gt;
           {leftIcon &amp;&amp; &lt;span className={styles.leftIcon}&gt;{leftIcon}&lt;/span&gt;}
@@ -260,7 +260,7 @@ const AppInput = forwardRef&lt;HTMLInputElement, AppInputProps&gt;(
             ref={ref}
             id={inputId}
             className={styles.input}
-            aria-describedby={error ? `${inputId}-error` : helperText ? <span class="branch-0 cbranch-no" title="branch not covered" >`${inputId}-helper` : u</span>ndefined}
+            aria-describedby={error ? <span class="branch-0 cbranch-no" title="branch not covered" >`${inputId}-error` : h</span>elperText ? <span class="branch-0 cbranch-no" title="branch not covered" >`${inputId}-helper` : u</span>ndefined}
             aria-invalid={!!error}
             {...rest}
             onFocus={handleFocus}
@@ -269,7 +269,7 @@ const AppInput = forwardRef&lt;HTMLInputElement, AppInputProps&gt;(
           {rightSlot &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;span className={styles.rightSlot}&gt;{rightSlot}&lt;/span&gt;}</span>
         &lt;/div&gt;
         {error ? (
-          &lt;p id={`${inputId}-error`} className={styles.errorText} role="alert"&gt;
+<span class="branch-0 cbranch-no" title="branch not covered" >          &lt;p id={`${inputId}-error`} className={styles.errorText} role="alert"&gt;</span>
             {error}
           &lt;/p&gt;
         ) : helperText ? (
@@ -292,7 +292,7 @@ export default AppInput;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-31T22:37:52.362Z
+                at 2026-08-31T22:48:29.087Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -19,7 +19,18 @@ namespace Backend.Services
 
         public async Task<IEnumerable<ProjectDto>> GetAllProjectsAsync()
         {
+            return await GetProjectsAsync();
+        }
+
+        public async Task<IEnumerable<ProjectDto>> GetProjectsAsync(string? userId = null, string? userRole = null)
+        {
             var projects = await _projectRepository.GetAllAsync();
+
+            if (!string.IsNullOrEmpty(userRole) && userRole == UserRoles.RegularUser && !string.IsNullOrEmpty(userId))
+            {
+                projects = projects.Where(p => p.LeadUserId == userId);
+            }
+
             return projects.Select(MapToDto);
         }
 

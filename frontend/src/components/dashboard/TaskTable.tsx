@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { TaskItem } from '../../types/dashboard.types';
 import StatusBadge from '../ui/StatusBadge';
 import AvatarGroup from '../ui/AvatarGroup';
@@ -10,11 +11,16 @@ import styles from './TaskTable.module.css';
 interface TaskTableProps {
   tasks: TaskItem[];
   onViewAll?: () => void;
+  onViewDetails?: (taskId: string) => void;
+  onEditTask?: (task: TaskItem) => void;
+  onSeeProgress?: (taskId: string) => void;
+  onDeleteTask?: (task: TaskItem) => void;
 }
 
-export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onViewAll, onViewDetails, onEditTask, onSeeProgress, onDeleteTask }: TaskTableProps) => {
   const [activeMenuTaskId, setActiveMenuTaskId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -28,8 +34,20 @@ export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
 
   const handleAction = (actionName: string, taskId: string) => {
     setActiveMenuTaskId(null);
-    
-    alert(`${actionName} action triggered for task ${taskId}`);
+    const targetTask = tasks.find((t) => t.id === taskId);
+
+    if (actionName === 'View Details') {
+      if (onViewDetails) onViewDetails(taskId);
+      else navigate(`/tasks/${taskId}`);
+    } else if (actionName === 'See Progress') {
+      if (onSeeProgress) onSeeProgress(taskId);
+      else navigate(`/tasks/${taskId}`);
+    } else if (actionName === 'Edit Task') {
+      if (onEditTask && targetTask) onEditTask(targetTask);
+      else navigate(`/tasks?edit=${taskId}`);
+    } else if (actionName === 'Delete Task') {
+      if (onDeleteTask && targetTask) onDeleteTask(targetTask);
+    }
   };
 
   return (
@@ -107,6 +125,14 @@ export const TaskTable = ({ tasks, onViewAll }: TaskTableProps) => {
                       onClick={() => handleAction('View Details', task.id)}
                     >
                       View Details
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => handleAction('See Progress', task.id)}
+                    >
+                      See Progress
                     </button>
                     <button
                       type="button"

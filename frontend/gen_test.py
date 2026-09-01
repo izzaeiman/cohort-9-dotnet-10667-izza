@@ -1,2 +1,0 @@
-with open('src/validation.test.ts', 'w', encoding='utf-8') as f:
-    f.write('''import { describe, it, expect } from \'vitest\';\nimport { loginSchema } from \'./utils/loginSchema\';\nimport { signupSchema } from \'./utils/signupSchema\';\n\ndescribe(\'Validation Schemas\', () => {\n  describe(\'loginSchema\', () => {\n    it(\'should validate valid credentials\', () => {\n      const result = loginSchema.safeParse({ email: \'test@example.com\', password: \'Password123!\', rememberMe: false });\n      expect(result.success).toBe(true);\n    });\n  });\n});\n''')

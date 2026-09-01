@@ -64,8 +64,20 @@ export const projectService = {
   },
 
   async updateProject(id: string, updatedData: { name: string; description?: string }): Promise<ProjectItem> {
-    await api.put(`/projects/${id}`, updatedData);
-    return { ...updatedData, id, leadUserId: '', leadUserName: '' } as ProjectItem;
+    const response = await api.put(`/projects/${id}`, updatedData);
+    const p = response?.data;
+    if (p && p.id) {
+      return {
+        ...p,
+        category: p.category || 'General',
+        status: p.status || 'in_progress',
+        progress: p.progress ?? 0,
+        completedTasks: p.completedTasks ?? 0,
+        totalTasks: p.totalTasks ?? 0,
+        team: Array.isArray(p.team) ? p.team : [],
+      };
+    }
+    return { ...updatedData, id, leadUserId: '', leadUserName: '', category: 'General', status: 'in_progress', progress: 0, completedTasks: 0, totalTasks: 0, team: [] } as ProjectItem;
   },
 
   async deleteProject(id: string): Promise<boolean> {

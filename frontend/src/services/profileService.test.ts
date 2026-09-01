@@ -31,7 +31,12 @@ describe('profileService', () => {
     expect(apiClient.put).toHaveBeenCalledWith('/auth/change-password', payload);
   });
 
-  it('throws pending error when updateProfile is called', async () => {
-    await expect(profileService.updateProfile({})).rejects.toThrow(/Backend integration pending/i);
+  it('updates profile information via /auth/profile endpoint', async () => {
+    const updatedData = { id: 'u1', name: 'Updated Name', email: 'prof@test.com', role: 'Regular User' };
+    (apiClient.put as any).mockResolvedValue({ data: updatedData });
+
+    const result = await profileService.updateProfile({ name: 'Updated Name' });
+    expect(apiClient.put).toHaveBeenCalledWith('/auth/profile', { name: 'Updated Name' });
+    expect(result).toEqual(updatedData);
   });
 });

@@ -166,6 +166,45 @@ namespace Backend.Controllers
             }
         }
 
+        [HttpPut("profile")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var user = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+                _context.Users, u => u.Id == userId
+            );
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+            {
+                user.Name = dto.Name;
+            }
+            if (dto.Avatar != null)
+            {
+                user.Avatar = dto.Avatar;
+            }
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role,
+                Avatar = user.Avatar
+            });
+        }
+
+
         [HttpGet("admin-only")]
         [Authorize(Roles = UserRoles.Administrator)]
         [ProducesResponseType(StatusCodes.Status200OK)]

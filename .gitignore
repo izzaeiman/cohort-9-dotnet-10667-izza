@@ -31,6 +31,7 @@ Desktop.ini
 
 # SonarQube
 .sonarqube/
+.scannerwork/
 
 # TypeScript build info
 *.tsbuildinfo
@@ -44,3 +45,9 @@ Desktop.ini
 .env.local
 appsettings.Development.json
 user-secrets
+
+# Added
+Backend.Tests/TestResults/
+frontend/coverage/
+Backend/wwwroot/uploads/
+*.py

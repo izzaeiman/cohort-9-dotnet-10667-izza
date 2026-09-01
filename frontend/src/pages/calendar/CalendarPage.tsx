@@ -95,7 +95,7 @@ export const CalendarPage = () => {
 
   const handleAddEvent = async (data: AddEventFormData) => {
     try {
-      const eventDate = new Date(year, month, data.day);
+      const eventDate = new Date(year, month, data.day, 12, 0, 0);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (eventDate < today) {
@@ -107,6 +107,7 @@ export const CalendarPage = () => {
 
       const created = await taskService.createTask({
         title: data.title,
+        description: 'Scheduled Calendar Event',
         dueDate: isoDate,
         priority: data.priority as any,
         category: 'General',

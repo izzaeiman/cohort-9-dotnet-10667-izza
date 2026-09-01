@@ -14,7 +14,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   const method = config.method?.toLowerCase();
   if (method === 'post' || method === 'put' || method === 'delete') {
-    if (!config.url?.includes('/auth/antiforgery-token') && !config.headers['X-XSRF-TOKEN']) {
+    if (!config.url?.includes('/auth/antiforgery-token')) {
       try {
         const tokenRes = await axios.get(`${API_BASE_URL}/auth/antiforgery-token`, { withCredentials: true });
         if (tokenRes.data?.token) {

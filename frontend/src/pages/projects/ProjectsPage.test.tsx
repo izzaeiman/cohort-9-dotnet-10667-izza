@@ -5,6 +5,11 @@ import { ProjectsPage } from './ProjectsPage';
 import { projectService } from '../../services/projectService';
 import React from 'react';
 
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'u1', name: 'Project Admin' }, isAdmin: () => true }),
+  default: () => ({ user: { id: 'u1', name: 'Project Admin' }, isAdmin: () => true }),
+}));
+
 vi.mock('../../services/projectService', () => ({
   projectService: {
     getProjects: vi.fn(),
@@ -43,13 +48,13 @@ const mockProjects = [
   },
 ];
 
-describe('ProjectsPage - Full Interactive & Error Coverage', () => {
+describe('ProjectsPage - Comprehensive Deep Interactive Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (projectService.getProjects as any).mockResolvedValue(mockProjects);
   });
 
-  it('1. renders projects page with stats and cards', async () => {
+  it('1. renders projects page with stats, cards, and grid view', async () => {
     render(
       <MemoryRouter>
         <ProjectsPage />
@@ -62,7 +67,7 @@ describe('ProjectsPage - Full Interactive & Error Coverage', () => {
     });
   });
 
-  it('2. triggers search input filtering', async () => {
+  it('2. filters projects by search input and category select', async () => {
     render(
       <MemoryRouter>
         <ProjectsPage />
@@ -79,7 +84,27 @@ describe('ProjectsPage - Full Interactive & Error Coverage', () => {
     });
   });
 
-  it('3. opens New Project modal when button clicked', async () => {
+  it('3. toggles view mode between Grid view and List view', async () => {
+    render(
+      <MemoryRouter>
+        <ProjectsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('SaaS Core Dashboard')).toBeDefined());
+
+    const listBtn = screen.getByTitle('List View');
+    fireEvent.click(listBtn);
+
+    const gridBtn = screen.getByTitle('Grid View');
+    fireEvent.click(gridBtn);
+
+    expect(screen.getByText('SaaS Core Dashboard')).toBeDefined();
+  });
+
+  it('4. opens Create Project modal and submits create form', async () => {
+    (projectService.createProject as any).mockResolvedValue({ id: 'prj-999', name: 'New Project' });
+
     render(
       <MemoryRouter>
         <ProjectsPage />
@@ -94,9 +119,20 @@ describe('ProjectsPage - Full Interactive & Error Coverage', () => {
     await waitFor(() => {
       expect(screen.getByText('Create New Project')).toBeDefined();
     });
+
+    fireEvent.change(screen.getByLabelText(/Project Name/i), { target: { value: 'New Microservice Project' } });
+    fireEvent.change(screen.getByLabelText(/Description/i), { target: { value: 'Description for microservice' } });
+    fireEvent.change(screen.getByLabelText(/Target Completion Date/i), { target: { value: '2026-12-31' } });
+
+    const submitBtn = screen.getByText('Create Project');
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(projectService.createProject).toHaveBeenCalled();
+    });
   });
 
-  it('4. executes project deletion flow upon confirmation', async () => {
+  it('5. executes project deletion flow upon confirmation', async () => {
     (projectService.deleteProject as any).mockResolvedValue({});
 
     render(
@@ -107,14 +143,48 @@ describe('ProjectsPage - Full Interactive & Error Coverage', () => {
 
     await waitFor(() => expect(screen.getByText('SaaS Core Dashboard')).toBeDefined());
 
-    const actionMenuBtns = screen.getAllByLabelText(/Project options for/i);
-    if (actionMenuBtns.length > 0) {
-      fireEvent.click(actionMenuBtns[0]);
-      await waitFor(() => expect(screen.getByText('Delete Project')).toBeDefined());
+    const menuBtns = screen.getAllByLabelText(/Project options for/i);
+    if (menuBtns.length > 0) {
+      fireEvent.click(menuBtns[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Project')).toBeDefined();
+      });
+
+      const deleteMenuBtn = screen.getByText('Delete Project');
+      fireEvent.click(deleteMenuBtn);
+
+      await waitFor(() => {
+        expect(screen.getAllByText('Delete Project').length).toBeGreaterThan(0);
+      });
+
+      const confirmBtn = screen.getAllByText('Delete Project')[1] || screen.getByText('Delete Project');
+      fireEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(projectService.deleteProject).toHaveBeenCalledWith('prj-101');
+      });
     }
   });
 
-  it('5. renders error state and handles retry button', async () => {
+  it('6. renders empty state when no projects match search filter', async () => {
+    render(
+      <MemoryRouter>
+        <ProjectsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('SaaS Core Dashboard')).toBeDefined());
+
+    const searchInput = screen.getByPlaceholderText(/Search projects/i);
+    fireEvent.change(searchInput, { target: { value: 'NonExistentProjectNameXYZ' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('No projects found')).toBeDefined();
+    });
+  });
+
+  it('7. renders error state and handles Retry Loading action', async () => {
     (projectService.getProjects as any).mockRejectedValue(new Error('Network error loading projects'));
 
     render(

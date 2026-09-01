@@ -24,7 +24,16 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects()
         {
-            var projects = await _projectService.GetAllProjectsAsync();
+            var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User?.FindFirstValue(ClaimTypes.Role);
+
+            if (string.IsNullOrEmpty(userId) && string.IsNullOrEmpty(userRole))
+            {
+                var all = await _projectService.GetAllProjectsAsync();
+                return Ok(all);
+            }
+
+            var projects = await _projectService.GetProjectsAsync(userId, userRole);
             return Ok(projects);
         }
 
@@ -39,7 +48,7 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<ProjectDto>> CreateProject(CreateProjectDto createDto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var project = await _projectService.CreateProjectAsync(createDto, userId);
@@ -49,7 +58,7 @@ namespace Backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProject(string id, CreateProjectDto updateDto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             try

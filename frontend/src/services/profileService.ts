@@ -21,7 +21,8 @@ export const profileService = {
    * Update profile information
    */
   async updateProfile(data: Partial<ProfileDto>): Promise<ProfileDto> {
-    throw new Error('Backend integration pending — Update profile endpoints require ASP.NET Core API implementation.');
+    const response = await apiClient.put<ProfileDto>('/auth/profile', data);
+    return response.data;
   },
 
   /**

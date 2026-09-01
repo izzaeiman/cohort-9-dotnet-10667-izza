@@ -101,6 +101,7 @@ export const authService = {
         };
 
         localStorage.setItem('workflow_user', JSON.stringify(authUser));
+        await this.ensureCsrfToken();
         return authUser;
       } else {
         throw new Error('Invalid backend response structure.');

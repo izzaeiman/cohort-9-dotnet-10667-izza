@@ -8,4 +8,11 @@ namespace Backend.DTOs
         public string Role { get; set; } = string.Empty;
         public string? Avatar { get; set; }
     }
+
+    public class UpdateProfileDto
+    {
+        public string? Name { get; set; }
+        public string? Avatar { get; set; }
+    }
 }
+

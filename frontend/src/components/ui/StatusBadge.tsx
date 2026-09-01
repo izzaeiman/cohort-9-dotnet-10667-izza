@@ -2,7 +2,7 @@ import type { TaskStatus, TaskPriority } from '../../types/dashboard.types';
 import clsx from 'clsx';
 import styles from './StatusBadge.module.css';
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status?: TaskStatus;
   priority?: TaskPriority;
   size?: 'sm' | 'md';
@@ -13,9 +13,11 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
   in_progress: 'In Progress',
   pending: 'Pending',
   overdue: 'Overdue',
+  cancelled: 'Cancelled',
 };
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  critical: 'Critical',
   high: 'High',
   medium: 'Medium',
   low: 'Low',
@@ -32,7 +34,7 @@ export const StatusBadge = ({ status, priority, size = 'md' }: StatusBadgeProps)
         )}
       >
         <span className={styles.dot} />
-        {STATUS_LABELS[status]}
+        {STATUS_LABELS[status] || status}
       </span>
     );
   }
@@ -46,7 +48,7 @@ export const StatusBadge = ({ status, priority, size = 'md' }: StatusBadgeProps)
           styles[`badge--${size}`],
         )}
       >
-        {PRIORITY_LABELS[priority]}
+        {PRIORITY_LABELS[priority] || priority}
       </span>
     );
   }

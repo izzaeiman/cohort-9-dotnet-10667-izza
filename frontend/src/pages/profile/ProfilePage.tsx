@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,11 +6,7 @@ import {
   MdPerson,
   MdEmail,
   MdWork,
-  MdPhone,
-  MdLocationOn,
-  MdCalendarToday,
   MdInfoOutline,
-  MdDevices,
 } from 'react-icons/md';
 
 import AppButton from '../../components/ui/AppButton';
@@ -19,26 +15,70 @@ import Toast from '../../components/common/Toast';
 import PageLoader from '../../components/common/PageLoader';
 import ActivityTimeline from '../../components/dashboard/ActivityTimeline';
 
-import { profileService } from '../../services/profileService';
+import useAuth from '../../hooks/useAuth';
+import { profileService, type ProfileDto } from '../../services/profileService';
 import { INITIAL_ACTIVITIES } from '../../data/activity';
-import type { UserItem } from '../../data/users';
 import styles from './Profile.module.css';
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Full name is required'),
   email: z.string().email('Please enter a valid email address'),
-  department: z.string().min(1, 'Department is required'),
-  phone: z.string().optional(),
-  bio: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+const getAvatarUrl = (avatarPath?: string, name?: string) => {
+  if (!avatarPath) {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=random`;
+  }
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+    return avatarPath;
+  }
+  const backendBase = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:5000';
+  return `${backendBase}${avatarPath}`;
+};
+
 export const ProfilePage = () => {
-  const [profile, setProfile] = useState<UserItem | null>(null);
+  const [profile, setProfile] = useState<ProfileDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'security'>('profile');
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'profile' | 'activity'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { updateUserAvatar } = useAuth();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setToastMessage(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const api = (await import('../../services/api')).default;
+      const res = await api.post('/uploads/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data?.avatarUrl) {
+        const newAvatarUrl = res.data.avatarUrl;
+        setProfile((prev) => prev ? { ...prev, avatar: newAvatarUrl } : null);
+        updateUserAvatar(newAvatarUrl);
+        setToastMessage('Avatar updated successfully!');
+      }
+    } catch (err: any) {
+      setToastMessage(err.response?.data?.message || 'Failed to upload avatar.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const {
     register,
@@ -49,39 +89,54 @@ export const ProfilePage = () => {
     resolver: zodResolver(profileSchema),
   });
 
-  useEffect(() => {
-    let isMounted = true;
-    profileService.getProfile().then((data) => {
-      if (isMounted) {
+  const loadProfile = () => {
+    setIsLoading(true);
+    setError(null);
+    profileService.getProfile()
+      .then((data) => {
         setProfile(data);
         reset({
           name: data.name,
           email: data.email,
-          department: data.department,
-          phone: data.phone || '',
-          bio: data.bio || '',
         });
         setIsLoading(false);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
+      })
+      .catch((err) => {
+        console.error(err);
+        setError('Unable to load your profile. Please try again.');
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadProfile();
   }, [reset]);
 
   const handleSaveProfile = async (data: ProfileFormData) => {
-    const updated = await profileService.updateProfile({
-      name: data.name,
-      email: data.email,
-      department: data.department,
-      phone: data.phone,
-      bio: data.bio,
-    });
-    setProfile(updated);
-    setToastMessage('Profile information updated successfully!');
+    try {
+      const updated = await profileService.updateProfile({
+        name: data.name,
+        email: data.email,
+      });
+      setProfile(updated);
+      setToastMessage('Profile information updated successfully!');
+    } catch (err) {
+      setToastMessage('Failed to update profile.');
+    }
   };
 
-  if (isLoading || !profile) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
+
+  if (error) {
+    return (
+      <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '20px' }}>
+        <div style={{ color: '#ef4444', fontSize: '1.2rem', textAlign: 'center' }}>{error}</div>
+        <AppButton onClick={loadProfile} variant="primary">Retry</AppButton>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
 
   return (
     <div className={styles.page}>
@@ -90,48 +145,65 @@ export const ProfilePage = () => {
         <div className={styles.coverBanner} />
         <div className={styles.profileInfoRow}>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '20px' }}>
-            <div className={styles.avatarWrap}>
+            <div
+              className={styles.avatarWrap}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              style={{ cursor: isUploading ? 'not-allowed' : 'pointer', position: 'relative' }}
+              title="Click to change photo"
+            >
               <img
-                src={profile.avatar}
+                src={getAvatarUrl(profile.avatar, profile.name)}
                 alt={`${profile.name} avatar`}
                 className={styles.avatar}
+                style={{ opacity: isUploading ? 0.5 : 1 }}
+              />
+              {isUploading && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(0,0,0,0.3)',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold'
+                }}>
+                  Uploading...
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+                accept="image/*"
               />
             </div>
             <div className={styles.userMeta}>
               <h1 className={styles.userName}>{profile.name}</h1>
               <div className={styles.userSub}>
                 <span>
-                  <MdWork size={14} style={{ verticalAlign: 'middle' }} /> {profile.role} ({profile.department})
-                </span>
-                <span>
-                  <MdLocationOn size={14} style={{ verticalAlign: 'middle' }} /> Islamabad, Pakistan
-                </span>
-                <span>
-                  <MdCalendarToday size={14} style={{ verticalAlign: 'middle' }} /> Joined July 2026
+                  <MdWork size={14} style={{ verticalAlign: 'middle' }} /> {profile.role}
                 </span>
               </div>
             </div>
           </div>
 
-          <AppButton
-            variant="outlined"
-            size="sm"
-            onClick={() => setToastMessage('Avatar upload placeholder — Image picker integration pending.')}
-          >
-            Upload Avatar
-          </AppButton>
+          
         </div>
       </div>
 
       {/* ── Navigation Tabs ───────────────────────────────────────────────── */}
-      <div className={styles.tabsBar} role="tablist" aria-label="Profile section tabs">
+      <div className={styles.tabsBar} role="tablist">
         <button
           type="button"
           role="tab"
-          id="tab-profile"
-          aria-controls="panel-profile"
           aria-selected={activeTab === 'profile'}
-          tabIndex={activeTab === 'profile' ? 0 : -1}
           className={`${styles.tabBtn} ${activeTab === 'profile' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('profile')}
         >
@@ -140,32 +212,17 @@ export const ProfilePage = () => {
         <button
           type="button"
           role="tab"
-          id="tab-activity"
-          aria-controls="panel-activity"
           aria-selected={activeTab === 'activity'}
-          tabIndex={activeTab === 'activity' ? 0 : -1}
           className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('activity')}
         >
-          My Activity Timeline
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="tab-security"
-          aria-controls="panel-security"
-          aria-selected={activeTab === 'security'}
-          tabIndex={activeTab === 'security' ? 0 : -1}
-          className={`${styles.tabBtn} ${activeTab === 'security' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('security')}
-        >
-          Sessions & Security
+          Activity (Sample Data)
         </button>
       </div>
 
       {/* ── Tab Content ───────────────────────────────────────────────────── */}
       {activeTab === 'profile' ? (
-        <div id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" className={styles.card}>
+        <div className={styles.card}>
           <form onSubmit={handleSubmit(handleSaveProfile)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className={styles.formGrid}>
               <AppInput
@@ -184,33 +241,6 @@ export const ProfilePage = () => {
                 error={errors.email?.message}
                 {...register('email')}
               />
-
-              <AppInput
-                id="prof-dept"
-                label="Department / Program"
-                leftIcon={<MdWork />}
-                error={errors.department?.message}
-                {...register('department')}
-              />
-
-              <AppInput
-                id="prof-phone"
-                label="Phone Number"
-                leftIcon={<MdPhone />}
-                error={errors.phone?.message}
-                {...register('phone')}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="prof-bio" className={styles.bioLabel}>
-                Professional Biography
-              </label>
-              <textarea
-                id="prof-bio"
-                className={styles.bioTextarea}
-                {...register('bio')}
-              />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
@@ -221,39 +251,8 @@ export const ProfilePage = () => {
           </form>
         </div>
       ) : activeTab === 'activity' ? (
-        <div id="panel-activity" role="tabpanel" aria-labelledby="tab-activity">
-          <ActivityTimeline activities={INITIAL_ACTIVITIES} />
-        </div>
-      ) : (
-        <div id="panel-security" role="tabpanel" aria-labelledby="tab-security" className={styles.card} style={{ gap: '16px' }}>
-          <h3 className={styles.sectionHeading} style={{ margin: 0 }}>
-            Active Sessions & Security
-          </h3>
-
-          <div
-            style={{
-              background: '#FFF8E1',
-              border: '1px solid rgba(255, 193, 7, 0.4)',
-              borderRadius: '12px',
-              padding: '14px 16px',
-              fontSize: '0.875rem',
-              color: '#7F5000',
-              fontWeight: 600,
-            }}
-          >
-            <MdInfoOutline size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-            Backend integration pending — Password modifications and active session revocation require ASP.NET Core Identity API integration.
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#F8F8F8', borderRadius: '12px' }}>
-            <MdDevices size={24} color="#FF7A1A" />
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Current Browser Session</div>
-              <div style={{ fontSize: '0.78rem', color: '#666' }}>Windows • Chrome • Islamabad, Pakistan (Active Now)</div>
-            </div>
-          </div>
-        </div>
-      )}
+        <ActivityTimeline activities={INITIAL_ACTIVITIES} />
+      ) : null }
 
       {/* Toast */}
       {toastMessage && (

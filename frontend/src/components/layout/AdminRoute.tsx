@@ -3,12 +3,12 @@ import ProtectedRoute from './ProtectedRoute';
 
 export const isAdminUser = (user: { role?: string } | null): boolean => {
   if (!user || !user.role) return false;
-  const role = user.role.trim().toLowerCase();
-  return role === 'admin' || role === 'administrator';
+  const r = user.role.toLowerCase();
+  return r.includes('admin') || r === 'administrator';
 };
 
 export const AdminRoute: React.FC = () => {
-  return <ProtectedRoute requiredRole="Admin" />;
+  return <ProtectedRoute requiredRole="Administrator" />;
 };
 
 export default AdminRoute;

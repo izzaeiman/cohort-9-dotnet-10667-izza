@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,7 +21,7 @@ import styles from './Users.module.css';
 const inviteUserSchema = z.object({
   name: z.string().min(1, 'Full name is required'),
   email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['Administrator', 'Regular User']),
+  role: z.string().min(1, 'Role is required'),
   department: z.string().min(1, 'Department is required'),
   phone: z.string().optional(),
 });
@@ -33,6 +33,7 @@ const PAGE_SIZE = 5;
 export const UsersPage = () => {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -63,18 +64,62 @@ export const UsersPage = () => {
     },
   });
 
-  useEffect(() => {
+  const loadUsers = useCallback(() => {
     let isMounted = true;
-    userService.getUsers().then((data) => {
-      if (isMounted) {
-        setUsers(data);
-        setIsLoading(false);
-      }
-    });
+    setIsLoading(true);
+    setError(null);
+    userService.getUsers()
+      .then((data) => {
+        if (isMounted) {
+          setUsers(data);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load users', err);
+        if (isMounted) {
+          setError('Failed to load users. Please check your connection and try again.');
+          setIsLoading(false);
+        }
+      });
     return () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeMenuId) return;
+
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`.${styles.menuDropdown}`) && !target.closest(`[aria-label^="User actions for"]`)) {
+        setActiveMenuId(null);
+      }
+    };
+
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveMenuId(null);
+    };
+
+    const handleScroll = () => {
+      setActiveMenuId(null);
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeydown);
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeydown);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [activeMenuId]);
+
+  useEffect(() => {
+    const cancelLoad = loadUsers();
+    return () => cancelLoad();
+  }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -88,7 +133,14 @@ export const UsersPage = () => {
     });
   }, [users, searchTerm, roleFilter, statusFilter]);
 
-  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredUsers.slice(start, start + PAGE_SIZE);
@@ -98,7 +150,7 @@ export const UsersPage = () => {
     const newUser = await userService.inviteUser({
       name: data.name,
       email: data.email,
-      role: data.role,
+      role: data.role as any,
       department: data.department,
       phone: data.phone || '+1 (555) 000-0000',
     });
@@ -114,7 +166,7 @@ export const UsersPage = () => {
     const updated = await userService.updateUser(editingUser.id, {
       name: data.name,
       email: data.email,
-      role: data.role,
+      role: data.role as any,
       department: data.department,
       phone: data.phone || editingUser.phone,
     });
@@ -133,6 +185,15 @@ export const UsersPage = () => {
   };
 
   if (isLoading) return <PageLoader />;
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px', padding: '20px' }}>
+        <p style={{ color: '#EF4444', fontWeight: 600, fontSize: '1.1rem' }}>{error}</p>
+        <AppButton variant="primary" onClick={loadUsers}>Retry Loading</AppButton>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -319,33 +380,10 @@ export const UsersPage = () => {
                     </button>
 
                     {activeMenuId === u.id && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          right: '16px',
-                          top: '100%',
-                          background: '#fff',
-                          border: '1px solid #ECECEC',
-                          borderRadius: '10px',
-                          boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-                          padding: '4px',
-                          zIndex: 10,
-                          width: '120px',
-                          textAlign: 'left',
-                        }}
-                      >
+                      <div className={styles.menuDropdown}>
                         <button
                           type="button"
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            textAlign: 'left',
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
+                          className={styles.menuItem}
                           onClick={() => {
                             setActiveMenuId(null);
                             setEditingUser(u);
@@ -362,17 +400,7 @@ export const UsersPage = () => {
                         </button>
                         <button
                           type="button"
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            textAlign: 'left',
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            color: '#D32F2F',
-                            cursor: 'pointer',
-                          }}
+                          className={`${styles.menuItem} ${styles.menuItemDanger}`}
                           onClick={() => {
                             setActiveMenuId(null);
                             setDeletingUser(u);
@@ -401,12 +429,7 @@ export const UsersPage = () => {
           title="No members found"
           description="No users matched your current search filters."
           actionLabel="Clear Search"
-          onAction={() => {
-            setSearchTerm('');
-            setRoleFilter('all');
-            setStatusFilter('all');
-            setCurrentPage(1);
-          }}
+          onAction={() => setSearchTerm('')}
         />
       )}
 
@@ -425,7 +448,7 @@ export const UsersPage = () => {
             id="inv-email"
             label="Email Address"
             type="email"
-            placeholder="charlie@example.com"
+            placeholder="charlie@example.test"
             error={errors.email?.message}
             {...register('email')}
           />

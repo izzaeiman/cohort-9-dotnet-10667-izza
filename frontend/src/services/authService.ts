@@ -1,192 +1,182 @@
 import type { LoginFormData } from '../utils/loginSchema';
 import type { SignupFormData } from '../utils/signupSchema';
+import apiClient from './api';
 
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
+export type UserRole = 'Administrator' | 'Regular User';
 
 export interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   avatar: string;
+  department?: string;
 }
-
-// In-memory active session user state (server session cache)
-let activeSessionUser: AuthUser | null = null;
-
-const SEEDED_USERS: AuthUser[] = [
-  {
-    id: 'usr-1',
-    name: 'Izza Eiman',
-    email: 'izzaeiman@yahoo.com',
-    role: 'Administrator',
-    avatar: 'https://i.pravatar.cc/150?img=68',
-  },
-  {
-    id: 'usr-2',
-    name: 'Izza Eiman',
-    email: 'izzaeiman@example.com',
-    role: 'Administrator',
-    avatar: 'https://i.pravatar.cc/150?img=68',
-  },
-  {
-    id: 'usr-3',
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    role: 'Software Engineer',
-    avatar: 'https://i.pravatar.cc/150?img=33',
-  },
-];
 
 export const authService = {
   /**
-   * Hydrate active session from backend session endpoint or active tab session cache
+   * Helper to ensure CSRF token is fetched
    */
-  async hydrateSession(): Promise<AuthUser | null> {
+  async ensureCsrfToken() {
     try {
-      const response = await fetch('/api/auth/session', {
-        headers: { Accept: 'application/json' },
-      });
-      if (response.ok) {
-        const resData = await response.json();
-        if (resData.user) {
-          activeSessionUser = resData.user;
-          sessionStorage.setItem('workflow_session_user', JSON.stringify(resData.user));
-          return activeSessionUser;
-        }
+      const csrfRes = await apiClient.get('/auth/antiforgery-token');
+      if (apiClient.defaults?.headers?.common && csrfRes?.data?.token) {
+        apiClient.defaults.headers.common['X-XSRF-TOKEN'] = csrfRes.data.token;
       }
     } catch {
-      // Backend session endpoint offline in decoupled mode
+      // Safe fallback if mocked in tests
     }
-
-    const cached = sessionStorage.getItem('workflow_session_user');
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed === 'object' && parsed.email) {
-          activeSessionUser = parsed;
-          return activeSessionUser;
-        }
-      } catch {
-        sessionStorage.removeItem('workflow_session_user');
-      }
-    }
-
-    activeSessionUser = null;
-    return null;
   },
 
   /**
-   * Log in user — calls ASP.NET Core backend /api/auth/login endpoint,
-   * establishes backend session cookie, and returns server authenticated user.
+   * Log in user — validates email and password against backend
    */
   async login(credentials: LoginFormData): Promise<AuthUser> {
-    const inputEmail = credentials.email.trim().toLowerCase();
-
-    // 1. Attempt backend POST /api/auth/login integration
     try {
-      const formData = new FormData();
-      formData.append('Email', credentials.email.trim());
-      formData.append('Password', credentials.password);
-      formData.append('RememberMe', credentials.rememberMe ? 'true' : 'false');
-
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          Accept: 'application/json',
-        },
+      await this.ensureCsrfToken();
+      const response = await apiClient.post('/auth/login', {
+        email: credentials.email.trim(),
+        password: credentials.password
       });
 
-      if (response.ok) {
-        const resData = await response.json();
-        if (resData.success) {
-          const matchedUser = SEEDED_USERS.find((u) => u.email.toLowerCase() === inputEmail);
-          activeSessionUser = matchedUser ?? {
-            id: resData.userId || `usr-${Date.now()}`,
-            name: inputEmail.split('@')[0],
-            email: resData.email || credentials.email.trim(),
-            role: 'Regular User',
-            avatar: 'https://i.pravatar.cc/150?img=68',
-          };
-          sessionStorage.setItem('workflow_session_user', JSON.stringify(activeSessionUser));
-          return activeSessionUser;
+      if (response.data?.user) {
+        const userDto = response.data.user;
+
+        const mappedRole: UserRole = userDto.role === 'Administrator' ? 'Administrator' : 'Regular User';
+
+        const authUser: AuthUser = {
+          id: userDto.id,
+          name: userDto.name,
+          email: userDto.email,
+          role: mappedRole,
+          avatar: userDto.role === 'Administrator' ? 'https://i.pravatar.cc/150?img=68' : 'https://i.pravatar.cc/150?img=33',
+          department: userDto.role === 'Administrator' ? 'Engineering Management' : 'Frontend Development'
+        };
+
+        localStorage.setItem('workflow_user', JSON.stringify(authUser));
+
+        // Force-refresh the CSRF token now that the user is authenticated
+        if (apiClient.defaults?.headers?.common) {
+          delete apiClient.defaults.headers.common['X-XSRF-TOKEN'];
         }
+        await this.ensureCsrfToken();
+
+        return authUser;
+      } else {
+        throw new Error('Invalid backend response structure.');
       }
-    } catch {
-      // Backend server API endpoint fallback during decoupled frontend mode
+    } catch (err: unknown) {
+      if ((err as any).message === 'Network Error') {
+        throw new Error('Unable to connect to the server. Please try again.');
+      }
+      const errorMsg = (err as any).response?.data?.message || (err as any).message || 'Authentication failed.';
+      throw new Error(errorMsg);
     }
-
-    await delay();
-
-    // 2. Decoupled boundary verification
-    const matchedUser = SEEDED_USERS.find(
-      (u) => u.email.toLowerCase() === inputEmail,
-    );
-
-    if (!matchedUser) {
-      throw new Error('Invalid email or password.');
-    }
-
-    activeSessionUser = matchedUser;
-    sessionStorage.setItem('workflow_session_user', JSON.stringify(activeSessionUser));
-    return activeSessionUser;
   },
 
   /**
-   * Register new user — sends registration request to server.
+   * Register new user — stores new credentials in backend
    */
   async signup(data: SignupFormData): Promise<AuthUser> {
-    await delay();
+    try {
+      await this.ensureCsrfToken();
+      const response = await apiClient.post('/auth/register', {
+        name: data.fullName.trim(),
+        email: data.email.trim(),
+        password: data.password
+      });
 
-    const newUser: AuthUser = {
-      id: `usr-${Date.now()}`,
-      name: data.fullName.trim(),
-      email: data.email.trim(),
-      role: 'Regular User',
-      avatar: 'https://i.pravatar.cc/150?img=68',
-    };
+      if (response.data?.user) {
+        const userDto = response.data.user;
 
-    activeSessionUser = newUser;
-    sessionStorage.setItem('workflow_session_user', JSON.stringify(newUser));
-    return newUser;
+        const mappedRole: UserRole = userDto.role === 'Administrator' ? 'Administrator' : 'Regular User';
+
+        const authUser: AuthUser = {
+          id: userDto.id,
+          name: userDto.name,
+          email: userDto.email,
+          role: mappedRole,
+          avatar: userDto.role === 'Administrator' ? 'https://i.pravatar.cc/150?img=68' : 'https://i.pravatar.cc/150?img=33',
+          department: 'Engineering'
+        };
+
+        localStorage.setItem('workflow_user', JSON.stringify(authUser));
+        await this.ensureCsrfToken();
+        return authUser;
+      } else {
+        throw new Error('Invalid backend response structure.');
+      }
+    } catch (err: unknown) {
+      if ((err as any).message === 'Network Error') {
+        throw new Error('Unable to connect to the server. Please try again.');
+      }
+      const errorMsg = (err as any).response?.data?.message || (err as any).message || 'Registration failed.';
+      throw new Error(errorMsg);
+    }
   },
 
   /**
-   * Log out user — invalidates backend session after server confirmation.
+   * Log out user — completely clears session tokens and user data
    */
   async logout(): Promise<void> {
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: { Accept: 'application/json' },
-      });
-      if (!response.ok) {
-        throw new Error('Logout failed: Server returned an unsuccessful status.');
-      }
-    } catch (err) {
-      if (err instanceof Error && err.message.startsWith('Logout failed')) {
-        throw err;
-      }
+      await this.ensureCsrfToken();
+      await apiClient.post('/auth/logout');
+    } catch (e) {
+      // Ignore errors on logout
     }
-
-    await delay();
-    activeSessionUser = null;
-    sessionStorage.removeItem('workflow_session_user');
+    localStorage.removeItem('workflow_user');
+    if (apiClient.defaults?.headers?.common) {
+      delete apiClient.defaults.headers.common['X-XSRF-TOKEN'];
+    }
   },
 
   /**
-   * Get current stored user session.
-   * Returns null if missing or invalid — DOES NOT manufacture tokens or default users.
+   * Get current stored user (returns null if unauthenticated)
    */
   getCurrentUser(): AuthUser | null {
-    return activeSessionUser;
+    const stored = localStorage.getItem('workflow_user');
+    if (!stored) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(stored);
+      // Validate stored session structure: must be an object with non-empty id, email, and role
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        typeof parsed.id === 'string' &&
+        parsed.id.trim() !== '' &&
+        typeof parsed.email === 'string' &&
+        parsed.email.trim() !== '' &&
+        (parsed.role === 'Administrator' || parsed.role === 'Regular User')
+      ) {
+        return parsed;
+      }
+      throw new Error('Invalid session structure detected.');
+    } catch {
+      localStorage.removeItem('workflow_user');
+      return null;
+    }
   },
 
   /**
-   * Check if authenticated session is active
+   * Change Password
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await this.ensureCsrfToken();
+    await apiClient.put('/auth/change-password', {
+      currentPassword,
+      newPassword
+    });
+  },
+
+  /**
+   * Check if authenticated
    */
   isAuthenticated(): boolean {
-    return activeSessionUser !== null;
+    return this.getCurrentUser() !== null;
   },
 };
+
+export default authService;

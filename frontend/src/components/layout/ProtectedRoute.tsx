@@ -15,12 +15,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole, ch
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole === 'Admin' && !isAdmin()) {
+  if (requiredRole === 'Administrator' && !isAdmin()) {
     // Regular Member attempting to access Admin routes -> redirect to Member Dashboard
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (requiredRole === 'Member' && isAdmin()) {
+  if (requiredRole === 'Regular User' && isAdmin()) {
     // Admin attempting to access Member Dashboard -> redirect to Admin Dashboard
     return <Navigate to="/admin/dashboard" replace />;
   }

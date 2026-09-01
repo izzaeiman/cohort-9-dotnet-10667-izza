@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,6 +18,8 @@ import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PageLoader from '../../components/common/PageLoader';
 
 import { taskService } from '../../services/taskService';
+import { authService } from '../../services/authService';
+import { isAdminUser } from '../../components/layout/AdminRoute';
 import { getLocalDate } from '../../utils/dateHelpers';
 import type { DetailedTaskItem } from '../../data/tasks';
 import type { TaskPriority, TaskCategory, TaskStatus } from '../../types/dashboard.types';
@@ -26,9 +28,9 @@ import styles from './Tasks.module.css';
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required').min(3, 'Title must be at least 3 characters'),
   description: z.string().optional(),
-  category: z.enum(['Frontend', 'Backend', 'UI/UX Design', 'DevOps', 'Database']),
-  priority: z.enum(['high', 'medium', 'low']),
-  status: z.enum(['completed', 'in_progress', 'pending', 'overdue']),
+  category: z.enum(['General', 'Frontend', 'Backend', 'UiUxDesign', 'DevOps', 'Database', 'FullStack']),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled', 'overdue']),
   dueDate: z.string().min(1, 'Due date is required'),
 });
 
@@ -38,6 +40,9 @@ const PAGE_SIZE = 5;
 
 export const TasksPage = () => {
   const navigate = useNavigate();
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = isAdminUser(currentUser);
+
   const [tasks, setTasks] = useState<DetailedTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,6 +62,34 @@ export const TasksPage = () => {
   const [editingTask, setEditingTask] = useState<DetailedTaskItem | null>(null);
   const [deletingTask, setDeletingTask] = useState<DetailedTaskItem | null>(null);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportErrors([]);
+    setImportSuccess(null);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const api = (await import('../../services/api')).default;
+      const csrfRes = await api.get('/auth/antiforgery-token');
+      if (csrfRes.data?.token) api.defaults.headers.common['X-XSRF-TOKEN'] = csrfRes.data.token;
+      const res = await api.post('/tasks/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImportSuccess(res.data?.message || 'Import successful!');
+      loadTasks({});
+    } catch (err: any) {
+      if (err.response?.data?.errors) {
+        setImportErrors(err.response.data.errors);
+      } else {
+        setImportErrors([err.response?.data?.message || 'Import failed. Check CSV format.']);
+      }
+    }
+  };
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -77,49 +110,75 @@ export const TasksPage = () => {
     },
   });
 
-  useEffect(() => {
-    let isMounted = true;
-    taskService.getTasks().then((data) => {
-      if (isMounted) {
-        setTasks(data);
-        setIsLoading(false);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const loadTasks = async (filters: {
+    search?: string;
+    status?: string;
+    priority?: string;
+    category?: string;
+  }) => {
+    try {
+      setIsLoading(true);
+      const data = await taskService.getAllTasks(filters);
+      setTasks(data);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Filter & Sort tasks
-  const filteredAndSortedTasks = useMemo(() => {
-    const result = tasks.filter((t) => {
-      const matchesSearch =
-        t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
-      const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter;
-      const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
-      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadTasks({
+        search: searchTerm,
+        status: statusFilter,
+        priority: priorityFilter,
+        category: categoryFilter,
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, statusFilter, priorityFilter, categoryFilter]);
+
+  useEffect(() => {
+    const unsub = taskService.subscribe(() => {
+      loadTasks({
+        search: searchTerm,
+        status: statusFilter,
+        priority: priorityFilter,
+        category: categoryFilter,
+      });
     });
+    return () => unsub();
+  }, [searchTerm, statusFilter, priorityFilter, categoryFilter]);
+
+  // Sort tasks
+  const sortedTasks = useMemo(() => {
+    const result = [...tasks];
 
     result.sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'priority') {
-        const pOrder: Record<string, number> = { high: 1, medium: 2, low: 3 };
-        return pOrder[a.priority] - pOrder[b.priority];
+        const pOrder: Record<string, number> = { high: 1, medium: 2, low: 3, critical: 0 };
+        return (pOrder[a.priority] ?? 4) - (pOrder[b.priority] ?? 4);
       }
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
 
     return result;
-  }, [tasks, searchTerm, statusFilter, priorityFilter, categoryFilter, sortBy]);
+  }, [tasks, sortBy]);
 
   // Paginated dataset
-  const totalPages = Math.ceil(filteredAndSortedTasks.length / PAGE_SIZE);
+  const totalPages = Math.ceil(sortedTasks.length / PAGE_SIZE) || 1;
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedTasks = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredAndSortedTasks.slice(start, start + PAGE_SIZE);
-  }, [filteredAndSortedTasks, currentPage]);
+    return sortedTasks.slice(start, start + PAGE_SIZE);
+  }, [sortedTasks, currentPage]);
 
   const handleCreateTask = async (data: CreateTaskFormData) => {
     const created = await taskService.createTask({
@@ -128,19 +187,24 @@ export const TasksPage = () => {
       category: data.category as TaskCategory,
       priority: data.priority as TaskPriority,
       status: data.status as TaskStatus,
+      project: 'Task Management System SaaS',
+      startDate: new Date().toISOString().split('T')[0],
+      startTime: '09:00 AM',
       dueDate: data.dueDate,
-      assignees: [{ id: 'usr-1', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?img=68' }],
+      dueTime: '05:00 PM',
+      assignedUser: currentUser?.name || 'Jane Doe',
+      assignedUserId: currentUser?.id || 'usr-1',
     });
 
-    setTasks((prev) => [created, ...prev]);
     setIsCreateModalOpen(false);
     reset();
     setToastMessage(`Task "${created.title}" created successfully!`);
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const handleEditTask = async (data: CreateTaskFormData) => {
     if (!editingTask) return;
-    const updated = await taskService.updateTask(editingTask.id, {
+    await taskService.updateTask(editingTask.id, {
       title: data.title,
       description: data.description || '',
       category: data.category as TaskCategory,
@@ -149,27 +213,27 @@ export const TasksPage = () => {
       dueDate: data.dueDate,
     });
 
-    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     setEditingTask(null);
     setToastMessage('Task updated successfully!');
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const handleDeleteSingle = async () => {
     if (!deletingTask) return;
     await taskService.deleteTask(deletingTask.id);
-    setTasks((prev) => prev.filter((t) => t.id !== deletingTask.id));
     setDeletingTask(null);
     setToastMessage('Task deleted successfully!');
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const handleBulkDelete = async () => {
     for (const id of selectedTaskIds) {
       await taskService.deleteTask(id);
     }
-    setTasks((prev) => prev.filter((t) => !selectedTaskIds.includes(t.id)));
     setSelectedTaskIds([]);
     setIsBulkDeleteOpen(false);
     setToastMessage(`${selectedTaskIds.length} tasks deleted successfully!`);
+    loadTasks({ search: searchTerm, status: statusFilter, priority: priorityFilter, category: categoryFilter });
   };
 
   const toggleSelectAll = () => {
@@ -193,30 +257,48 @@ export const TasksPage = () => {
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Task Management</h1>
+          <h1 className={styles.title}>{isAdmin ? 'Tasks Overview' : 'My Assigned Tasks'}</h1>
           <p className={styles.subtitle}>
-            Organize, prioritize, and track deliverables across your team
+            {isAdmin
+              ? 'Organize, prioritize, and track deliverables across your team'
+              : `Welcome back, ${currentUser?.name}! View and update your active task assignments.`}
           </p>
         </div>
 
-        <AppButton
-          variant="primary"
-          size="md"
-          leftIcon={<MdAdd size={20} />}
-          onClick={() => {
-            reset({
-              title: '',
-              description: '',
-              category: 'Frontend',
-              priority: 'medium',
-              status: 'in_progress',
-              dueDate: getLocalDate(),
-            });
-            setIsCreateModalOpen(true);
-          }}
-        >
-          Create Task
-        </AppButton>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <AppButton
+            variant="outlined"
+            size="md"
+            onClick={() => window.open('http://localhost:5000/api/tasks/export?format=csv', '_blank')}
+          >
+            Export Tasks
+          </AppButton>
+          <AppButton
+            variant="outlined"
+            size="md"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            Import Tasks
+          </AppButton>
+          <AppButton
+            variant="primary"
+            size="md"
+            leftIcon={<MdAdd size={20} />}
+            onClick={() => {
+              reset({
+                title: '',
+                description: '',
+                category: 'Frontend',
+                priority: 'medium',
+                status: 'in_progress',
+                dueDate: getLocalDate(),
+              });
+              setIsCreateModalOpen(true);
+            }}
+          >
+            Create Task
+          </AppButton>
+        </div>
       </header>
 
       {/* ── Controls & Filter Bar ─────────────────────────────────────────── */}
@@ -280,11 +362,13 @@ export const TasksPage = () => {
             aria-label="Filter tasks by category"
           >
             <option value="all">All Categories</option>
+            <option value="General">General</option>
             <option value="Frontend">Frontend</option>
             <option value="Backend">Backend</option>
-            <option value="UI/UX Design">UI/UX Design</option>
+            <option value="UiUxDesign">UI/UX Design</option>
             <option value="DevOps">DevOps</option>
             <option value="Database">Database</option>
+            <option value="FullStack">Full Stack</option>
           </select>
 
           <select
@@ -331,8 +415,9 @@ export const TasksPage = () => {
       {/* ── Main Task Table / Empty State ─────────────────────────────────── */}
       {paginatedTasks.length > 0 ? (
         <div className={styles.card}>
-          <table className={styles.table}>
-            <thead>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
               <tr>
                 <th className={styles.th} style={{ width: 40 }}>
                   <input
@@ -368,14 +453,14 @@ export const TasksPage = () => {
                     />
                   </td>
                   <td className={styles.td}>
-                    <div
+                    <Link
+                      to={`/tasks/${t.id}`}
                       className={styles.taskTitle}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/tasks/${t.id}`)}
+                      style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}
                     >
                       <span className={styles.taskTitleHover}>{t.title}</span>
                       <span className={styles.taskId}>{t.id}</span>
-                    </div>
+                    </Link>
                   </td>
                   <td className={styles.td}>
                     <StatusBadge priority={t.priority} size="sm" />
@@ -456,11 +541,12 @@ export const TasksPage = () => {
               ))}
             </tbody>
           </table>
+          </div>
 
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalItems={filteredAndSortedTasks.length}
+            totalItems={sortedTasks.length}
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
@@ -502,11 +588,13 @@ export const TasksPage = () => {
             id="create-task-category"
             label="Category"
             options={[
+              { value: 'General', label: 'General' },
               { value: 'Frontend', label: 'Frontend' },
               { value: 'Backend', label: 'Backend' },
-              { value: 'UI/UX Design', label: 'UI/UX Design' },
+              { value: 'UiUxDesign', label: 'UI/UX Design' },
               { value: 'DevOps', label: 'DevOps' },
               { value: 'Database', label: 'Database' },
+              { value: 'FullStack', label: 'Full Stack' },
             ]}
             error={errors.category?.message}
             {...register('category')}
@@ -578,11 +666,13 @@ export const TasksPage = () => {
             id="edit-task-category"
             label="Category"
             options={[
+              { value: 'General', label: 'General' },
               { value: 'Frontend', label: 'Frontend' },
               { value: 'Backend', label: 'Backend' },
-              { value: 'UI/UX Design', label: 'UI/UX Design' },
+              { value: 'UiUxDesign', label: 'UI/UX Design' },
               { value: 'DevOps', label: 'DevOps' },
               { value: 'Database', label: 'Database' },
+              { value: 'FullStack', label: 'Full Stack' },
             ]}
             error={errors.category?.message}
             {...register('category')}
@@ -655,6 +745,45 @@ export const TasksPage = () => {
         confirmLabel={`Delete ${selectedTaskIds.length} Tasks`}
         isDanger
       />
+
+      {/* Import Tasks Modal */}
+      <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="Import Tasks from CSV">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #555)' }}>
+            Select a CSV file containing tasks. Required columns: <strong>Title</strong> (Description, Category, Priority, Status are optional).
+          </p>
+
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleImportFile}
+            style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '0.875rem' }}
+          />
+
+          {importSuccess && (
+            <div style={{ padding: '10px', backgroundColor: '#d1fae5', color: '#065f46', borderRadius: '6px', fontSize: '0.875rem' }}>
+              🎉 {importSuccess}
+            </div>
+          )}
+
+          {importErrors.length > 0 && (
+            <div style={{ padding: '10px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '6px', fontSize: '0.875rem', maxHeight: '180px', overflowY: 'auto' }}>
+              <strong>Import Completed with Errors:</strong>
+              <ul style={{ marginTop: '6px', paddingLeft: '18px' }}>
+                {importErrors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+            <AppButton variant="outlined" size="md" onClick={() => setIsImportModalOpen(false)}>
+              Close
+            </AppButton>
+          </div>
+        </div>
+      </Modal>
 
       {/* Toast */}
       {toastMessage && (

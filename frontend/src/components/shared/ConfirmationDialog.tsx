@@ -1,17 +1,21 @@
+import { useState } from 'react';
 import Modal from '../common/Modal';
 import AppButton from '../ui/AppButton';
 import { MdWarning } from 'react-icons/md';
 
-interface ConfirmationDialogProps {
+export interface ConfirmationDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
+  onClose?: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   message: string;
   confirmLabel?: string;
+  confirmText?: string;
   cancelLabel?: string;
+  cancelText?: string;
   isDanger?: boolean;
   isLoading?: boolean;
+  onCancel?: () => void;
 }
 
 export const ConfirmationDialog = ({
@@ -21,12 +25,31 @@ export const ConfirmationDialog = ({
   title,
   message,
   confirmLabel = 'Confirm',
+  confirmText,
   cancelLabel = 'Cancel',
+  cancelText,
   isDanger = true,
   isLoading = false,
+  onCancel,
 }: ConfirmationDialogProps) => {
+  const [isPending, setIsPending] = useState(false);
+  const handleCancel = onCancel || onClose || (() => {});
+  const effectiveConfirmLabel = confirmText || confirmLabel;
+  const effectiveCancelLabel = cancelText || cancelLabel;
+
+  const handleConfirm = async () => {
+    setIsPending(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const showLoading = isLoading || isPending;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal isOpen={isOpen} onClose={handleCancel} title={title}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
           <div
@@ -50,21 +73,21 @@ export const ConfirmationDialog = ({
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
-          <AppButton type="button" variant="outlined" size="md" onClick={onClose} disabled={isLoading}>
-            {cancelLabel}
+          <AppButton type="button" variant="outlined" size="md" onClick={handleCancel} disabled={showLoading}>
+            {effectiveCancelLabel}
           </AppButton>
           <AppButton
             type="button"
             variant="primary"
             size="md"
-            isLoading={isLoading}
-            onClick={onConfirm}
+            isLoading={showLoading}
+            onClick={handleConfirm}
             style={{
               backgroundColor: isDanger ? '#D32F2F' : undefined,
               borderColor: isDanger ? '#D32F2F' : undefined,
             }}
           >
-            {confirmLabel}
+            {effectiveConfirmLabel}
           </AppButton>
         </div>
       </div>

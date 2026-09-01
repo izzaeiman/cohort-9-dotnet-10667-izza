@@ -37,7 +37,7 @@ namespace Backend.Services
             }
         }
 
-        public async Task<IEnumerable<TaskDto>> GetTasksAsync(string currentUserId, string currentUserRole)
+        public async Task<IEnumerable<TaskDto>> GetTasksAsync(string currentUserId, string currentUserRole, TaskQueryDto query)
         {
             ValidateIdentity(currentUserId, currentUserRole);
 
@@ -46,11 +46,13 @@ namespace Backend.Services
             IEnumerable<TaskItem> tasks;
             if (currentUserRole == UserRoles.Administrator)
             {
-                tasks = await _taskRepository.GetAllAsync();
+                tasks = await _taskRepository.GetAllAsync(query);
             }
             else
             {
-                tasks = await _taskRepository.GetByAssignedUserIdAsync(currentUserId);
+                // For a regular user, do not allow AssignedUserId in the query to override their authorization scope.
+                // The GetByAssignedUserIdAsync method already enforces the top-level boundary.
+                tasks = await _taskRepository.GetByAssignedUserIdAsync(currentUserId, query);
             }
 
             return tasks.Select(MapToTaskDto);
@@ -78,14 +80,17 @@ namespace Backend.Services
             return MapToTaskDto(task);
         }
 
-        public async Task<TaskDto> CreateTaskAsync(CreateTaskDto dto, string currentUserId, string currentUserRole)
+        public async Task<TaskDto> CreateTaskAsync(TaskInputDto dto, string currentUserId, string currentUserRole)
         {
             ValidateIdentity(currentUserId, currentUserRole);
 
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
 
             if (string.IsNullOrWhiteSpace(dto.Title))
                 throw new ArgumentException("Task title cannot be null, empty, or whitespace.", nameof(dto));
+
+            if (dto.DueDate.HasValue && dto.DueDate.Value.ToUniversalTime().Date < DateTime.UtcNow.Date)
+                throw new ArgumentException("Due date cannot be in the past.", nameof(dto));
 
             string? targetAssignedUserId = dto.AssignedUserId;
             if (string.IsNullOrWhiteSpace(targetAssignedUserId))
@@ -116,8 +121,10 @@ namespace Backend.Services
                 Description = dto.Description?.Trim() ?? string.Empty,
                 Status = dto.Status,
                 Priority = dto.Priority,
-                Category = string.IsNullOrWhiteSpace(dto.Category) ? "General" : dto.Category.Trim(),
+                Category = dto.Category,
                 DueDate = dto.DueDate,
+                TimeLimit = dto.TimeLimit,
+                ProjectId = dto.ProjectId,
                 AssignedUserId = targetAssignedUserId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -131,11 +138,11 @@ namespace Backend.Services
             return MapToTaskDto(created);
         }
 
-        public async Task<TaskDto?> UpdateTaskAsync(int id, UpdateTaskDto dto, string currentUserId, string currentUserRole)
+        public async Task<TaskDto?> UpdateTaskAsync(int id, TaskInputDto dto, string currentUserId, string currentUserRole)
         {
             ValidateIdentity(currentUserId, currentUserRole);
 
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
 
             if (string.IsNullOrWhiteSpace(dto.Title))
                 throw new ArgumentException("Task title cannot be null, empty, or whitespace.", nameof(dto));
@@ -185,8 +192,10 @@ namespace Backend.Services
             existingTask.Description = dto.Description?.Trim() ?? string.Empty;
             existingTask.Status = dto.Status;
             existingTask.Priority = dto.Priority;
-            existingTask.Category = string.IsNullOrWhiteSpace(dto.Category) ? "General" : dto.Category.Trim();
+            existingTask.Category = dto.Category;
             existingTask.DueDate = dto.DueDate;
+            existingTask.TimeLimit = dto.TimeLimit;
+            existingTask.ProjectId = dto.ProjectId;
             existingTask.AssignedUserId = targetAssignedUserId;
             existingTask.UpdatedAt = DateTime.UtcNow;
 
@@ -239,6 +248,9 @@ namespace Backend.Services
                 DueDate = task.DueDate,
                 AssignedUserId = task.AssignedUserId,
                 AssignedUserName = task.AssignedUser?.Name,
+                ProjectId = task.ProjectId,
+                ProjectName = task.Project?.Name,
+                TimeLimit = task.TimeLimit,
                 CreatedAt = task.CreatedAt,
                 UpdatedAt = task.UpdatedAt
             };

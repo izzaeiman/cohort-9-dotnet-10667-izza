@@ -1,11 +1,12 @@
 import { MdChevronLeft, MdChevronRight } from 'react-icons/md';
 import styles from './Pagination.module.css';
 
-interface PaginationProps {
+export interface PaginationProps {
   currentPage: number;
   totalPages: number;
   totalItems: number;
-  pageSize: number;
+  pageSize?: number;
+  itemsPerPage?: number;
   onPageChange: (page: number) => void;
 }
 
@@ -13,13 +14,15 @@ export const Pagination = ({
   currentPage,
   totalPages,
   totalItems,
-  pageSize,
+  pageSize = 10,
+  itemsPerPage,
   onPageChange,
 }: PaginationProps) => {
   if (totalPages <= 1) return null;
 
-  const startItem = (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
+  const effectivePageSize = itemsPerPage || pageSize;
+  const startItem = (currentPage - 1) * effectivePageSize + 1;
+  const endItem = Math.min(currentPage * effectivePageSize, totalItems);
 
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 

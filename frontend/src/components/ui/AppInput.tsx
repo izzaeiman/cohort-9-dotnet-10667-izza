@@ -1,9 +1,9 @@
-import { forwardRef, useState, type InputHTMLAttributes, type ReactNode, type FocusEvent } from 'react';
+import { forwardRef, useState, useId, type InputHTMLAttributes, type ReactNode, type FocusEvent } from 'react';
 import clsx from 'clsx';
 import styles from './AppInput.module.css';
 
-interface AppInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  id: string;
+export interface AppInputProps extends InputHTMLAttributes<HTMLInputElement> {
+  id?: string;
   label: string;
   error?: string;
   leftIcon?: ReactNode;
@@ -16,6 +16,8 @@ const AppInput = forwardRef<HTMLInputElement, AppInputProps>(
     { id, label, error, leftIcon, rightSlot, helperText, className, onFocus, onBlur, ...rest },
     ref,
   ) => {
+    const generatedId = useId();
+    const inputId = id || generatedId;
     const [isFocused, setIsFocused] = useState(false);
 
     const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
@@ -30,7 +32,7 @@ const AppInput = forwardRef<HTMLInputElement, AppInputProps>(
 
     return (
       <div className={clsx(styles.wrapper, className)}>
-        <label htmlFor={id} className={styles.label}>
+        <label htmlFor={inputId} className={styles.label}>
           {label}
         </label>
         <div
@@ -43,9 +45,9 @@ const AppInput = forwardRef<HTMLInputElement, AppInputProps>(
           {leftIcon && <span className={styles.leftIcon}>{leftIcon}</span>}
           <input
             ref={ref}
-            id={id}
+            id={inputId}
             className={styles.input}
-            aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
+            aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
             aria-invalid={!!error}
             {...rest}
             onFocus={handleFocus}
@@ -54,11 +56,11 @@ const AppInput = forwardRef<HTMLInputElement, AppInputProps>(
           {rightSlot && <span className={styles.rightSlot}>{rightSlot}</span>}
         </div>
         {error ? (
-          <p id={`${id}-error`} className={styles.errorText} role="alert">
+          <p id={`${inputId}-error`} className={styles.errorText} role="alert">
             {error}
           </p>
         ) : helperText ? (
-          <p id={`${id}-helper`} className={styles.helperText}>
+          <p id={`${inputId}-helper`} className={styles.helperText}>
             {helperText}
           </p>
         ) : null}

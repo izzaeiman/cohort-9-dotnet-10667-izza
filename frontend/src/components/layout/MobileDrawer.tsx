@@ -5,6 +5,7 @@ import {
   MdClose,
   MdDashboard,
   MdCheckCircleOutline,
+  MdAdminPanelSettings,
   MdFolderOpen,
   MdCalendarToday,
   MdPeopleOutline,
@@ -12,6 +13,7 @@ import {
   MdOutlineSettings,
 } from 'react-icons/md';
 import WorkFlowLogo from '../ui/WorkFlowLogo';
+import useAuth from '../../hooks/useAuth';
 import styles from './MobileDrawer.module.css';
 
 interface MobileDrawerProps {
@@ -19,19 +21,31 @@ interface MobileDrawerProps {
   onClose: () => void;
 }
 
-const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: MdDashboard },
-  { path: '/tasks', label: 'Tasks', icon: MdCheckCircleOutline },
-  { path: '/projects', label: 'Projects', icon: MdFolderOpen },
-  { path: '/calendar', label: 'Calendar', icon: MdCalendarToday },
-  { path: '/users', label: 'Users', icon: MdPeopleOutline },
-  { path: '/profile', label: 'Profile', icon: MdPersonOutline },
-  { path: '/settings', label: 'Settings', icon: MdOutlineSettings },
-];
-
 export const MobileDrawer = ({ isOpen, onClose }: MobileDrawerProps) => {
   const drawerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  const { isAdmin } = useAuth();
+  const adminUser = isAdmin();
+
+  const navItems = adminUser
+    ? [
+        { path: '/admin/dashboard', label: 'Admin Dashboard', icon: MdDashboard },
+        { path: '/admin/tasks', label: 'Admin Tasks', icon: MdAdminPanelSettings },
+        { path: '/admin/projects', label: 'Projects', icon: MdFolderOpen },
+        { path: '/admin/users', label: 'Users', icon: MdPeopleOutline },
+        { path: '/admin/calendar', label: 'Calendar', icon: MdCalendarToday },
+        { path: '/admin/profile', label: 'Profile', icon: MdPersonOutline },
+        { path: '/admin/settings', label: 'Settings', icon: MdOutlineSettings },
+      ]
+    : [
+        { path: '/dashboard', label: 'Dashboard', icon: MdDashboard },
+        { path: '/tasks', label: 'My Tasks', icon: MdCheckCircleOutline },
+        { path: '/projects', label: 'Projects', icon: MdFolderOpen },
+        { path: '/calendar', label: 'Calendar', icon: MdCalendarToday },
+        { path: '/profile', label: 'Profile', icon: MdPersonOutline },
+        { path: '/settings', label: 'Settings', icon: MdOutlineSettings },
+      ];
 
   useEffect(() => {
     if (!isOpen) return;
@@ -116,7 +130,7 @@ export const MobileDrawer = ({ isOpen, onClose }: MobileDrawerProps) => {
         </div>
 
         <nav className={styles.nav} aria-label="Mobile navigation links">
-          {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
+          {navItems.map(({ path, label, icon: Icon }) => (
             <NavLink
               key={path}
               to={path}

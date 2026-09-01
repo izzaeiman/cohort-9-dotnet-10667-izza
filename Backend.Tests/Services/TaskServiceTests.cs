@@ -85,22 +85,23 @@ namespace Backend.Tests.Services
                 new TaskItem { Id = 2, Title = "Task B", AssignedUserId = "usr-2" }
             };
 
-            _taskRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(allTasks);
+            _taskRepositoryMock.Setup(r => r.GetAllAsync(It.IsAny<TaskQueryDto>())).ReturnsAsync(allTasks);
 
             // Act
-            var results = await _taskService.GetTasksAsync("usr-admin", UserRoles.Administrator);
+            var query = new TaskQueryDto();
+            var results = await _taskService.GetTasksAsync("usr-admin", UserRoles.Administrator, query);
 
             // Assert
             Assert.NotNull(results);
             Assert.Equal(2, results.Count());
-            _taskRepositoryMock.Verify(r => r.GetAllAsync(), Times.Once);
+            _taskRepositoryMock.Verify(r => r.GetAllAsync(It.IsAny<TaskQueryDto>()), Times.Once);
         }
 
         [Fact]
         public async Task Test8_CreateTaskAsync_InvalidAssignedUser_IsRejected()
         {
             // Arrange — Administrator tries to assign to non-existent user
-            var dto = new CreateTaskDto
+            var dto = new TaskInputDto
             {
                 Title = "New Task",
                 AssignedUserId = "usr-nonexistent"
@@ -129,7 +130,7 @@ namespace Backend.Tests.Services
                 UpdatedAt = originalTime
             };
 
-            var updateDto = new UpdateTaskDto
+            var updateDto = new TaskInputDto
             {
                 Title = "Updated Title",
                 Status = TaskStatusEnum.InProgress,
@@ -178,7 +179,7 @@ namespace Backend.Tests.Services
         {
             // Arrange — Finding #5: authorization check runs BEFORE user lookup,
             // so no GetByIdAsync mock setup is needed here.
-            var dto = new CreateTaskDto
+            var dto = new TaskInputDto
             {
                 Title = "Illegal Assignment",
                 AssignedUserId = "usr-other"
@@ -205,7 +206,7 @@ namespace Backend.Tests.Services
                 AssignedUserId = "usr-other"
             };
 
-            var updateDto = new UpdateTaskDto { Title = "Hacked Title", AssignedUserId = "usr-other" };
+            var updateDto = new TaskInputDto { Title = "Hacked Title", AssignedUserId = "usr-other" };
 
             _taskRepositoryMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(existingTask);
 
@@ -247,7 +248,7 @@ namespace Backend.Tests.Services
                 AssignedUserId = "usr-regular"
             };
 
-            var updateDto = new UpdateTaskDto
+            var updateDto = new TaskInputDto
             {
                 Title = "Admin Override Title",
                 AssignedUserId = "usr-regular"
@@ -269,7 +270,7 @@ namespace Backend.Tests.Services
         public async Task Test15_CreateTaskAsync_Administrator_AssignsToValidUser_Succeeds()
         {
             // Arrange
-            var dto = new CreateTaskDto
+            var dto = new TaskInputDto
             {
                 Title = "Admin Assigned Task",
                 AssignedUserId = "usr-engineer"
@@ -292,7 +293,7 @@ namespace Backend.Tests.Services
         public async Task Test16_CreateTaskAsync_NullTitle_ThrowsArgumentException()
         {
             // Finding #4: null title rejected before any DB call
-            var dto = new CreateTaskDto { Title = null!, AssignedUserId = null };
+            var dto = new TaskInputDto { Title = null!, AssignedUserId = null };
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
                 _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
@@ -305,7 +306,7 @@ namespace Backend.Tests.Services
         public async Task Test17_CreateTaskAsync_EmptyTitle_ThrowsArgumentException()
         {
             // Finding #4: empty title rejected
-            var dto = new CreateTaskDto { Title = string.Empty };
+            var dto = new TaskInputDto { Title = string.Empty };
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
                 _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
@@ -317,7 +318,7 @@ namespace Backend.Tests.Services
         public async Task Test18_CreateTaskAsync_WhitespaceTitle_ThrowsArgumentException()
         {
             // Finding #4: whitespace-only title rejected
-            var dto = new CreateTaskDto { Title = "   " };
+            var dto = new TaskInputDto { Title = "   " };
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
                 _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
@@ -329,7 +330,7 @@ namespace Backend.Tests.Services
         public async Task Test19_CreateTaskAsync_ValidTitleWithWhitespace_TrimsAndSucceeds()
         {
             // Finding #4: valid title with surrounding whitespace is trimmed
-            var dto = new CreateTaskDto { Title = "  My Task  " };
+            var dto = new TaskInputDto { Title = "  My Task  " };
             _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-regular"))
                 .ReturnsAsync(new User { Id = "usr-regular", Name = "Regular" });
             _taskRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<TaskItem>()))
@@ -344,7 +345,7 @@ namespace Backend.Tests.Services
         public async Task Test20_UpdateTaskAsync_WhitespaceTitle_ThrowsArgumentException()
         {
             // Finding #4: whitespace-only title on update is rejected before DB call
-            var dto = new UpdateTaskDto { Title = "   " };
+            var dto = new TaskInputDto { Title = "   " };
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
                 _taskService.UpdateTaskAsync(1, dto, "usr-regular", UserRoles.RegularUser));
@@ -358,7 +359,7 @@ namespace Backend.Tests.Services
         {
             // Finding #5: for Regular User assigning another user, authorization check fires
             // BEFORE any DB lookup — GetByIdAsync should never be called.
-            var dto = new CreateTaskDto { Title = "Task", AssignedUserId = "usr-other" };
+            var dto = new TaskInputDto { Title = "Task", AssignedUserId = "usr-other" };
 
             var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
                 _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
@@ -382,7 +383,7 @@ namespace Backend.Tests.Services
             _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-regular")).ReturnsAsync(new User { Id = "usr-regular", Name = "Regular" });
             _taskRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<TaskItem>())).ReturnsAsync((TaskItem t) => t);
 
-            var updateDto = new UpdateTaskDto
+            var updateDto = new TaskInputDto
             {
                 Title = "Updated Title",
                 AssignedUserId = string.Empty
@@ -412,7 +413,7 @@ namespace Backend.Tests.Services
             _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-regular")).ReturnsAsync(new User { Id = "usr-regular", Name = "Regular" });
             _taskRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<TaskItem>())).ReturnsAsync((TaskItem t) => t);
 
-            var updateDto = new UpdateTaskDto
+            var updateDto = new TaskInputDto
             {
                 Title = "Updated Title",
                 AssignedUserId = "   "
@@ -438,19 +439,229 @@ namespace Backend.Tests.Services
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _taskService.GetTasksAsync(currentUserId!, currentUserRole!));
+                _taskService.GetTasksAsync(currentUserId!, currentUserRole!, new TaskQueryDto()));
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _taskService.GetTaskByIdAsync(1, currentUserId!, currentUserRole!));
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _taskService.CreateTaskAsync(new CreateTaskDto { Title = "Task" }, currentUserId!, currentUserRole!));
+                _taskService.CreateTaskAsync(new TaskInputDto { Title = "Task" }, currentUserId!, currentUserRole!));
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _taskService.UpdateTaskAsync(1, new UpdateTaskDto { Title = "Task" }, currentUserId!, currentUserRole!));
+                _taskService.UpdateTaskAsync(1, new TaskInputDto { Title = "Task" }, currentUserId!, currentUserRole!));
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _taskService.DeleteTaskAsync(1, currentUserId!, currentUserRole!));
         }
+
+        [Fact]
+        public async Task Test25_CreateTaskAsync_PastDueDate_ThrowsArgumentException()
+        {
+            var dto = new TaskInputDto
+            {
+                Title = "Task with Past Due Date",
+                DueDate = DateTime.UtcNow.AddDays(-2)
+            };
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
+
+            Assert.Contains("due date", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // ── Batch 6 — Closing remaining TaskService coverage gaps ─────────────
+
+        [Fact]
+        public async Task Test26_GetTasksAsync_RegularUser_GetsAssignedTasks()
+        {
+            // Regular-user branch of GetTasksAsync: calls GetByAssignedUserIdAsync
+            var tasks = new List<TaskItem> { new TaskItem { Id = 5, Title = "My Task", AssignedUserId = "usr-regular" } };
+            _taskRepositoryMock.Setup(r => r.GetByAssignedUserIdAsync("usr-regular", It.IsAny<TaskQueryDto>())).ReturnsAsync(tasks);
+
+            var result = await _taskService.GetTasksAsync("usr-regular", UserRoles.RegularUser, new TaskQueryDto());
+
+            Assert.Single(result);
+            Assert.Equal("My Task", result.First().Title);
+        }
+
+        [Fact]
+        public async Task Test27_GetTasksAsync_Administrator_GetsAllTasks()
+        {
+            // Admin branch of GetTasksAsync: calls GetAllAsync
+            var tasks = new List<TaskItem>
+            {
+                new TaskItem { Id = 1, Title = "Task A", AssignedUserId = "usr-1" },
+                new TaskItem { Id = 2, Title = "Task B", AssignedUserId = "usr-2" }
+            };
+            _taskRepositoryMock.Setup(r => r.GetAllAsync(It.IsAny<TaskQueryDto>())).ReturnsAsync(tasks);
+
+            var result = await _taskService.GetTasksAsync("admin-1", UserRoles.Administrator, new TaskQueryDto());
+
+            Assert.Equal(2, result.Count());
+        }
+
+        [Fact]
+        public async Task Test28_GetTaskByIdAsync_TaskNotFound_ReturnsNull()
+        {
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((TaskItem?)null);
+            var result = await _taskService.GetTaskByIdAsync(999, "usr-1", UserRoles.RegularUser);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task Test29_CreateTaskAsync_NullDto_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _taskService.CreateTaskAsync(null!, "usr-1", UserRoles.RegularUser));
+        }
+
+        [Fact]
+        public async Task Test30_CreateTaskAsync_EmptyTitle_ThrowsArgumentException()
+        {
+            var dto = new TaskInputDto { Title = "   " };
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.CreateTaskAsync(dto, "usr-1", UserRoles.RegularUser));
+            Assert.Contains("title", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test31_CreateTaskAsync_RegularUser_AssignsToOtherUser_ThrowsUnauthorized()
+        {
+            // Regular user trying to assign task to another user
+            var dto = new TaskInputDto { Title = "Task", AssignedUserId = "usr-other" };
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _taskService.CreateTaskAsync(dto, "usr-regular", UserRoles.RegularUser));
+            Assert.Contains("assign", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test32_CreateTaskAsync_AssignedUserDoesNotExist_ThrowsArgumentException()
+        {
+            // Even admin: if assigned user doesn't exist in DB, throw
+            var dto = new TaskInputDto { Title = "Task", AssignedUserId = "usr-nonexistent" };
+            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-nonexistent")).ReturnsAsync((User?)null);
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.CreateTaskAsync(dto, "admin-1", UserRoles.Administrator));
+            Assert.Contains("does not exist", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test33_UpdateTaskAsync_NullDto_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _taskService.UpdateTaskAsync(1, null!, "usr-1", UserRoles.RegularUser));
+        }
+
+        [Fact]
+        public async Task Test34_UpdateTaskAsync_EmptyTitle_ThrowsArgumentException()
+        {
+            var dto = new TaskInputDto { Title = "" };
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.UpdateTaskAsync(1, dto, "usr-1", UserRoles.RegularUser));
+            Assert.Contains("title", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test35_UpdateTaskAsync_TaskNotFound_ReturnsNull()
+        {
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((TaskItem?)null);
+            var result = await _taskService.UpdateTaskAsync(999, new TaskInputDto { Title = "T" }, "usr-1", UserRoles.RegularUser);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task Test36_UpdateTaskAsync_RegularUser_UpdatesOtherUserTask_ThrowsUnauthorized()
+        {
+            var existing = new TaskItem { Id = 7, Title = "Task", AssignedUserId = "usr-other" };
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(7)).ReturnsAsync(existing);
+
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _taskService.UpdateTaskAsync(7, new TaskInputDto { Title = "New" }, "usr-regular", UserRoles.RegularUser));
+            Assert.Contains("permission", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test37_UpdateTaskAsync_AssignedUserDoesNotExist_ThrowsArgumentException()
+        {
+            var existing = new TaskItem { Id = 8, Title = "Task", AssignedUserId = "usr-1" };
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(8)).ReturnsAsync(existing);
+            _userRepositoryMock.Setup(r => r.GetByIdAsync("usr-ghost")).ReturnsAsync((User?)null);
+
+            var dto = new TaskInputDto { Title = "Task", AssignedUserId = "usr-ghost" };
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _taskService.UpdateTaskAsync(8, dto, "admin-1", UserRoles.Administrator));
+            Assert.Contains("does not exist", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test38_UpdateTaskAsync_RegularUser_TriesToReassign_ThrowsUnauthorized()
+        {
+            // Regular user owns the task but tries to reassign it to someone else
+            var existing = new TaskItem { Id = 9, Title = "Task", AssignedUserId = "usr-regular" };
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(9)).ReturnsAsync(existing);
+
+            var dto = new TaskInputDto { Title = "Task", AssignedUserId = "usr-other" };
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _taskService.UpdateTaskAsync(9, dto, "usr-regular", UserRoles.RegularUser));
+            Assert.Contains("reassign", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test39_DeleteTaskAsync_TaskNotFound_ReturnsFalse()
+        {
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((TaskItem?)null);
+            var result = await _taskService.DeleteTaskAsync(999, "usr-1", UserRoles.RegularUser);
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task Test40_DeleteTaskAsync_RegularUser_DeletesOtherUserTask_ThrowsUnauthorized()
+        {
+            var existing = new TaskItem { Id = 11, Title = "Task", AssignedUserId = "usr-other" };
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(11)).ReturnsAsync(existing);
+
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _taskService.DeleteTaskAsync(11, "usr-regular", UserRoles.RegularUser));
+            Assert.Contains("permission", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Test41_DeleteTaskAsync_AdminDeletesAnyTask_ReturnsTrue()
+        {
+            var existing = new TaskItem { Id = 12, Title = "Task", AssignedUserId = "usr-other" };
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(12)).ReturnsAsync(existing);
+            _taskRepositoryMock.Setup(r => r.DeleteAsync(12)).ReturnsAsync(true);
+
+            var result = await _taskService.DeleteTaskAsync(12, "admin-1", UserRoles.Administrator);
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task Test42_MapToTaskDto_NullNavigations_ReturnsNullNames()
+        {
+            // Task with no AssignedUser navigation and no Project navigation
+            var task = new TaskItem
+            {
+                Id = 20,
+                Title = "Orphan Task",
+                AssignedUserId = "usr-1",
+                AssignedUser = null,
+                Project = null,
+                Status = TaskStatusEnum.Pending,
+                Priority = TaskPriorityEnum.Medium,
+                Category = TaskCategoryEnum.General,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _taskRepositoryMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(task);
+
+            var result = await _taskService.GetTaskByIdAsync(20, "admin-1", UserRoles.Administrator);
+
+            Assert.NotNull(result);
+            Assert.Null(result!.AssignedUserName);
+            Assert.Null(result.ProjectName);
+        }
     }
 }
+

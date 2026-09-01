@@ -24,6 +24,24 @@ namespace Backend.Middleware
             {
                 await _next(context);
             }
+            catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException ex)
+            {
+                var traceId = context.TraceIdentifier;
+                _logger.LogWarning(ex, "CSRF Validation Failed for TraceId: {TraceId}", traceId);
+                if (!context.Response.HasStarted)
+                {
+                    context.Response.ContentType = "application/problem+json";
+                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+                    {
+                        Title = "CSRF Token Validation Failed.",
+                        Status = (int)HttpStatusCode.Forbidden,
+                        Detail = ex.Message,
+                        Instance = context.Request.Path
+                    };
+                    await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails));
+                }
+            }
             catch (Exception ex)
             {
                 var traceId = context.TraceIdentifier;
@@ -45,17 +63,20 @@ namespace Backend.Middleware
 
         private static Task HandleExceptionAsync(HttpContext context, string traceId)
         {
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-            var errorResponse = new
+            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
             {
-                statusCode = context.Response.StatusCode,
-                message = "An unexpected server error occurred. Please contact administrator.",
-                traceId = traceId
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
+                Title = "An unexpected server error occurred.",
+                Status = context.Response.StatusCode,
+                Detail = "Please contact administrator.",
+                Instance = context.Request.Path
             };
+            problemDetails.Extensions.Add("traceId", traceId);
 
-            var jsonResponse = JsonSerializer.Serialize(errorResponse);
+            var jsonResponse = JsonSerializer.Serialize(problemDetails);
             return context.Response.WriteAsync(jsonResponse);
         }
     }

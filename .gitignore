@@ -28,3 +28,26 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 .DS_Store
+
+# SonarQube
+.sonarqube/
+.scannerwork/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Executables and Installers
+*.exe
+
+# Environment & Secrets
+.env
+.env.*
+.env.local
+appsettings.Development.json
+user-secrets
+
+# Added
+Backend.Tests/TestResults/
+frontend/coverage/
+Backend/wwwroot/uploads/
+*.py

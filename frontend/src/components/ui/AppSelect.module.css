@@ -1,0 +1,111 @@
+/* ─── AppSelect Component Styles ─────────────────────────────────────────── */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.01em;
+  user-select: none;
+}
+
+.selectWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--color-input-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.25s ease;
+}
+
+.selectWrap.focused {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3.5px rgba(255, 122, 26, 0.15);
+}
+
+.selectWrap.hasError {
+  border-color: #FF5A5A;
+  box-shadow: 0 0 0 3.5px rgba(255, 90, 90, 0.10);
+}
+
+.leftIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 14px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  font-size: 17px;
+  transition: color 0.22s ease;
+  pointer-events: none;
+}
+
+.selectWrap.focused .leftIcon {
+  color: var(--color-primary);
+}
+
+.arrowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 12px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: color 0.22s ease;
+}
+
+.selectWrap.focused .arrowIcon {
+  color: var(--color-primary);
+}
+
+.select {
+  flex: 1;
+  padding: 13px 14px;
+  font-size: 0.925rem;
+  font-family: var(--font-family);
+  font-weight: var(--font-regular);
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  line-height: 1.5;
+  min-width: 0;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select option {
+  color: var(--color-text);
+  background: var(--color-surface);
+  padding: 10px;
+}
+
+.errorText {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  color: #FF5A5A;
+  margin: 0;
+  padding-left: 2px;
+  animation: slide-down 0.18s ease;
+}
+
+.helperText {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+  padding-left: 2px;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

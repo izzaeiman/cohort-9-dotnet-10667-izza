@@ -1,0 +1,236 @@
+/* ─── SignupForm Styles ─────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+/* ── Server / Success banners ────────────────────────────────────────────── */
+.serverError {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #FFEBEE;
+  border: 1px solid rgba(255, 90, 90, 0.25);
+  border-radius: 12px;
+  color: #D32F2F;
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: slide-down 0.2s ease;
+}
+
+.successBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #E8F5E9;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
+  color: #2E7D32;
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: slide-down 0.2s ease;
+}
+
+.errorIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Eye button ──────────────────────────────────────────────────────────── */
+.eyeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #AAAAAA;
+  padding: 6px;
+  border-radius: 8px;
+  transition: color 0.18s ease, background 0.18s ease;
+  line-height: 1;
+}
+
+.eyeBtn:hover {
+  color: #FF7A1A;
+  background: rgba(255, 122, 26, 0.08);
+}
+
+.eyeBtn:focus-visible {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 1px;
+}
+
+/* ── Password Strength Indicator ─────────────────────────────────────────── */
+.strengthWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: -6px;
+}
+
+.strengthBarTrack {
+  width: 100%;
+  height: 5px;
+  background: #ECECEC;
+  border-radius: 99px;
+  overflow: hidden;
+  display: flex;
+}
+
+.strengthBarFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strengthLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #777777;
+}
+
+.strengthText {
+  font-weight: 700;
+}
+
+/* ── Checkbox row ────────────────────────────────────────────────────────── */
+.checkboxWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #666666;
+  font-weight: 500;
+  user-select: none;
+  line-height: 1.4;
+}
+
+.checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.checkmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #DDDDDD;
+  border-radius: 5px;
+  background: #ffffff;
+  transition: background 0.18s ease, border-color 0.18s ease;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.checkbox:checked + .checkmark {
+  background: #FF7A1A;
+  border-color: #FF7A1A;
+}
+
+.checkbox:checked + .checkmark::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translateY(-1px);
+}
+
+.checkbox:focus-visible + .checkmark {
+  outline: 2px solid #FF7A1A;
+  outline-offset: 2px;
+}
+
+.termsLink {
+  color: #FF7A1A;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.termsLink:hover {
+  text-decoration: underline;
+}
+
+.errorText {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  color: #FF5A5A;
+  margin: 0;
+  padding-left: 2px;
+}
+
+/* ── Divider ─────────────────────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 2px 0;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: #ECECEC;
+}
+
+.dividerText {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #BBBBBB;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Sign in text ────────────────────────────────────────────────────────── */
+.signinText {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666666;
+  margin: 0;
+  margin-top: 2px;
+}
+
+.signinLink {
+  color: #FF7A1A;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.signinLink:hover {
+  color: #F96A00;
+  text-decoration: underline;
+}
+
+.signinLink:focus-visible {
+  outline: 2px solid #FF7A1A;
+  border-radius: 4px;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

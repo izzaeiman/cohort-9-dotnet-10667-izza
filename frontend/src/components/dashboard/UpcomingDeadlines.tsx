@@ -8,8 +8,6 @@ interface UpcomingDeadlinesProps {
 }
 
 export const UpcomingDeadlines = ({ items }: UpcomingDeadlinesProps) => {
-  const safeItems = items ?? [];
-
   return (
     <div className={styles.card}>
       <SectionTitle
@@ -18,7 +16,7 @@ export const UpcomingDeadlines = ({ items }: UpcomingDeadlinesProps) => {
       />
 
       <div className={styles.list}>
-        {safeItems.map((item) => (
+        {items.map((item) => (
           <div key={item.id} className={styles.item}>
             <div className={styles.info}>
               <span className={styles.title} title={item.title}>

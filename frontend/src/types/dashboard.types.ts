@@ -1,8 +1,8 @@
 // ─── Dashboard Data Types ──────────────────────────────────────────────────
 
-export type TaskStatus = 'completed' | 'in_progress' | 'pending' | 'overdue';
-export type TaskPriority = 'high' | 'medium' | 'low';
-export type TaskCategory = 'Frontend' | 'Backend' | 'UI/UX Design' | 'DevOps' | 'Database';
+export type TaskStatus = 'completed' | 'in_progress' | 'pending' | 'overdue' | 'cancelled';
+export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
+export type TaskCategory = 'General' | 'Frontend' | 'Backend' | 'UiUxDesign' | 'DevOps' | 'Database' | 'FullStack';
 
 export interface StatCardData {
   id: string;

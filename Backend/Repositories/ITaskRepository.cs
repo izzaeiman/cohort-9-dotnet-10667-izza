@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Backend.Models;
+using Backend.DTOs;
 
 namespace Backend.Repositories
 {
     public interface ITaskRepository
     {
-        Task<IEnumerable<TaskItem>> GetAllAsync();
-        Task<IEnumerable<TaskItem>> GetByAssignedUserIdAsync(string userId);
+        Task<IEnumerable<TaskItem>> GetAllAsync(TaskQueryDto dto);
+        Task<IEnumerable<TaskItem>> GetByAssignedUserIdAsync(string userId, TaskQueryDto dto);
         Task<TaskItem?> GetByIdAsync(int id);
         Task<TaskItem> CreateAsync(TaskItem task);
         Task<TaskItem> UpdateAsync(TaskItem task);

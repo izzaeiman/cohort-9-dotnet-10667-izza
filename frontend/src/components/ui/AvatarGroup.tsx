@@ -7,8 +7,8 @@ interface AvatarGroupProps {
   size?: number;
 }
 
-export const AvatarGroup = ({ assignees, max = 3, size = 28 }: AvatarGroupProps) => {
-  const safeAssignees = assignees ?? [];
+export const AvatarGroup = ({ assignees = [], max = 3, size = 28 }: AvatarGroupProps) => {
+  const safeAssignees = Array.isArray(assignees) ? assignees : [];
   const visible = safeAssignees.slice(0, max);
   const extra = safeAssignees.length - max;
 

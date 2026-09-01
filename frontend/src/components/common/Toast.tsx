@@ -22,7 +22,7 @@ export const Toast = ({ message, type = 'success', onClose, duration = 3000 }: T
     <div
       className={`${styles.toast} ${styles[`toast--${type}`]}`}
       role={role}
-      aria-live={type === 'error' ? 'assertive' : 'polite'}
+      aria-live="polite"
     >
       <span className={styles.icon} aria-hidden="true">
         <Icon color={type === 'success' ? '#4CAF50' : type === 'error' ? '#FF5A5A' : '#FF7A1A'} />

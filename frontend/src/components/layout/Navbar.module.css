@@ -1,0 +1,305 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  height: 72px;
+  background: var(--color-navbar);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 30;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mobileMenuBtn,
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.mobileMenuBtn:hover,
+.menuBtn:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.mobileMenuBtn:focus-visible,
+.menuBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Breadcrumbs */
+.breadcrumb,
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.crumbRoot,
+.breadcrumbLink {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.crumbRoot:hover,
+.breadcrumbLink:hover {
+  color: var(--color-primary);
+}
+
+.crumbCurrent,
+.breadcrumbCurrent {
+  color: var(--color-text);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.crumbSeparator,
+.separator {
+  color: var(--color-text-muted);
+}
+
+/* Right Section */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Search Bar */
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  width: 220px;
+  padding: 8px 36px 8px 34px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-input-bg);
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  outline: none;
+  transition: width 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+}
+
+.searchInput:focus,
+.searchInput:focus-visible {
+  width: 280px;
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.kbdHint,
+.searchKbd {
+  position: absolute;
+  right: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  padding: 2px 6px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* Icon Action Buttons */
+.iconBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.iconBtn:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: rgba(255, 122, 26, 0.3);
+}
+
+.iconBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  border: 2px solid var(--color-surface);
+}
+
+/* User Dropdown */
+.userWrap {
+  position: relative;
+}
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 99px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.userBtn:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.userBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.userName {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.userRole {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  line-height: 1.1;
+}
+
+/* Dropdown Menu */
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 220px;
+  background: var(--color-surface);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: dropdown-fade 0.2s ease both;
+  z-index: 50;
+}
+
+@keyframes dropdown-fade {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.dropdownItem:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.dropdownItem:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.dropdownItemDanger {
+  color: #FF5A5A;
+}
+
+.dropdownItemDanger:hover {
+  background: var(--color-overdue-bg);
+  color: #FF5A5A;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--color-border-subtle);
+  margin: 4px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar { padding: 0 16px; }
+  .mobileMenuBtn, .menuBtn { display: flex; }
+  .searchWrap { display: none; }
+  .userInfo { display: none; }
+  .breadcrumb, .breadcrumbs { display: none; }
+}

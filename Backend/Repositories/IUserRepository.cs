@@ -1,3 +1,4 @@
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Backend.Models;
 
@@ -9,5 +10,7 @@ namespace Backend.Repositories
         Task<User?> GetByIdAsync(string id);
         Task<bool> ExistsByEmailAsync(string email);
         Task<User> CreateAsync(User user);
+        Task<IEnumerable<User>> GetAllAsync(string? search = null);
+        Task UpdateAsync(User user);
     }
 }

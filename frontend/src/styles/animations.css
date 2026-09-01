@@ -81,16 +81,3 @@
 .animate-slide-up { animation: slide-up 0.22s ease-out both; }
 .animate-shimmer { animation: shimmer 1.5s infinite linear; }
 .animate-spin { animation: spin 1s linear infinite; }
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-fade-in,
-  .animate-fade-in-left,
-  .animate-fade-in-right,
-  .animate-scale-in,
-  .animate-slide-down,
-  .animate-slide-up,
-  .animate-shimmer,
-  .animate-spin {
-    animation: none !important;
-  }
-}

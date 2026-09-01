@@ -18,12 +18,16 @@ namespace Backend.Services
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        public string GenerateToken(User user)
+        public (string Token, DateTimeOffset ExpiresAt) GenerateToken(User user)
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-
+            ArgumentNullException.ThrowIfNull(user);
+            if (string.IsNullOrWhiteSpace(user.Id)) throw new ArgumentException("User Id is required.", nameof(user));
+            if (string.IsNullOrWhiteSpace(user.Email)) throw new ArgumentException("User Email is required.", nameof(user));
+            if (string.IsNullOrWhiteSpace(user.Name)) throw new ArgumentException("User Name is required.", nameof(user));
+            if (string.IsNullOrWhiteSpace(user.Role)) throw new ArgumentException("User Role is required.", nameof(user));
             // Key must be configured — no hardcoded fallback in production
             var jwtKey = _configuration["Jwt:Key"]
+                ?? Environment.GetEnvironmentVariable("JWT_KEY")
                 ?? throw new InvalidOperationException(
                     "JWT signing key is not configured. Set 'Jwt:Key' in configuration or the JWT_KEY environment variable.");
 
@@ -43,15 +47,16 @@ namespace Backend.Services
                 new Claim("role", user.Role)
             };
 
+            var expires = DateTime.UtcNow.AddMinutes(expirationMinutes);
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
+                expires: expires,
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return (new JwtSecurityTokenHandler().WriteToken(token), expires);
         }
     }
 }

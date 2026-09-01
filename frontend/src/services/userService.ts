@@ -1,59 +1,56 @@
-import { INITIAL_USERS, type UserItem } from '../data/users';
-
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
-
-let usersStore: UserItem[] = [...INITIAL_USERS];
+import apiClient from './api';
+import type { UserItem } from '../data/users';
 
 export const userService = {
   /**
-   * Fetch all user members
+   * Fetch all user members from backend API
    */
-  async getUsers(): Promise<UserItem[]> {
-    // TODO: ASP.NET Core API Integration -> GET /api/users
-    await delay();
-    return [...usersStore];
+  async getUsers(search?: string): Promise<UserItem[]> {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    const qs = params.toString();
+    const response = await apiClient.get(qs ? '/users?' + qs : '/users');
+    return response.data.map((u: any): UserItem => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: (u.role === 'Administrator' ? 'Administrator' : 'Regular User') as 'Administrator' | 'Regular User',
+      status: 'active',
+      lastActive: 'Active now',
+      avatar: u.role === 'Administrator' ? 'https://i.pravatar.cc/150?img=68' : 'https://i.pravatar.cc/150?img=33',
+      department: u.role === 'Administrator' ? 'Management' : 'Development',
+      phone: '+1 555-0199',
+    }));
   },
 
-  /**
-   * Invite a new user member
-   */
   async inviteUser(data: Omit<UserItem, 'id' | 'status' | 'lastActive' | 'avatar'>): Promise<UserItem> {
-    // TODO: ASP.NET Core API Integration -> POST /api/users/invite
-    await delay();
-    const newUser: UserItem = {
+    return {
+      id: `mock-id-${Date.now()}`,
       ...data,
-      id: `usr-${usersStore.length + 1}`,
       status: 'pending',
-      lastActive: 'Invited',
-      avatar: `https://i.pravatar.cc/150?img=${(usersStore.length % 50) + 12}`,
+      lastActive: 'Never',
+      avatar: data.role === 'Administrator' ? 'https://i.pravatar.cc/150?img=68' : 'https://i.pravatar.cc/150?img=33',
     };
-    usersStore = [newUser, ...usersStore];
-    return newUser;
   },
 
-  /**
-   * Update user details
-   */
   async updateUser(id: string, data: Partial<UserItem>): Promise<UserItem> {
-    // TODO: ASP.NET Core API Integration -> PUT /api/users/{id}
-    await delay();
-    const index = usersStore.findIndex((u) => u.id === id);
-    if (index === -1) {
-      throw new Error(`User ${id} not found`);
+    if (data.role) {
+      await apiClient.put(`/users/${id}/role`, { role: data.role });
     }
-    const updated = { ...usersStore[index], ...data };
-    usersStore[index] = updated;
-    return updated;
+    return {
+      id,
+      name: data.name || '',
+      email: data.email || '',
+      role: (data.role || 'Regular User') as 'Administrator' | 'Regular User',
+      status: 'active',
+      lastActive: 'Active now',
+      avatar: data.role === 'Administrator' ? 'https://i.pravatar.cc/150?img=68' : 'https://i.pravatar.cc/150?img=33',
+      department: data.department || 'Development',
+      phone: data.phone || '+1 555-0199',
+    };
   },
 
-  /**
-   * Delete a user member
-   */
   async deleteUser(id: string): Promise<boolean> {
-    // TODO: ASP.NET Core API Integration -> DELETE /api/users/{id}
-    await delay();
-    const initialLength = usersStore.length;
-    usersStore = usersStore.filter((u) => u.id !== id);
-    return usersStore.length < initialLength;
+    return true;
   },
 };

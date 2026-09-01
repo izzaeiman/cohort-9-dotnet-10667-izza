@@ -5,9 +5,9 @@ import Modal from '../common/Modal';
 import AppSelect from '../ui/AppSelect';
 import AppInput from '../ui/AppInput';
 import AppButton from '../ui/AppButton';
-import { INITIAL_USERS } from '../../data/users';
+import { userService } from '../../services/userService';
 import type { DetailedTaskItem } from '../../data/tasks';
-import { adminTaskService } from '../../services/adminTaskService';
+import { taskService } from '../../services/taskService';
 import { assignTaskSchema, type AssignTaskFormData } from '../../utils/taskSchema';
 import Toast from '../common/Toast';
 import styles from './TaskModalForm.module.css';
@@ -27,6 +27,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoadingUsers(true);
+      userService.getUsers()
+        .then(data => setUsers(data || []))
+        .catch(err => console.error('Failed to load users for assignment', err))
+        .finally(() => setIsLoadingUsers(false));
+    }
+  }, [isOpen]);
 
   const {
     register,
@@ -39,7 +51,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
   useEffect(() => {
     if (task) {
-      setValue('assignedUserId', task.assignedUserId || 'usr-1');
+      setValue('assignedUserId', task.assignedUserId || '');
       setValue('startDate', task.startDate);
       setValue('startTime', task.startTime || '09:00 AM');
       setValue('dueDate', task.dueDate);
@@ -53,7 +65,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const handleFormSubmit = async (data: AssignTaskFormData) => {
     try {
       setIsSubmitting(true);
-      await adminTaskService.assignTask(
+      await taskService.assignTask(
         task.id,
         data.assignedUserId,
         data.startDate,
@@ -63,7 +75,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         data.timeLimit ? Number(data.timeLimit) : undefined,
       );
 
-      const assignedUserObj = INITIAL_USERS.find((u) => u.id === data.assignedUserId);
+      const assignedUserObj = users.find((u) => u.id === data.assignedUserId);
       setToastMessage(
         `Task ${task.id} successfully assigned to ${assignedUserObj?.name || 'user'}!`,
       );
@@ -95,10 +107,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             label="Assignee User *"
             {...register('assignedUserId')}
             error={errors.assignedUserId?.message}
-            options={INITIAL_USERS.map((u) => ({
-              value: u.id,
-              label: `${u.name} — ${u.department} (${u.role})`,
-            }))}
+            options={[
+              { value: '', label: isLoadingUsers ? 'Loading...' : 'Select User...' },
+              ...users.map((u) => ({
+                value: u.id,
+                label: `${u.name} (${u.role})`,
+              }))
+            ]}
           />
 
           <div className={styles.grid2}>

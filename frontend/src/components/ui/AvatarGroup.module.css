@@ -19,7 +19,6 @@
 .avatar:hover {
   transform: translateY(-2px) scale(1.1);
   z-index: 5;
-  position: relative;
 }
 
 .moreAvatar {

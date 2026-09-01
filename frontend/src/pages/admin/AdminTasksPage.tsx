@@ -24,10 +24,10 @@ import EditTaskModal from '../../components/admin/EditTaskModal';
 import AssignTaskModal from '../../components/admin/AssignTaskModal';
 
 import type { DetailedTaskItem } from '../../data/tasks';
-import { adminTaskService } from '../../services/adminTaskService';
-import { INITIAL_USERS } from '../../data/users';
-import { INITIAL_PROJECTS } from '../../data/projects';
-import { calculateTaskDeadlineStatus, formatDateDisplay, parseLocalDate } from '../../utils/deadlineHelpers';
+import { taskService } from '../../services/taskService';
+import { userService } from '../../services/userService';
+import { projectService } from '../../services/projectService';
+import { calculateTaskDeadlineStatus, formatDateDisplay } from '../../utils/deadlineHelpers';
 
 import styles from './AdminTasksPage.module.css';
 
@@ -63,12 +63,21 @@ export const AdminTasksPage: React.FC = () => {
   const [assigningTask, setAssigningTask] = useState<DetailedTaskItem | null>(null);
   const [deletingTask, setDeletingTask] = useState<DetailedTaskItem | null>(null);
 
+  // Users State
+  const [users, setUsers] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+
   // Fetch Tasks
-  const loadTasks = async () => {
+  const loadTasks = async (filters: {
+    search?: string;
+    status?: string;
+    priority?: string;
+    assignedUserId?: string;
+  }) => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await adminTaskService.getAllTasks();
+      const data = await taskService.getAllTasks(filters);
       setTasks(data);
     } catch (err: any) {
       setError(err.message || 'Unable to load tasks.');
@@ -77,13 +86,40 @@ export const AdminTasksPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    loadTasks();
-    const unsubscribe = adminTaskService.subscribe(() => {
-      loadTasks();
+  const reloadTasks = () => {
+    loadTasks({
+      search: searchQuery,
+      status: statusFilter,
+      priority: priorityFilter,
+      assignedUserId: userFilter,
     });
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadTasks({
+        search: searchQuery,
+        status: statusFilter,
+        priority: priorityFilter,
+        assignedUserId: userFilter,
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, statusFilter, priorityFilter, userFilter]);
+
+  useEffect(() => {
+    userService.getUsers()
+      .then(data => setUsers(data || []))
+      .catch(err => console.error('Failed to load users for filter', err));
+    
+    projectService.getProjects()
+      .then(data => setProjects(data || []))
+      .catch(err => console.error('Failed to load projects for filter', err));
+
+    const unsubscribe = taskService.subscribe(reloadTasks);
     return () => unsubscribe();
-  }, []);
+  }, [searchQuery, statusFilter, priorityFilter, userFilter]);
 
   // Calculate Statistics dynamically
   const stats = useMemo(() => {
@@ -106,66 +142,26 @@ export const AdminTasksPage: React.FC = () => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, priorityFilter, userFilter, projectFilter, deadlineFilter, sortBy, sortOrder]);
 
-  // Filtered & Sorted Tasks
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      // 1. Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesTitle = task.title.toLowerCase().includes(q);
-        const matchesDesc = (task.description || '').toLowerCase().includes(q);
-        const matchesUser = (task.assignedUser || '').toLowerCase().includes(q);
-        const matchesProject = (task.project || '').toLowerCase().includes(q);
-        const matchesCategory = (task.category || '').toLowerCase().includes(q);
-        if (!matchesTitle && !matchesDesc && !matchesUser && !matchesProject && !matchesCategory) {
-          return false;
-        }
-      }
-
-      // 2. Status Filter
-      if (statusFilter !== 'all') {
-        if (statusFilter === 'overdue') {
-          const deadlineInfo = calculateTaskDeadlineStatus(task);
-          if (task.status !== 'overdue' && deadlineInfo.state !== 'OVERDUE') return false;
-        } else if (task.status !== statusFilter) {
-          return false;
-        }
-      }
-
-      // 3. Priority Filter
-      if (priorityFilter !== 'all' && task.priority !== priorityFilter) {
-        return false;
-      }
-
-      // 4. User Filter
-      if (userFilter !== 'all') {
-        if (task.assignedUserId !== userFilter && task.assignedUser !== userFilter) {
-          return false;
-        }
-      }
-
-      // 5. Project Filter
+  // Sorted Tasks (Filtering moved to backend)
+  const sortedTasks = useMemo(() => {
+    return [...tasks].filter((task) => {
+      // 5. Project Filter (Not supported in backend yet, keep client side)
       if (projectFilter !== 'all' && task.project !== projectFilter) {
         return false;
       }
 
-      // 6. Deadline Filter
+      // 6. Deadline Filter (Complex logic, keep client side)
       if (deadlineFilter !== 'all') {
         const deadlineInfo = calculateTaskDeadlineStatus(task);
         if (deadlineFilter === 'due_today' && deadlineInfo.state !== 'DUE_TODAY') return false;
         if (deadlineFilter === 'due_tomorrow' && deadlineInfo.state !== 'DUE_TOMORROW') return false;
-        if (deadlineFilter === 'due_this_week') {
-          if (task.status === 'completed' || task.status === 'cancelled') return false;
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const endOfWeek = new Date(today);
-          const dayOfWeek = today.getDay();
-          const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-          endOfWeek.setDate(today.getDate() + daysUntilSunday);
-          endOfWeek.setHours(23, 59, 59, 999);
-
-          const due = parseLocalDate(task.dueDate);
-          if (due < today || due > endOfWeek) return false;
+        if (
+          deadlineFilter === 'due_this_week' &&
+          deadlineInfo.state !== 'DUE_TODAY' &&
+          deadlineInfo.state !== 'DUE_TOMORROW' &&
+          deadlineInfo.state !== 'APPROACHING_DEADLINE'
+        ) {
+          return false;
         }
         if (deadlineFilter === 'overdue' && deadlineInfo.state !== 'OVERDUE') return false;
       }
@@ -189,16 +185,16 @@ export const AdminTasksPage: React.FC = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [tasks, searchQuery, statusFilter, priorityFilter, userFilter, projectFilter, deadlineFilter, sortBy, sortOrder]);
+  }, [tasks, projectFilter, deadlineFilter, sortBy, sortOrder]);
 
   // Pagination Calculations
-  const totalPages = Math.ceil(filteredTasks.length / ITEMS_PER_PAGE) || 1;
+  const totalPages = Math.ceil(sortedTasks.length / ITEMS_PER_PAGE) || 1;
   const validCurrentPage = Math.min(currentPage, totalPages);
 
   const paginatedTasks = useMemo(() => {
     const start = (validCurrentPage - 1) * ITEMS_PER_PAGE;
-    return filteredTasks.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredTasks, validCurrentPage]);
+    return sortedTasks.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedTasks, validCurrentPage]);
 
   // Handlers
   const handleClearFilters = () => {
@@ -216,13 +212,12 @@ export const AdminTasksPage: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!deletingTask) return;
     try {
-      await adminTaskService.deleteTask(deletingTask.id);
+      await taskService.deleteTask(deletingTask.id);
       setToastMessage(`Task ${deletingTask.id} deleted successfully.`);
       setDeletingTask(null);
-      await loadTasks();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to delete task.';
-      alert(msg);
+      reloadTasks();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete task.');
     }
   };
 
@@ -340,7 +335,7 @@ export const AdminTasksPage: React.FC = () => {
               onChange={(e) => setUserFilter(e.target.value)}
             >
               <option value="all">All Users</option>
-              {INITIAL_USERS.map((u) => (
+              {users.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name}
                 </option>
@@ -357,7 +352,7 @@ export const AdminTasksPage: React.FC = () => {
               onChange={(e) => setProjectFilter(e.target.value)}
             >
               <option value="all">All Projects</option>
-              {INITIAL_PROJECTS.map((p) => (
+              {projects.map((p) => (
                 <option key={p.id} value={p.name}>
                   {p.name}
                 </option>
@@ -417,11 +412,11 @@ export const AdminTasksPage: React.FC = () => {
       ) : error ? (
         <div className={styles.errorBox}>
           <p>{error}</p>
-          <AppButton variant="outlined" onClick={loadTasks}>
+          <AppButton variant="outlined" onClick={reloadTasks}>
             Retry Loading
           </AppButton>
         </div>
-      ) : filteredTasks.length === 0 ? (
+      ) : sortedTasks.length === 0 ? (
         <EmptyState
           title="No tasks match your filter criteria"
           description="Try adjusting your search query, status, user, or project filters to find what you are looking for."
@@ -532,7 +527,7 @@ export const AdminTasksPage: React.FC = () => {
             currentPage={validCurrentPage}
             totalPages={totalPages}
             onPageChange={(page) => setCurrentPage(page)}
-            totalItems={filteredTasks.length}
+            totalItems={sortedTasks.length}
             pageSize={ITEMS_PER_PAGE}
           />
         </div>
@@ -542,21 +537,21 @@ export const AdminTasksPage: React.FC = () => {
       <CreateTaskModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={loadTasks}
+        onSuccess={reloadTasks}
       />
 
       <EditTaskModal
         isOpen={!!editingTask}
         task={editingTask}
         onClose={() => setEditingTask(null)}
-        onSuccess={loadTasks}
+        onSuccess={reloadTasks}
       />
 
       <AssignTaskModal
         isOpen={!!assigningTask}
         task={assigningTask}
         onClose={() => setAssigningTask(null)}
-        onSuccess={loadTasks}
+        onSuccess={reloadTasks}
       />
 
       <ConfirmationDialog

@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import {
   MdDashboard,
   MdCheckCircleOutline,
+  MdAdminPanelSettings,
   MdFolderOpen,
   MdCalendarToday,
   MdPeopleOutline,
@@ -13,6 +14,7 @@ import {
   MdChevronRight,
 } from 'react-icons/md';
 import WorkFlowLogo from '../ui/WorkFlowLogo';
+import useAuth from '../../hooks/useAuth';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
@@ -20,23 +22,34 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: MdDashboard },
-  { path: '/tasks', label: 'Tasks', icon: MdCheckCircleOutline },
-  { path: '/projects', label: 'Projects', icon: MdFolderOpen },
-  { path: '/calendar', label: 'Calendar', icon: MdCalendarToday },
-  { path: '/users', label: 'Users', icon: MdPeopleOutline },
-  { path: '/profile', label: 'Profile', icon: MdPersonOutline },
-  { path: '/settings', label: 'Settings', icon: MdOutlineSettings },
-];
-
 export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
   const navigate = useNavigate();
+  const { isAdmin, logout } = useAuth();
+  const adminUser = isAdmin();
 
-  const handleLogout = () => {
-    // TODO: Replace with real auth logout logic when ASP.NET Core API is ready
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
+
+  const navItems = adminUser
+    ? [
+        { path: '/admin/dashboard', label: 'Admin Dashboard', icon: MdDashboard },
+        { path: '/admin/tasks', label: 'Admin Tasks', icon: MdAdminPanelSettings },
+        { path: '/admin/projects', label: 'Projects', icon: MdFolderOpen },
+        { path: '/admin/users', label: 'Users', icon: MdPeopleOutline },
+        { path: '/admin/calendar', label: 'Calendar', icon: MdCalendarToday },
+        { path: '/admin/profile', label: 'Profile', icon: MdPersonOutline },
+        { path: '/admin/settings', label: 'Settings', icon: MdOutlineSettings },
+      ]
+    : [
+        { path: '/dashboard', label: 'Dashboard', icon: MdDashboard },
+        { path: '/tasks', label: 'My Tasks', icon: MdCheckCircleOutline },
+        { path: '/projects', label: 'Projects', icon: MdFolderOpen },
+        { path: '/calendar', label: 'Calendar', icon: MdCalendarToday },
+        { path: '/profile', label: 'Profile', icon: MdPersonOutline },
+        { path: '/settings', label: 'Settings', icon: MdOutlineSettings },
+      ];
 
   return (
     <aside
@@ -68,11 +81,10 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
 
       {/* Nav List */}
       <nav className={styles.nav}>
-        {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
+        {navItems.map(({ path, label, icon: Icon }) => (
           <NavLink
             key={path}
             to={path}
-            aria-label={label}
             className={({ isActive }) =>
               clsx(styles.navItem, isActive && styles.navItemActive)
             }
@@ -90,7 +102,6 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
       <div className={styles.footer}>
         <button
           type="button"
-          aria-label="Logout"
           className={styles.logoutBtn}
           onClick={handleLogout}
           title={isCollapsed ? 'Logout' : undefined}

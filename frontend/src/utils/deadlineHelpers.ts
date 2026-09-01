@@ -17,21 +17,6 @@ export interface DeadlineInfo {
 }
 
 /**
- * Parses YYYY-MM-DD date strings into local Date objects.
- */
-export const parseLocalDate = (dateStr: string): Date => {
-  if (!dateStr) return new Date();
-  const [yearStr, monthStr, dayStr] = dateStr.split('T')[0].split('-');
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-  const day = parseInt(dayStr, 10);
-  if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-    return new Date(year, month - 1, day);
-  }
-  return new Date(dateStr);
-};
-
-/**
  * Calculates deadline status dynamically based on current date/time.
  */
 export const calculateTaskDeadlineStatus = (task: DetailedTaskItem): DeadlineInfo => {
@@ -56,11 +41,35 @@ export const calculateTaskDeadlineStatus = (task: DetailedTaskItem): DeadlineInf
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const due = parseLocalDate(task.dueDate);
+  let dueDateVal = task.dueDate;
+  if (!dueDateVal && task.timeLimit) {
+    const start = new Date(task.createdDate || task.startDate || new Date());
+    start.setDate(start.getDate() + task.timeLimit);
+    dueDateVal = start.toISOString();
+  }
+
+  if (!dueDateVal) {
+    return {
+      state: 'FAR_FROM_DEADLINE',
+      label: 'Invalid date',
+      daysDiff: NaN,
+      badgeVariant: 'secondary',
+    };
+  }
+
+  const due = new Date(dueDateVal);
+  if (isNaN(due.getTime())) {
+    return {
+      state: 'FAR_FROM_DEADLINE',
+      label: 'Invalid date',
+      daysDiff: NaN,
+      badgeVariant: 'secondary',
+    };
+  }
   due.setHours(0, 0, 0, 0);
 
   const diffTime = due.getTime() - today.getTime();
-  const daysDiff = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  const daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (task.status === 'overdue' || daysDiff < 0) {
     const overdueDays = Math.abs(daysDiff) || 1;
@@ -113,7 +122,10 @@ export const calculateTaskDeadlineStatus = (task: DetailedTaskItem): DeadlineInf
 export const formatDateDisplay = (dateStr?: string, timeStr?: string): string => {
   if (!dateStr) return 'N/A';
   try {
-    const dateObj = parseLocalDate(dateStr);
+    const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) {
+      return dateStr;
+    }
     const formatted = dateObj.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { TaskItem } from '../../types/dashboard.types';
 import StatusBadge from '../ui/StatusBadge';
 import AvatarGroup from '../ui/AvatarGroup';
@@ -10,13 +11,16 @@ import styles from './TaskTable.module.css';
 interface TaskTableProps {
   tasks: TaskItem[];
   onViewAll?: () => void;
-  onSelectTask?: (task: TaskItem) => void;
+  onViewDetails?: (taskId: string) => void;
+  onEditTask?: (task: TaskItem) => void;
+  onSeeProgress?: (taskId: string) => void;
+  onDeleteTask?: (task: TaskItem) => void;
 }
 
-export const TaskTable = ({ tasks, onViewAll, onSelectTask }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onViewAll, onViewDetails, onEditTask, onSeeProgress, onDeleteTask }: TaskTableProps) => {
   const [activeMenuTaskId, setActiveMenuTaskId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const safeTasks = tasks ?? [];
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -28,10 +32,21 @@ export const TaskTable = ({ tasks, onViewAll, onSelectTask }: TaskTableProps) =>
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleAction = (task: TaskItem) => {
+  const handleAction = (actionName: string, taskId: string) => {
     setActiveMenuTaskId(null);
-    if (onSelectTask) {
-      onSelectTask(task);
+    const targetTask = tasks.find((t) => t.id === taskId);
+
+    if (actionName === 'View Details') {
+      if (onViewDetails) onViewDetails(taskId);
+      else navigate(`/tasks/${taskId}`);
+    } else if (actionName === 'See Progress') {
+      if (onSeeProgress) onSeeProgress(taskId);
+      else navigate(`/tasks/${taskId}`);
+    } else if (actionName === 'Edit Task') {
+      if (onEditTask && targetTask) onEditTask(targetTask);
+      else navigate(`/tasks?edit=${taskId}`);
+    } else if (actionName === 'Delete Task') {
+      if (onDeleteTask && targetTask) onDeleteTask(targetTask);
     }
   };
 
@@ -64,7 +79,7 @@ export const TaskTable = ({ tasks, onViewAll, onSelectTask }: TaskTableProps) =>
           </tr>
         </thead>
         <tbody>
-          {safeTasks.map((task) => (
+          {tasks.map((task) => (
             <tr key={task.id} className={styles.tr}>
               <td className={styles.td}>
                 <div className={styles.taskTitle}>
@@ -107,9 +122,33 @@ export const TaskTable = ({ tasks, onViewAll, onSelectTask }: TaskTableProps) =>
                       type="button"
                       className={styles.menuItem}
                       role="menuitem"
-                      onClick={() => handleAction(task)}
+                      onClick={() => handleAction('View Details', task.id)}
                     >
                       View Details
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => handleAction('See Progress', task.id)}
+                    >
+                      See Progress
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => handleAction('Edit Task', task.id)}
+                    >
+                      Edit Task
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                      role="menuitem"
+                      onClick={() => handleAction('Delete Task', task.id)}
+                    >
+                      Delete Task
                     </button>
                   </div>
                 )}

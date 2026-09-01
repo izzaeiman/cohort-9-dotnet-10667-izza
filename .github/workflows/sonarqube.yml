@@ -1,0 +1,88 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarqube:
+    name: Build and Analyze
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies (Frontend)
+        working-directory: ./frontend
+        run: npm ci || npm install
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npx tsc --noEmit
+          npm run build
+          npm run test:coverage
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Begin SonarQube Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          ORG_NAME="${SONAR_ORGANIZATION:-izzaeiman}"
+          PROJECT_KEY="${SONAR_PROJECT_KEY:-izzaeiman_cohort-9-dotnet-10667-izza}"
+          HOST_URL="${SONAR_HOST_URL:-https://sonarcloud.io}"
+          
+          SONAR_ARGS=(
+            begin
+            /k:"$PROJECT_KEY"
+            /o:"$ORG_NAME"
+            /d:sonar.host.url="$HOST_URL"
+            /d:sonar.sources="frontend/src"
+            /d:sonar.typescript.tsconfigPaths="frontend/tsconfig.json"
+            /d:sonar.javascript.lcov.reportPaths="frontend/coverage/lcov.info"
+            /d:sonar.cs.opencover.reportsPaths="Backend.Tests/TestResults/**/coverage.opencover.xml"
+            /d:sonar.qualitygate.wait=true
+          )
+          if [ -n "$SONAR_TOKEN" ]; then
+            SONAR_ARGS+=("/d:sonar.token=$SONAR_TOKEN")
+          fi
+          dotnet sonarscanner "${SONAR_ARGS[@]}"
+
+      - name: Build Backend
+        run: dotnet build Backend/Backend.csproj
+
+      - name: Run Backend Tests and Collect Coverage
+        run: dotnet test Backend.Tests/Backend.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: End SonarQube Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          SONAR_ARGS=("end")
+          if [ -n "$SONAR_TOKEN" ]; then
+            SONAR_ARGS+=("/d:sonar.token=$SONAR_TOKEN")
+          fi
+          dotnet sonarscanner "${SONAR_ARGS[@]}"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,8 +6,6 @@ import {
   MdOutlinePalette,
   MdNotificationsNone,
   MdLockOutline,
-  MdLanguage,
-  MdInfoOutline,
 } from 'react-icons/md';
 
 import AppButton from '../../components/ui/AppButton';
@@ -15,6 +13,8 @@ import AppInput from '../../components/ui/AppInput';
 import AppSelect from '../../components/ui/AppSelect';
 import Toast from '../../components/common/Toast';
 import useTheme from '../../hooks/useTheme';
+import { authService } from '../../services/authService';
+import apiClient from '../../services/api';
 import styles from './Settings.module.css';
 
 const passwordChangeSchema = z
@@ -34,14 +34,25 @@ export const SettingsPage = () => {
   const { theme, setTheme } = useTheme();
   const isDarkMode = theme === 'dark';
 
-  const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'security' | 'regional'>('appearance');
+  const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'security'>('appearance');
 
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [pushAlerts, setPushAlerts] = useState(true);
-  const [weeklyDigest, setWeeklyDigest] = useState(true);
+  const getStoredSettings = () => {
+    const stored = localStorage.getItem('workflow_settings');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        // Fallback
+      }
+    }
+    return null;
+  };
 
-  const [language, setLanguage] = useState('en-US');
-  const [timezone, setTimezone] = useState('America/New_York');
+  const storedSettings = getStoredSettings();
+
+  const [emailAlerts, setEmailAlerts] = useState(storedSettings?.emailAlerts ?? true);
+  const [pushAlerts, setPushAlerts] = useState(storedSettings?.pushAlerts ?? true);
+  const [weeklyDigest, setWeeklyDigest] = useState(storedSettings?.weeklyDigest ?? true);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -63,14 +74,60 @@ export const SettingsPage = () => {
     setTheme(checked ? 'dark' : 'light');
   };
 
-  const handleChangePassword = async () => {
-    await new Promise((res) => setTimeout(res, 400));
-    reset();
-    setToastMessage('Coming Soon — Password modification pending ASP.NET Core API integration');
+  const handleChangePassword = async (data: PasswordChangeFormData) => {
+    try {
+      await authService.changePassword(data.currentPassword, data.newPassword);
+      reset();
+      setToastMessage('Password updated successfully!');
+    } catch (err: any) {
+      setToastMessage(err.response?.data?.message || err.message || 'Failed to update password.');
+    }
   };
 
   const handleSaveSettings = () => {
-    setToastMessage('Settings preferences updated for current session.');
+    try {
+      const settings = {
+        emailAlerts,
+        pushAlerts,
+        weeklyDigest,
+      };
+      localStorage.setItem('workflow_settings', JSON.stringify(settings));
+      setToastMessage('Settings preferences saved!');
+    } catch {
+      setToastMessage('Failed to save settings preferences.');
+    }
+  };
+
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+
+  const fetchSessions = useCallback(async () => {
+    setIsLoadingSessions(true);
+    try {
+      const response = await apiClient.get('/auth/sessions');
+      setSessions(response.data);
+    } catch {
+      // Fallback
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'security') {
+      fetchSessions();
+    }
+  }, [activeTab, fetchSessions]);
+
+  const handleRevokeSession = async (id: number) => {
+    try {
+      await authService.ensureCsrfToken();
+      await apiClient.post(`/auth/sessions/${id}/revoke`);
+      setToastMessage('Session revoked successfully!');
+      fetchSessions();
+    } catch (err: any) {
+      setToastMessage(err.response?.data?.message || err.message || 'Failed to revoke session.');
+    }
   };
 
   return (
@@ -86,11 +143,9 @@ export const SettingsPage = () => {
       {/* ── Settings Grid ─────────────────────────────────────────────────── */}
       <div className={styles.grid}>
         {/* Left Side Navigation */}
-        <div className={styles.navCard} role="tablist" aria-label="Settings categories">
+        <div className={styles.navCard} aria-label="Settings categories">
           <button
             type="button"
-            role="tab"
-            aria-selected={activeTab === 'appearance'}
             className={`${styles.navItem} ${activeTab === 'appearance' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('appearance')}
           >
@@ -99,8 +154,6 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={activeTab === 'notifications'}
             className={`${styles.navItem} ${activeTab === 'notifications' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('notifications')}
           >
@@ -109,23 +162,11 @@ export const SettingsPage = () => {
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={activeTab === 'security'}
             className={`${styles.navItem} ${activeTab === 'security' ? styles.navActive : ''}`}
             onClick={() => setActiveTab('security')}
           >
             <MdLockOutline size={18} />
             <span>Password & Security</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'regional'}
-            className={`${styles.navItem} ${activeTab === 'regional' ? styles.navActive : ''}`}
-            onClick={() => setActiveTab('regional')}
-          >
-            <MdLanguage size={18} />
-            <span>Language & Region</span>
           </button>
         </div>
 
@@ -238,11 +279,6 @@ export const SettingsPage = () => {
             <div>
               <h3 className={styles.sectionTitle}>Change Password</h3>
 
-              <div className={styles.pendingBanner}>
-                <MdInfoOutline size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-                <span>Backend Integration Pending — Password modifications will connect to ASP.NET Core Identity API.</span>
-              </div>
-
               <form onSubmit={handleSubmit(handleChangePassword)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '420px' }}>
                 <AppInput
                   id="cur-pass"
@@ -278,43 +314,56 @@ export const SettingsPage = () => {
                   </AppButton>
                 </div>
               </form>
-            </div>
-          )}
 
-          {activeTab === 'regional' && (
-            <div>
-              <h3 className={styles.sectionTitle}>Language & Region</h3>
+              <div style={{ marginTop: '32px', borderTop: '1px solid var(--color-border)', paddingTop: '24px' }}>
+                <h3 className={styles.sectionTitle}>Active Sessions</h3>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', marginBottom: '16px' }}>
+                  Manage the devices and browsers that are currently logged in to your account
+                </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '420px' }}>
-                <AppSelect
-                  id="sel-lang"
-                  label="Display Language"
-                  options={[
-                    { value: 'en-US', label: 'English (United States)' },
-                    { value: 'en-GB', label: 'English (United Kingdom)' },
-                    { value: 'ur-PK', label: 'Urdu (Pakistan)' },
-                  ]}
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                />
-
-                <AppSelect
-                  id="sel-tz"
-                  label="Time Zone"
-                  options={[
-                    { value: 'America/New_York', label: 'Eastern Time (America/New_York)' },
-                    { value: 'Asia/Karachi', label: '(GMT+05:00) Islamabad, Karachi' },
-                    { value: 'UTC', label: '(GMT+00:00) UTC' },
-                  ]}
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                />
-
-                <div style={{ marginTop: '12px' }}>
-                  <AppButton variant="primary" size="md" onClick={handleSaveSettings}>
-                    Save Localization
-                  </AppButton>
-                </div>
+                {isLoadingSessions ? (
+                  <div style={{ padding: '12px 0', color: 'var(--color-text-secondary)' }}>Loading active sessions...</div>
+                ) : sessions.length === 0 ? (
+                  <div style={{ padding: '12px 0', color: 'var(--color-text-secondary)' }}>No active sessions found.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px', maxWidth: '500px' }}>
+                    {sessions.map((sess) => (
+                      <div key={sess.id} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px 16px',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--color-bg-card)'
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>Session #{sess.id}</span>
+                            {sess.isCurrent && (
+                              <span style={{
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                backgroundColor: '#E3F2FD',
+                                color: '#1565C0',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold'
+                              }}>Current Session</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                            Created: {new Date(sess.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                        {!sess.isCurrent && (
+                          <AppButton variant="secondary" size="sm" onClick={() => handleRevokeSession(sess.id)}>
+                            Revoke
+                          </AppButton>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

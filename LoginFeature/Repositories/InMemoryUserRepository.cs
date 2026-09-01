@@ -22,20 +22,20 @@ namespace LoginFeature.Repositories
                 new User
                 {
                     Id = "usr-1",
-                    Email = "izzaeiman@yahoo.com",
-                    PasswordHash = hasher.HashPassword(null!, "Password123!")
+                    Email = "demo1@example.local",
+                    PasswordHash = hasher.HashPassword(null!, "DemoPassword123!")
                 },
                 new User
                 {
                     Id = "usr-2",
-                    Email = "izzaeiman@example.com",
-                    PasswordHash = hasher.HashPassword(null!, "Password123!")
+                    Email = "demo2@example.local",
+                    PasswordHash = hasher.HashPassword(null!, "DemoPassword123!")
                 },
                 new User
                 {
                     Id = "usr-3",
-                    Email = "john.smith@example.com",
-                    PasswordHash = hasher.HashPassword(null!, "Password123!")
+                    Email = "demo3@example.local",
+                    PasswordHash = hasher.HashPassword(null!, "DemoPassword123!")
                 }
             };
         }

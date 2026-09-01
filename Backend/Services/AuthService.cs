@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -11,30 +12,32 @@ namespace Backend.Services
     public class AuthService : IAuthService
     {
         // Static dummy hash used only for timing-safe user-not-found path.
-        // This is a pre-computed BCrypt hash of a throwaway value and is not a secret.
         private static readonly string _dummyPasswordHash =
             new PasswordHasher<User>().HashPassword(new User(), "DUMMY_TIMING_PLACEHOLDER_NOT_A_REAL_PASSWORD");
 
         private readonly IUserRepository _userRepository;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IJwtTokenService _jwtTokenService;
         private readonly ILogger<AuthService> _logger;
 
         public AuthService(
             IUserRepository userRepository,
+            IRefreshTokenRepository refreshTokenRepository,
             IPasswordHasher<User> passwordHasher,
             IJwtTokenService jwtTokenService,
             ILogger<AuthService> logger)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
             _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
             _jwtTokenService = jwtTokenService ?? throw new ArgumentNullException(nameof(jwtTokenService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
+        public async Task<AuthInternalResult> RegisterAsync(RegisterDto dto)
         {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
 
             // Finding #8: explicit null/whitespace guards before Trim() to protect direct callers
             if (string.IsNullOrWhiteSpace(dto.Email))
@@ -69,22 +72,25 @@ namespace Backend.Services
             newUser.PasswordHash = _passwordHasher.HashPassword(newUser, dto.Password);
 
             var createdUser = await _userRepository.CreateAsync(newUser);
-            var token = _jwtTokenService.GenerateToken(createdUser);
+            var tokenInfo = _jwtTokenService.GenerateToken(createdUser);
+            var rawRefresh = await IssueRefreshTokenAsync(createdUser.Id);
 
             // Finding #10: log UserId only, not email
             _logger.LogInformation("User registration successful for UserId: {UserId}, Role: {Role}",
                 createdUser.Id, createdUser.Role);
 
-            return new AuthResponseDto
+            return new AuthInternalResult
             {
-                Token = token,
+                Token = tokenInfo.Token,
+                ExpiresAt = tokenInfo.ExpiresAt,
+                RefreshToken = rawRefresh,
                 User = MapToUserDto(createdUser)
             };
         }
 
-        public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
+        public async Task<AuthInternalResult> LoginAsync(LoginDto dto)
         {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
 
             // Finding #8: explicit null/whitespace guards before Trim()
             if (string.IsNullOrWhiteSpace(dto.Email))
@@ -117,14 +123,17 @@ namespace Backend.Services
                 throw new UnauthorizedAccessException("Invalid email or password.");
             }
 
-            var token = _jwtTokenService.GenerateToken(user);
+            var tokenInfo = _jwtTokenService.GenerateToken(user);
+            var rawRefresh = await IssueRefreshTokenAsync(user.Id);
 
             // Finding #10: log UserId and role only, not email
             _logger.LogInformation("Login successful for UserId: {UserId}, Role: {Role}", user.Id, user.Role);
 
-            return new AuthResponseDto
+            return new AuthInternalResult
             {
-                Token = token,
+                Token = tokenInfo.Token,
+                ExpiresAt = tokenInfo.ExpiresAt,
+                RefreshToken = rawRefresh,
                 User = MapToUserDto(user)
             };
         }
@@ -143,6 +152,95 @@ namespace Backend.Services
             return MapToUserDto(user);
         }
 
+        public async Task ChangePasswordAsync(string userId, ChangePasswordDto dto)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("User not found.");
+            }
+
+            var verification = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
+            if (verification == PasswordVerificationResult.Failed)
+            {
+                throw new InvalidOperationException("Incorrect current password.");
+            }
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
+            await _userRepository.UpdateAsync(user);
+            
+            _logger.LogInformation("Password changed successfully for UserId: {UserId}", userId);
+        }
+
+        /// <summary>Issues a new rotating refresh token alongside an access token.</summary>
+        public async Task<AuthInternalResult> RefreshAsync(string rawRefreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(rawRefreshToken))
+                throw new UnauthorizedAccessException("Refresh token is required.");
+
+            var tokenHash = HashToken(rawRefreshToken);
+            var storedToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
+
+            if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                _logger.LogWarning("Refresh attempt with invalid/expired/revoked token.");
+                throw new UnauthorizedAccessException("Invalid or expired refresh token.");
+            }
+
+            var user = await _userRepository.GetByIdAsync(storedToken.UserId);
+            if (user == null)
+            {
+                _logger.LogWarning("Refresh: user {UserId} not found.", storedToken.UserId);
+                throw new UnauthorizedAccessException("User not found.");
+            }
+
+            // Rotate: revoke old token, issue new one
+            await _refreshTokenRepository.RevokeAsync(storedToken);
+            var tokenInfo = _jwtTokenService.GenerateToken(user);
+            var newRefreshResult = await IssueRefreshTokenAsync(user.Id);
+
+            _logger.LogInformation("Token refreshed for UserId: {UserId}", user.Id);
+
+            return new AuthInternalResult
+            {
+                Token = tokenInfo.Token,
+                ExpiresAt = tokenInfo.ExpiresAt,
+                RefreshToken = newRefreshResult,
+                User = MapToUserDto(user)
+            };
+        }
+
+        public async Task RevokeAllRefreshTokensAsync(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId)) return;
+            await _refreshTokenRepository.RevokeAllForUserAsync(userId);
+            _logger.LogInformation("All refresh tokens revoked for UserId: {UserId}", userId);
+        }
+
+        /// <summary>Creates a hashed refresh token record in the DB and returns the raw (unhashed) token for cookie use.</summary>
+        private async Task<string> IssueRefreshTokenAsync(string userId)
+        {
+            var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var tokenHash = HashToken(rawToken);
+
+            await _refreshTokenRepository.CreateAsync(new RefreshToken
+            {
+                UserId = userId,
+                TokenHash = tokenHash,
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(7),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+            return rawToken;
+        }
+
+        public static string HashToken(string rawToken)
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(rawToken);
+            var hash = SHA256.HashData(bytes);
+            return Convert.ToBase64String(hash);
+        }
+
         private static UserDto MapToUserDto(User user)
         {
             return new UserDto
@@ -150,7 +248,8 @@ namespace Backend.Services
                 Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
-                Role = user.Role
+                Role = user.Role,
+                Avatar = user.Avatar
             };
         }
     }

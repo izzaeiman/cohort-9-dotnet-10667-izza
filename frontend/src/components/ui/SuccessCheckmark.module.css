@@ -48,12 +48,3 @@
 @keyframes fill {
   100% { box-shadow: inset 0px 0px 0px 30px rgba(76, 175, 80, 0.12); }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .checkmark,
-  .checkmarkCircle,
-  .checkmarkCheck {
-    animation: none !important;
-    stroke-dashoffset: 0 !important;
-  }
-}

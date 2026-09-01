@@ -32,58 +32,25 @@ export const taskFormSchema = z
   .refine(
     (data) => {
       if (!data.startDate || !data.dueDate) return true;
-      const startStr = `${data.startDate}T${data.startTime || '00:00'}`;
-      const dueStr = `${data.dueDate}T${data.dueTime || '23:59'}`;
-      const start = new Date(startStr);
-      const due = new Date(dueStr);
-      if (!isNaN(start.getTime()) && !isNaN(due.getTime())) {
-        return due >= start;
-      }
-      return new Date(data.dueDate) >= new Date(data.startDate);
+      const start = new Date(data.startDate);
+      const due = new Date(data.dueDate);
+      return due >= start;
     },
     {
-      message: 'Due Date/Time cannot be before Start Date/Time.',
+      message: 'Due Date cannot be before Start Date.',
       path: ['dueDate'],
     },
   );
 
 export type TaskFormData = z.infer<typeof taskFormSchema>;
 
-export const assignTaskSchema = z
-  .object({
-    assignedUserId: z.string().min(1, 'Please select a user to assign.'),
-    startDate: z.string().optional(),
-    startTime: z.string().optional(),
-    dueDate: z.string().optional(),
-    dueTime: z.string().optional(),
-    timeLimit: z
-      .string()
-      .optional()
-      .refine(
-        (val) => {
-          if (!val || val.trim() === '') return true;
-          const num = Number(val);
-          return !isNaN(num) && num > 0;
-        },
-        { message: 'Time limit must be a positive number greater than 0.' },
-      ),
-  })
-  .refine(
-    (data) => {
-      if (!data.startDate || !data.dueDate) return true;
-      const startStr = `${data.startDate}T${data.startTime || '00:00'}`;
-      const dueStr = `${data.dueDate}T${data.dueTime || '23:59'}`;
-      const start = new Date(startStr);
-      const due = new Date(dueStr);
-      if (!isNaN(start.getTime()) && !isNaN(due.getTime())) {
-        return due >= start;
-      }
-      return new Date(data.dueDate) >= new Date(data.startDate);
-    },
-    {
-      message: 'Due Date/Time cannot be before Start Date/Time.',
-      path: ['dueDate'],
-    },
-  );
+export const assignTaskSchema = z.object({
+  assignedUserId: z.string().min(1, 'Please select a user to assign.'),
+  startDate: z.string().optional(),
+  startTime: z.string().optional(),
+  dueDate: z.string().optional(),
+  dueTime: z.string().optional(),
+  timeLimit: z.string().optional(),
+});
 
 export type AssignTaskFormData = z.infer<typeof assignTaskSchema>;

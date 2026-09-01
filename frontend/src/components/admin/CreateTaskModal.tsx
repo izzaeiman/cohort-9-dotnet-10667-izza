@@ -5,12 +5,12 @@ import Modal from '../common/Modal';
 import AppInput from '../ui/AppInput';
 import AppSelect from '../ui/AppSelect';
 import AppButton from '../ui/AppButton';
-import { INITIAL_USERS } from '../../data/users';
-import { INITIAL_PROJECTS } from '../../data/projects';
-import { adminTaskService } from '../../services/adminTaskService';
+import { userService } from '../../services/userService';
+import { projectService } from '../../services/projectService';
+import { taskService } from '../../services/taskService';
 import { taskFormSchema, type TaskFormData } from '../../utils/taskSchema';
-import { getLocalDate } from '../../utils/dateHelpers';
 import Toast from '../common/Toast';
+import { getLocalDate } from '../../utils/dateHelpers';
 import styles from './TaskModalForm.module.css';
 
 interface CreateTaskModalProps {
@@ -26,11 +26,63 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const fetchIdRef = React.useRef(0);
 
-  const defaultStartDate = getLocalDate();
-  const dueDateObj = new Date();
-  dueDateObj.setDate(dueDateObj.getDate() + 7);
-  const defaultDueDate = getLocalDate(dueDateObj);
+  const loadUsers = React.useCallback(() => {
+    setIsLoadingUsers(true);
+    setUsersError(null);
+    setUsers([]);
+    
+    const currentFetchId = ++fetchIdRef.current;
+
+    userService.getUsers()
+      .then(data => {
+        if (currentFetchId !== fetchIdRef.current) return;
+        setUsers(data || []);
+        setUsersError(null);
+      })
+      .catch(err => {
+        if (currentFetchId !== fetchIdRef.current) return;
+        console.error('Failed to load users for assignment', err);
+        setUsers([]);
+        setUsersError('Unable to load users. Please try again.');
+      })
+      .finally(() => {
+        if (currentFetchId !== fetchIdRef.current) return;
+        setIsLoadingUsers(false);
+      });
+  }, []);
+
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+
+  const loadProjects = React.useCallback(async () => {
+    setIsLoadingProjects(true);
+    try {
+      const data = await projectService.getProjects();
+      setProjects(data || []);
+    } catch (err) {
+      console.error('Failed to load projects', err);
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      loadUsers();
+      loadProjects();
+    }
+  }, [isOpen, loadUsers, loadProjects]);
+
+  const startDate = new Date();
+  const defaultStartDate = getLocalDate(startDate);
+  const dueDate = new Date(startDate);
+  dueDate.setDate(dueDate.getDate() + 7);
+  const defaultDueDate = getLocalDate(dueDate);
 
   const {
     register,
@@ -42,8 +94,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     defaultValues: {
       title: '',
       description: '',
-      assignedUserId: 'usr-1',
-      project: INITIAL_PROJECTS[0]?.name || 'Task Management System SaaS',
+      assignedUserId: '',
+      project: '',
       category: 'Frontend',
       priority: 'medium',
       status: 'pending',
@@ -58,14 +110,16 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const handleFormSubmit = async (data: TaskFormData) => {
     try {
       setIsSubmitting(true);
-      const selectedUser = INITIAL_USERS.find((u) => u.id === data.assignedUserId);
+      const selectedUser = users.find((u) => u.id === data.assignedUserId);
+      const selectedProject = data.project === 'none' ? null : projects.find((p) => p.id === data.project);
 
-      await adminTaskService.createTask({
+      await taskService.createTask({
         title: data.title.trim(),
         description: data.description.trim(),
         assignedUser: selectedUser?.name || 'Unassigned',
         assignedUserId: data.assignedUserId,
-        project: data.project,
+        project: selectedProject?.name || 'Unassigned',
+        projectId: data.project === 'none' ? undefined : data.project,
         category: data.category as any,
         priority: data.priority,
         status: data.status,
@@ -83,9 +137,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         onSuccess();
         onClose();
       }, 500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSubmitting(false);
-      alert(err.message || 'Failed to create task.');
+      alert(err instanceof Error ? err.message : 'Failed to create task.');
     }
   };
 
@@ -114,24 +168,43 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           </div>
 
           <div className={styles.grid2}>
-            <AppSelect
-              label="Assigned User *"
-              {...register('assignedUserId')}
-              error={errors.assignedUserId?.message}
-              options={INITIAL_USERS.map((u) => ({
-                value: u.id,
-                label: `${u.name} (${u.role})`,
-              }))}
-            />
+            <div>
+              <AppSelect
+                label="Assigned User *"
+                {...register('assignedUserId')}
+                error={errors.assignedUserId?.message}
+                options={[
+                  { value: '', label: isLoadingUsers ? 'Loading...' : 'Select User...' },
+                  ...users.map((u) => ({
+                    value: u.id,
+                    label: `${u.name} (${u.role})`,
+                  }))
+                ]}
+              />
+              {usersError && (
+                <div style={{ marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className={styles.errorText}>{usersError}</span>
+                  <button 
+                    type="button" 
+                    onClick={loadUsers}
+                    disabled={isLoadingUsers} 
+                    style={{ background: 'none', border: 'none', color: isLoadingUsers ? '#9ca3af' : '#0070f3', cursor: isLoadingUsers ? 'default' : 'pointer', padding: 0, textDecoration: 'underline', fontSize: '0.875rem' }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+            </div>
 
             <AppSelect
               label="Project *"
               {...register('project')}
               error={errors.project?.message}
-              options={INITIAL_PROJECTS.map((p) => ({
-                value: p.name,
-                label: p.name,
-              }))}
+              options={[
+                { value: '', label: 'Select Project...' },
+                { value: 'none', label: 'No Project' },
+                ...projects.map((p) => ({ value: p.id, label: p.name }))
+              ]}
             />
           </div>
 
@@ -141,11 +214,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               {...register('category')}
               error={errors.category?.message}
               options={[
+                { value: 'General', label: 'General' },
                 { value: 'Frontend', label: 'Frontend' },
                 { value: 'Backend', label: 'Backend' },
-                { value: 'UI/UX Design', label: 'UI/UX Design' },
+                { value: 'UiUxDesign', label: 'UI/UX Design' },
                 { value: 'DevOps', label: 'DevOps' },
                 { value: 'Database', label: 'Database' },
+                { value: 'FullStack', label: 'Full Stack' },
               ]}
             />
 
@@ -219,7 +294,12 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             <AppButton variant="secondary" type="button" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </AppButton>
-            <AppButton variant="primary" type="submit" isLoading={isSubmitting}>
+            <AppButton 
+              variant="primary" 
+              type="submit" 
+              isLoading={isSubmitting}
+              disabled={isLoadingUsers || usersError !== null}
+            >
               Create Task
             </AppButton>
           </div>

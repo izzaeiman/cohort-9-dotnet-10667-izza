@@ -1,85 +1,34 @@
-import { useForm, type SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
-import { MdEmail, MdArrowBack } from 'react-icons/md';
-
-import { forgotPasswordSchema, type ForgotPasswordFormData } from '../../utils/forgotPasswordSchema';
-import AppInput from '../ui/AppInput';
-import AppButton from '../ui/AppButton';
+import { MdArrowBack, MdAdminPanelSettings } from 'react-icons/md';
 import styles from './ForgotPasswordForm.module.css';
 
-interface ForgotPasswordFormProps {
-  onSubmit: SubmitHandler<ForgotPasswordFormData>;
-  isLoading?: boolean;
-  serverError?: string;
-}
-
-const ForgotPasswordForm = ({
-  onSubmit,
-  isLoading = false,
-  serverError,
-}: ForgotPasswordFormProps) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: {
-      email: '',
-    },
-  });
-
+const ForgotPasswordForm = () => {
   return (
-    <form
-      className={styles.form}
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      aria-label="Forgot password form"
-    >
-      <p className={styles.description}>
-        Enter your email address and we'll send you instructions to reset your password.
-      </p>
-
-      {/* Server error */}
-      {serverError && (
-        <div className={styles.serverError} role="alert" aria-live="polite">
-          <span className={styles.errorIcon}>⚠️</span>
-          {serverError}
+    <div className={styles.form}>
+      <div style={{ padding: '18px', borderRadius: '10px', backgroundColor: 'var(--bg-secondary, #f9fafb)', border: '1px solid var(--border, #e5e7eb)', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#FF7A1A' }}>
+          <MdAdminPanelSettings size={22} />
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text, #111)' }}>
+            Administrator-Managed Password Recovery
+          </h3>
         </div>
-      )}
 
-      {/* Email input */}
-      <AppInput
-        id="forgot-email"
-        label="Email Address"
-        type="email"
-        placeholder="you@company.com"
-        autoComplete="email"
-        leftIcon={<MdEmail />}
-        error={errors.email?.message}
-        {...register('email')}
-      />
+        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary, #555)', lineHeight: 1.5 }}>
+          Password resets are managed directly by the System Administrator to ensure account security. Please contact the administrator below to request credential assistance.
+        </p>
 
-      {/* Submit button */}
-      <AppButton
-        type="submit"
-        variant="primary"
-        size="lg"
-        fullWidth
-        isLoading={isLoading}
-        id="forgot-submit"
-      >
-        Send Reset Link
-      </AppButton>
+        <div style={{ marginTop: '14px', padding: '10px 14px', backgroundColor: 'var(--card-bg, #ffffff)', borderRadius: '6px', border: '1px solid var(--border, #e5e7eb)', fontSize: '0.875rem' }}>
+          <span style={{ color: '#666' }}>Administrator Contact: </span>
+          <strong style={{ color: '#FF7A1A' }}>admin@workflow.local</strong>
+        </div>
+      </div>
 
-      {/* Back to Login link */}
       <p className={styles.backText}>
         <Link to="/login" className={styles.backLink} id="forgot-back-link">
           <MdArrowBack size={16} /> Back to Sign In
         </Link>
       </p>
-    </form>
+    </div>
   );
 };
 
